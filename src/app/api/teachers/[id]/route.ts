@@ -1,0 +1,120 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { validateSession, hashPassword } from '@/lib/auth'
+
+// PUT update teacher
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const { username, password, full_name, nip } = await request.json()
+
+        // Get teacher to find user_id
+        const { data: teacher } = await supabase
+            .from('teachers')
+            .select('user_id')
+            .eq('id', id)
+            .single()
+
+        if (!teacher) {
+            return NextResponse.json({ error: 'Guru tidak ditemukan' }, { status: 404 })
+        }
+
+        // Update user
+        const userUpdate: Record<string, string> = {}
+        if (username) userUpdate.username = username
+        if (full_name) userUpdate.full_name = full_name
+        if (password) userUpdate.password_hash = await hashPassword(password)
+
+        if (Object.keys(userUpdate).length > 0) {
+            const { error: userError } = await supabase
+                .from('users')
+                .update(userUpdate)
+                .eq('id', teacher.user_id)
+
+            if (userError) throw userError
+        }
+
+        // Update teacher
+        if (nip !== undefined) {
+            const { error: teacherError } = await supabase
+                .from('teachers')
+                .update({ nip })
+                .eq('id', id)
+
+            if (teacherError) throw teacherError
+        }
+
+        // Fetch updated data
+        const { data: updatedTeacher, error } = await supabase
+            .from('teachers')
+            .select(`
+        *,
+        user:users(id, username, full_name, role)
+      `)
+            .eq('id', id)
+            .single()
+
+        if (error) throw error
+
+        return NextResponse.json(updatedTeacher)
+    } catch (error) {
+        console.error('Error updating teacher:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
+// DELETE teacher
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'ADMIN') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Get teacher to find user_id
+        const { data: teacher } = await supabase
+            .from('teachers')
+            .select('user_id')
+            .eq('id', id)
+            .single()
+
+        if (!teacher) {
+            return NextResponse.json({ error: 'Guru tidak ditemukan' }, { status: 404 })
+        }
+
+        // Delete user (will cascade to teacher)
+        const { error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', teacher.user_id)
+
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error('Error deleting teacher:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}

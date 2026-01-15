@@ -1,0 +1,160 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { validateSession } from '@/lib/auth'
+
+// GET single quiz with questions
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const { data, error } = await supabase
+            .from('quizzes')
+            .select(`
+                *,
+                teaching_assignment:teaching_assignments(
+                    id,
+                    subject:subjects(id, name),
+                    class:classes(id, name)
+                ),
+                questions:quiz_questions(*)
+            `)
+            .eq('id', id)
+            .single()
+
+        if (error) throw error
+
+        // Sort questions by order_index
+        if (data.questions) {
+            data.questions.sort((a: any, b: any) => a.order_index - b.order_index)
+        }
+
+        return NextResponse.json(data)
+    } catch (error) {
+        console.error('Error fetching quiz:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
+// PUT update quiz
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'GURU') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const { title, description, duration_minutes, is_randomized, is_active } = body
+
+        // Construct update object dynamically to avoid overwriting with null/undefined
+        const updateData: any = {
+            updated_at: new Date().toISOString()
+        }
+
+        if (title !== undefined) updateData.title = title
+        if (description !== undefined) updateData.description = description
+        if (duration_minutes !== undefined) updateData.duration_minutes = duration_minutes
+        if (is_randomized !== undefined) updateData.is_randomized = is_randomized
+        if (is_active !== undefined) updateData.is_active = is_active
+
+        const { data, error } = await supabase
+            .from('quizzes')
+            .update(updateData)
+            .eq('id', id)
+            .select(`
+                *,
+                teaching_assignment:teaching_assignments(
+                    class_id,
+                    subject:subjects(name)
+                )
+            `)
+            .single()
+
+        if (error) {
+            console.error('Database update error:', error)
+            throw error
+        }
+
+        // If quiz was just published, send notifications to students
+        if (is_active === true && data?.teaching_assignment?.class_id) {
+            try {
+                const { data: students } = await supabase
+                    .from('students')
+                    .select('user_id')
+                    .eq('class_id', data.teaching_assignment.class_id)
+
+                if (students && students.length > 0) {
+                    const subjectName = data.teaching_assignment.subject?.name || ''
+                    await supabase.from('notifications').insert(
+                        students.map(s => ({
+                            user_id: s.user_id,
+                            type: 'KUIS_BARU',
+                            title: `Kuis Baru: ${data.title}`,
+                            message: `${subjectName} - ${data.duration_minutes || 0} menit`,
+                            link: '/dashboard/siswa/kuis'
+                        }))
+                    )
+                }
+            } catch (notifError) {
+                console.error('Error sending quiz notifications:', notifError)
+            }
+        }
+
+        return NextResponse.json(data)
+    } catch (error) {
+        console.error('Error updating quiz:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
+// DELETE quiz
+export async function DELETE(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'GURU') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const { error } = await supabase
+            .from('quizzes')
+            .delete()
+            .eq('id', id)
+
+        if (error) throw error
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error('Error deleting quiz:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}

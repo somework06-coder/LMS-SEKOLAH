@@ -77,6 +77,7 @@ export default function NilaiPage() {
     const [examSubmissions, setExamSubmissions] = useState<ExamSubmission[]>([])
     const [loading, setLoading] = useState(true)
     const [loadingData, setLoadingData] = useState(false)
+    const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
         const fetchInitial = async () => {
@@ -290,6 +291,12 @@ export default function NilaiPage() {
         ? Math.round(students.map(s => calculateAverage(s.id)).filter(a => a !== null).reduce((sum, a) => sum + (a || 0), 0) / students.filter(s => calculateAverage(s.id) !== null).length) || 0
         : 0
 
+    // Filter teaching assignments by search query
+    const filteredTAs = teachingAssignments.filter(ta =>
+        ta.class.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ta.subject.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -305,26 +312,88 @@ export default function NilaiPage() {
                 </div>
             </div>
 
-            {/* Select Class */}
-            <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-6">
-                <label className="block text-sm font-medium text-slate-300 mb-3">📚 Pilih Kelas & Mata Pelajaran</label>
-                <select
-                    value={selectedTA}
-                    onChange={(e) => { setSelectedTA(e.target.value); setActiveTab('rekap') }}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-lg"
-                >
-                    <option value="">-- Pilih Kelas --</option>
-                    {teachingAssignments.map((ta) => (
-                        <option key={ta.id} value={ta.id}>
-                            {ta.class.name} - {ta.subject.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+            {/* Selection View - Cards */}
+            {!selectedTA && (
+                <>
+                    {/* Search Bar */}
+                    <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-6">
+                        <label className="block text-sm font-medium text-slate-300 mb-3">🔍 Cari Kelas atau Mata Pelajaran</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Ketik nama kelas atau mata pelajaran..."
+                                className="w-full px-5 py-4 pl-12 bg-slate-700 border border-slate-600 rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
+                            />
+                            <svg className="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Class Cards Grid */}
+                    {loading ? (
+                        <div className="text-center text-slate-400 py-8">Memuat...</div>
+                    ) : filteredTAs.length === 0 ? (
+                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
+                            <p className="text-slate-400 text-lg">
+                                {searchQuery ? '🔍 Tidak ada kelas yang cocok dengan pencarian' : '📚 Belum ada kelas'}
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {filteredTAs.map((ta) => (
+                                <button
+                                    key={ta.id}
+                                    onClick={() => { setSelectedTA(ta.id); setActiveTab('rekap'); setSearchQuery('') }}
+                                    className="bg-gradient-to-br from-slate-800/80 to-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-200 text-left group"
+                                >
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className="flex-1">
+                                            <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">
+                                                {ta.class.name}
+                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-sm font-medium">
+                                                    {ta.subject.name}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="p-3 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors">
+                                            <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <p className="text-slate-400 text-sm">Klik untuk melihat nilai</p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </>
+            )}
 
             {/* Content after class selected */}
             {selectedTA && (
                 <>
+                    {/* Change Class Button */}
+                    <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                        <div>
+                            <h3 className="text-lg font-semibold text-white">{selectedTAData?.class.name}</h3>
+                            <p className="text-sm text-slate-400">{selectedTAData?.subject.name}</p>
+                        </div>
+                        <button
+                            onClick={() => setSelectedTA('')}
+                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Ganti Kelas
+                        </button>
+                    </div>
+
                     {/* Stats Cards */}
                     <div className="grid grid-cols-4 gap-4">
                         <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">

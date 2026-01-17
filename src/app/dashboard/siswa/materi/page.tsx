@@ -29,6 +29,7 @@ export default function SiswaMateriPage() {
     const [loading, setLoading] = useState(true)
     const [selectedSubject, setSelectedSubject] = useState<SubjectGroup | null>(null)
     const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null)
+    const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
         const fetchData = async () => {
@@ -83,6 +84,11 @@ export default function SiswaMateriPage() {
         }
     }
 
+    // Filter subjects by search query
+    const filteredSubjects = groupedMaterials.filter(group =>
+        group.subjectName.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+
     if (loading) {
         return <div className="text-center text-slate-400 py-8">Memuat materi...</div>
     }
@@ -97,18 +103,35 @@ export default function SiswaMateriPage() {
                     backHref="/dashboard/siswa"
                 />
 
-                {groupedMaterials.length === 0 ? (
-                    <EmptyState
-                        icon="📚"
-                        title="Belum Ada Materi"
-                        description="Belum ada materi tersedia untuk kelas Anda"
-                    />
+                {/* Search Bar */}
+                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-6">
+                    <label className="block text-sm font-medium text-slate-300 mb-3">🔍 Cari Mata Pelajaran</label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Ketik nama mata pelajaran..."
+                            className="w-full px-5 py-4 pl-12 bg-slate-700 border border-slate-600 rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-slate-500"
+                        />
+                        <svg className="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+
+                {filteredSubjects.length === 0 ? (
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
+                        <p className="text-slate-400 text-lg">
+                            {searchQuery ? '🔍 Tidak ada mata pelajaran yang cocok' : '📚 Belum ada materi tersedia'}
+                        </p>
+                    </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {groupedMaterials.map((group) => (
+                        {filteredSubjects.map((group) => (
                             <button
                                 key={group.subjectName}
-                                onClick={() => setSelectedSubject(group)}
+                                onClick={() => { setSelectedSubject(group); setSearchQuery('') }}
                                 className="group bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:border-cyan-500/50 hover:bg-slate-800 transition-all text-left"
                             >
                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white mb-4 shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
@@ -134,7 +157,6 @@ export default function SiswaMateriPage() {
             <PageHeader
                 title={selectedSubject.subjectName}
                 subtitle="Daftar Materi"
-                backHref="#"
                 action={
                     <button
                         onClick={() => setSelectedSubject(null)}

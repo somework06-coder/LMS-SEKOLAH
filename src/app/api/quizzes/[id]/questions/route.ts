@@ -62,7 +62,8 @@ export async function POST(
                 options: q.options || null,
                 correct_answer: q.correct_answer || null,
                 points: q.points || 10,
-                order_index: q.order_index ?? idx
+                order_index: q.order_index ?? idx,
+                image_url: q.image_url || null
             }))
 
             const { data, error } = await supabase
@@ -76,7 +77,7 @@ export async function POST(
         }
 
         // Single insert
-        const { question_text, question_type, options, correct_answer, points, order_index } = body
+        const { question_text, question_type, options, correct_answer, points, order_index, image_url } = body
 
         const { data, error } = await supabase
             .from('quiz_questions')
@@ -87,7 +88,8 @@ export async function POST(
                 options: options || null,
                 correct_answer: correct_answer || null,
                 points: points || 10,
-                order_index: order_index || 0
+                order_index: order_index || 0,
+                image_url: image_url || null
             })
             .select()
             .single()
@@ -97,6 +99,54 @@ export async function POST(
         return NextResponse.json(data)
     } catch (error) {
         console.error('Error adding question:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
+// PUT update question
+export async function PUT(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'GURU') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const { question_id, question_text, options, correct_answer, points, image_url } = body
+
+        if (!question_id) {
+            return NextResponse.json({ error: 'question_id required' }, { status: 400 })
+        }
+
+        const updateData: any = {}
+        if (question_text !== undefined) updateData.question_text = question_text
+        if (options !== undefined) updateData.options = options
+        if (correct_answer !== undefined) updateData.correct_answer = correct_answer
+        if (points !== undefined) updateData.points = points
+        if (image_url !== undefined) updateData.image_url = image_url
+
+        const { data, error } = await supabase
+            .from('quiz_questions')
+            .update(updateData)
+            .eq('id', question_id)
+            .eq('quiz_id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        return NextResponse.json(data)
+    } catch (error) {
+        console.error('Error updating quiz question:', error)
         return NextResponse.json({ error: 'Server error' }, { status: 500 })
     }
 }

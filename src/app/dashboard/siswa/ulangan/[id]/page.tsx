@@ -1,0 +1,524 @@
+'use client'
+
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { useParams, useRouter } from 'next/navigation'
+
+interface ExamQuestion {
+    id: string
+    question_text: string
+    question_type: 'ESSAY' | 'MULTIPLE_CHOICE'
+    options: string[] | null
+    points: number
+    image_url?: string | null
+}
+
+interface Exam {
+    id: string
+    title: string
+    description: string | null
+    start_time: string
+    duration_minutes: number
+    max_violations: number
+    teaching_assignment: {
+        subject: { name: string }
+        class: { name: string }
+    }
+}
+
+interface Submission {
+    id: string
+    started_at: string
+    is_submitted: boolean
+    violation_count: number
+    question_order: string[]
+}
+
+export default function TakeExamPage() {
+    const params = useParams()
+    const router = useRouter()
+    const examId = params.id as string
+
+    const [exam, setExam] = useState<Exam | null>(null)
+    const [questions, setQuestions] = useState<ExamQuestion[]>([])
+    const [submission, setSubmission] = useState<Submission | null>(null)
+    const [answers, setAnswers] = useState<{ [key: string]: string }>({})
+    const [currentIndex, setCurrentIndex] = useState(0)
+    const [timeLeft, setTimeLeft] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [submitting, setSubmitting] = useState(false)
+    const [showConfirmSubmit, setShowConfirmSubmit] = useState(false)
+    const [violationCount, setViolationCount] = useState(0)
+    const [showViolationWarning, setShowViolationWarning] = useState(false)
+    const [isFullscreen, setIsFullscreen] = useState(false)
+    const [forceSubmitted, setForceSubmitted] = useState(false)
+
+    const containerRef = useRef<HTMLDivElement>(null)
+    const hasStarted = useRef(false)
+
+    // Start exam - create submission
+    const startExam = useCallback(async () => {
+        if (hasStarted.current) return
+        hasStarted.current = true
+
+        try {
+            // Fetch exam details
+            const [examRes, questionsRes] = await Promise.all([
+                fetch(`/api/exams/${examId}`),
+                fetch(`/api/exams/${examId}/questions`)
+            ])
+            const examData = await examRes.json()
+            const questionsData = await questionsRes.json()
+
+            setExam(examData)
+
+            // Start submission
+            const subRes = await fetch('/api/exam-submissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ exam_id: examId })
+            })
+            const subData = await subRes.json()
+
+            if (subData.error) {
+                alert(subData.error)
+                router.push('/dashboard/siswa/ulangan')
+                return
+            }
+
+            setSubmission(subData)
+            setViolationCount(subData.violation_count || 0)
+
+            // Order questions based on submission's question_order (randomized)
+            const questionArr = Array.isArray(questionsData) ? questionsData : []
+            if (subData.question_order && subData.question_order.length > 0) {
+                const orderedQuestions = subData.question_order
+                    .map((qId: string) => questionArr.find((q: ExamQuestion) => q.id === qId))
+                    .filter(Boolean)
+                setQuestions(orderedQuestions)
+            } else {
+                setQuestions(questionArr)
+            }
+
+            // Calculate time left
+            const startedAt = new Date(subData.started_at).getTime()
+            const endTime = startedAt + examData.duration_minutes * 60000
+            const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000))
+            setTimeLeft(remaining)
+
+        } catch (error) {
+            console.error('Error starting exam:', error)
+            alert('Gagal memulai ulangan')
+            router.push('/dashboard/siswa/ulangan')
+        } finally {
+            setLoading(false)
+        }
+    }, [examId, router])
+
+    useEffect(() => {
+        startExam()
+    }, [startExam])
+
+    // Timer countdown
+    useEffect(() => {
+        if (timeLeft <= 0 || !submission) return
+
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    handleSubmit(true) // Auto-submit
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(timer)
+    }, [submission])
+
+    // Tab lock: detect visibility change
+    useEffect(() => {
+        if (!submission || submission.is_submitted) return
+
+        const handleVisibilityChange = async () => {
+            if (document.hidden) {
+                // User switched tab or minimized
+                await logViolation('TAB_SWITCH')
+            }
+        }
+
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault()
+            e.returnValue = 'Anda sedang dalam ulangan. Keluar akan dihitung sebagai pelanggaran!'
+            return e.returnValue
+        }
+
+        const handleBlur = async () => {
+            // Window lost focus
+            await logViolation('WINDOW_BLUR')
+        }
+
+        // Prevent right-click
+        const handleContextMenu = (e: MouseEvent) => {
+            e.preventDefault()
+        }
+
+        // Prevent copy-paste
+        const handleCopy = (e: ClipboardEvent) => {
+            e.preventDefault()
+        }
+
+        const handlePaste = (e: ClipboardEvent) => {
+            e.preventDefault()
+        }
+
+        // Prevent keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Prevent Ctrl+C, Ctrl+V, Ctrl+A, F12, etc.
+            if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'p', 's'].includes(e.key.toLowerCase())) {
+                e.preventDefault()
+            }
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+                e.preventDefault()
+            }
+        }
+
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+        window.addEventListener('beforeunload', handleBeforeUnload)
+        window.addEventListener('blur', handleBlur)
+        document.addEventListener('contextmenu', handleContextMenu)
+        document.addEventListener('copy', handleCopy)
+        document.addEventListener('paste', handlePaste)
+        document.addEventListener('keydown', handleKeyDown)
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+            window.removeEventListener('beforeunload', handleBeforeUnload)
+            window.removeEventListener('blur', handleBlur)
+            document.removeEventListener('contextmenu', handleContextMenu)
+            document.removeEventListener('copy', handleCopy)
+            document.removeEventListener('paste', handlePaste)
+            document.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [submission])
+
+    // Log violation
+    const logViolation = async (type: string) => {
+        if (!submission || submission.is_submitted || forceSubmitted) return
+
+        try {
+            const res = await fetch('/api/exam-submissions', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    submission_id: submission.id,
+                    violation: { type }
+                })
+            })
+
+            const data = await res.json()
+
+            if (data.force_submitted) {
+                setForceSubmitted(true)
+                alert('Ulangan otomatis dikumpulkan karena pelanggaran melebihi batas!')
+                router.push('/dashboard/siswa/ulangan')
+                return
+            }
+
+            setViolationCount(data.violation_count)
+            setShowViolationWarning(true)
+            setTimeout(() => setShowViolationWarning(false), 3000)
+        } catch (error) {
+            console.error('Error logging violation:', error)
+        }
+    }
+
+    // Request fullscreen
+    const requestFullscreen = async () => {
+        try {
+            if (containerRef.current?.requestFullscreen) {
+                await containerRef.current.requestFullscreen()
+                setIsFullscreen(true)
+            }
+        } catch (error) {
+            console.error('Fullscreen error:', error)
+        }
+    }
+
+    // Exit fullscreen handler
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement)
+        }
+        document.addEventListener('fullscreenchange', handleFullscreenChange)
+        return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }, [])
+
+    // Save answer
+    const saveAnswer = async (questionId: string, answer: string) => {
+        setAnswers(prev => ({ ...prev, [questionId]: answer }))
+
+        if (submission) {
+            await fetch('/api/exam-submissions', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    submission_id: submission.id,
+                    answers: [{ question_id: questionId, answer }]
+                })
+            })
+        }
+    }
+
+    // Submit exam
+    const handleSubmit = async (auto = false) => {
+        if (!submission || submitting) return
+        setSubmitting(true)
+
+        try {
+            // Save all current answers first
+            const answersArray = Object.entries(answers).map(([question_id, answer]) => ({
+                question_id, answer
+            }))
+
+            await fetch('/api/exam-submissions', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    submission_id: submission.id,
+                    answers: answersArray,
+                    submit: true
+                })
+            })
+
+            if (document.fullscreenElement) {
+                await document.exitFullscreen()
+            }
+
+            router.push(`/dashboard/siswa/ulangan/${examId}/hasil`)
+        } catch (error) {
+            console.error('Error submitting:', error)
+            alert('Gagal mengumpulkan ulangan')
+        } finally {
+            setSubmitting(false)
+        }
+    }
+
+    const formatTime = (seconds: number) => {
+        const hrs = Math.floor(seconds / 3600)
+        const mins = Math.floor((seconds % 3600) / 60)
+        const secs = seconds % 60
+        if (hrs > 0) {
+            return `${hrs}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+        }
+        return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                <div className="text-center">
+                    <div className="text-4xl mb-4 animate-pulse">📄</div>
+                    <p className="text-slate-400">Mempersiapkan ulangan...</p>
+                </div>
+            </div>
+        )
+    }
+
+    if (!exam || !submission || questions.length === 0) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                <div className="text-center text-red-400">Ulangan tidak dapat dimulai</div>
+            </div>
+        )
+    }
+
+    const currentQuestion = questions[currentIndex]
+    const answeredCount = Object.keys(answers).length
+    const maxViolations = exam.max_violations
+
+    return (
+        <div ref={containerRef} className="min-h-screen bg-slate-900 flex flex-col select-none" style={{ userSelect: 'none' }}>
+            {/* Violation Warning Overlay */}
+            {showViolationWarning && (
+                <div className="fixed inset-0 bg-red-600/80 flex items-center justify-center z-50">
+                    <div className="text-center text-white p-8">
+                        <div className="text-6xl mb-4">⚠️</div>
+                        <h2 className="text-2xl font-bold mb-2">PERINGATAN!</h2>
+                        <p>Anda terdeteksi keluar dari halaman ulangan</p>
+                        <p className="text-xl mt-4">Pelanggaran: {violationCount} / {maxViolations}</p>
+                        {violationCount >= maxViolations - 1 && (
+                            <p className="text-yellow-300 mt-2 font-bold">Pelanggaran berikutnya akan mengumpulkan ulangan secara otomatis!</p>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Fullscreen Prompt */}
+            {!isFullscreen && (
+                <div className="bg-amber-500/20 border-b border-amber-500/30 p-3 text-center">
+                    <button onClick={requestFullscreen} className="text-amber-400 hover:text-amber-300 underline">
+                        🔲 Klik untuk mode layar penuh (direkomendasikan)
+                    </button>
+                </div>
+            )}
+
+            {/* Header */}
+            <div className="bg-slate-800 border-b border-slate-700 p-4">
+                <div className="max-w-4xl mx-auto flex items-center justify-between">
+                    <div>
+                        <h1 className="text-lg font-bold text-white">{exam.title}</h1>
+                        <p className="text-sm text-slate-400">{exam.teaching_assignment?.subject?.name}</p>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        {/* Violation counter */}
+                        <div className={`px-3 py-1 rounded-lg ${violationCount > 0 ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-400'}`}>
+                            ⚠️ {violationCount}/{maxViolations}
+                        </div>
+                        {/* Timer */}
+                        <div className={`px-4 py-2 rounded-lg font-mono text-lg font-bold ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse' : timeLeft <= 600 ? 'bg-amber-500 text-white' : 'bg-purple-500/20 text-purple-400'}`}>
+                            ⏱️ {formatTime(timeLeft)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main content */}
+            <div className="flex-1 flex max-w-4xl mx-auto w-full">
+                {/* Question navigation sidebar */}
+                <div className="w-20 bg-slate-800/50 border-r border-slate-700 p-3 overflow-y-auto">
+                    <p className="text-xs text-slate-500 mb-3 text-center">Navigasi</p>
+                    <div className="grid grid-cols-2 gap-2">
+                        {questions.map((q, idx) => (
+                            <button
+                                key={q.id}
+                                onClick={() => setCurrentIndex(idx)}
+                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentIndex === idx ? 'bg-purple-500 text-white' : answers[q.id] ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                            >
+                                {idx + 1}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-4 text-center">{answeredCount}/{questions.length}</p>
+                </div>
+
+                {/* Question area */}
+                <div className="flex-1 p-6">
+                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 min-h-[400px]">
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">{currentIndex + 1}</span>
+                            <span className={`px-2 py-0.5 text-xs rounded ${currentQuestion.question_type === 'MULTIPLE_CHOICE' ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                {currentQuestion.question_type === 'MULTIPLE_CHOICE' ? 'Pilihan Ganda' : 'Essay'}
+                            </span>
+                            <span className="text-xs text-slate-500">({currentQuestion.points} poin)</span>
+                        </div>
+
+                        <p className="text-white text-lg mb-4">{currentQuestion.question_text}</p>
+
+                        {/* Display question image if exists */}
+                        {currentQuestion.image_url && (
+                            <div className="mb-6">
+                                <img
+                                    src={currentQuestion.image_url}
+                                    alt="Gambar soal"
+                                    className="max-h-64 rounded-lg border border-slate-600 mx-auto"
+                                />
+                            </div>
+                        )}
+
+                        {currentQuestion.question_type === 'MULTIPLE_CHOICE' && currentQuestion.options && (
+                            <div className="space-y-3">
+                                {currentQuestion.options.map((opt, optIdx) => {
+                                    const letter = String.fromCharCode(65 + optIdx)
+                                    const isSelected = answers[currentQuestion.id] === letter
+                                    return (
+                                        <button
+                                            key={optIdx}
+                                            onClick={() => saveAnswer(currentQuestion.id, letter)}
+                                            className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${isSelected ? 'bg-purple-500/20 border-purple-500 text-white' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}
+                                        >
+                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mr-3 font-bold ${isSelected ? 'bg-purple-500 text-white' : 'bg-slate-600 text-slate-300'}`}>{letter}</span>
+                                            {opt}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        )}
+
+                        {currentQuestion.question_type === 'ESSAY' && (
+                            <textarea
+                                value={answers[currentQuestion.id] || ''}
+                                onChange={(e) => saveAnswer(currentQuestion.id, e.target.value)}
+                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                rows={6}
+                                placeholder="Tulis jawaban Anda di sini..."
+                            />
+                        )}
+                    </div>
+
+                    {/* Navigation buttons */}
+                    <div className="flex items-center justify-between mt-6">
+                        <button
+                            onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+                            disabled={currentIndex === 0}
+                            className="px-6 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            ← Sebelumnya
+                        </button>
+
+                        {currentIndex === questions.length - 1 ? (
+                            <button
+                                onClick={() => setShowConfirmSubmit(true)}
+                                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+                            >
+                                ✅ Kumpulkan Ulangan
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
+                                className="px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors"
+                            >
+                                Selanjutnya →
+                            </button>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Submit Confirmation Modal */}
+            {showConfirmSubmit && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm text-center">
+                        <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h3 className="text-xl font-bold text-white mb-2">Kumpulkan Ulangan?</h3>
+                        <p className="text-slate-400 mb-2">
+                            Anda telah menjawab <strong className="text-white">{answeredCount}</strong> dari <strong className="text-white">{questions.length}</strong> soal.
+                        </p>
+                        {answeredCount < questions.length && (
+                            <p className="text-amber-400 text-sm mb-4">⚠️ Masih ada {questions.length - answeredCount} soal yang belum dijawab!</p>
+                        )}
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => setShowConfirmSubmit(false)}
+                                className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors"
+                                disabled={submitting}
+                            >
+                                Kembali
+                            </button>
+                            <button
+                                onClick={() => handleSubmit(false)}
+                                disabled={submitting}
+                                className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+                            >
+                                {submitting ? 'Mengumpulkan...' : 'Ya, Kumpulkan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}

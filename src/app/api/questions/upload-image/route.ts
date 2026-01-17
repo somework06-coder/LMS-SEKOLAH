@@ -1,0 +1,71 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { validateSession } from '@/lib/auth'
+
+export async function POST(request: NextRequest) {
+    try {
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'GURU') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const formData = await request.formData()
+        const file = formData.get('file') as File
+
+        if (!file) {
+            return NextResponse.json({ error: 'File diperlukan' }, { status: 400 })
+        }
+
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+        if (!allowedTypes.includes(file.type)) {
+            return NextResponse.json({ error: 'Format file tidak didukung. Gunakan JPG, PNG, GIF, atau WebP.' }, { status: 400 })
+        }
+
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024
+        if (file.size > maxSize) {
+            return NextResponse.json({ error: 'Ukuran file maksimal 5MB' }, { status: 400 })
+        }
+
+        // Generate unique filename
+        const timestamp = Date.now()
+        const ext = file.name.split('.').pop()
+        const filename = `question-images/${timestamp}-${Math.random().toString(36).substring(7)}.${ext}`
+
+        // Convert to buffer
+        const arrayBuffer = await file.arrayBuffer()
+        const buffer = Buffer.from(arrayBuffer)
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('uploads')
+            .upload(filename, buffer, {
+                contentType: file.type,
+                upsert: false
+            })
+
+        if (error) {
+            console.error('Upload error:', error)
+            return NextResponse.json({ error: 'Gagal upload file' }, { status: 500 })
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('uploads')
+            .getPublicUrl(filename)
+
+        return NextResponse.json({
+            url: urlData.publicUrl,
+            filename: filename
+        })
+    } catch (error) {
+        console.error('Error uploading question image:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}

@@ -1,0 +1,300 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { validateSession } from '@/lib/auth'
+
+// GET exam submissions
+export async function GET(request: NextRequest) {
+    try {
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const examId = request.nextUrl.searchParams.get('exam_id')
+        const studentId = request.nextUrl.searchParams.get('student_id')
+
+        let query = supabase
+            .from('exam_submissions')
+            .select(`
+                *,
+                student:students(id, nis, user:users(full_name)),
+                exam:exams(id, title, duration_minutes)
+            `)
+            .order('created_at', { ascending: false })
+
+        if (examId) {
+            query = query.eq('exam_id', examId)
+        }
+        if (studentId) {
+            query = query.eq('student_id', studentId)
+        }
+
+        const { data, error } = await query
+
+        if (error) throw error
+
+        return NextResponse.json(data)
+    } catch (error) {
+        console.error('Error fetching exam submissions:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
+// POST start exam (create submission)
+export async function POST(request: NextRequest) {
+    try {
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user || user.role !== 'SISWA') {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const { exam_id } = await request.json()
+
+        if (!exam_id) {
+            return NextResponse.json({ error: 'exam_id required' }, { status: 400 })
+        }
+
+        // Get student record
+        const { data: student } = await supabase
+            .from('students')
+            .select('id')
+            .eq('user_id', user.id)
+            .single()
+
+        if (!student) {
+            return NextResponse.json({ error: 'Student not found' }, { status: 404 })
+        }
+
+        // Check if exam exists and is active
+        const { data: exam } = await supabase
+            .from('exams')
+            .select('*, exam_questions(id)')
+            .eq('id', exam_id)
+            .single()
+
+        if (!exam) {
+            return NextResponse.json({ error: 'Exam not found' }, { status: 404 })
+        }
+
+        if (!exam.is_active) {
+            return NextResponse.json({ error: 'Ulangan belum dibuka' }, { status: 400 })
+        }
+
+        // Check start time
+        const now = new Date()
+        const startTime = new Date(exam.start_time)
+        if (now < startTime) {
+            return NextResponse.json({ error: 'Ulangan belum dimulai' }, { status: 400 })
+        }
+
+        // Check if already submitted
+        const { data: existingSubmission } = await supabase
+            .from('exam_submissions')
+            .select('id, is_submitted')
+            .eq('exam_id', exam_id)
+            .eq('student_id', student.id)
+            .single()
+
+        if (existingSubmission?.is_submitted) {
+            return NextResponse.json({ error: 'Anda sudah mengumpulkan ulangan ini' }, { status: 400 })
+        }
+
+        if (existingSubmission) {
+            // Return existing submission
+            return NextResponse.json(existingSubmission)
+        }
+
+        // Create randomized question order if enabled
+        const questionIds = exam.exam_questions.map((q: any) => q.id)
+        const questionOrder = exam.is_randomized
+            ? questionIds.sort(() => Math.random() - 0.5)
+            : questionIds
+
+        // Calculate max score
+        const { data: questions } = await supabase
+            .from('exam_questions')
+            .select('points')
+            .eq('exam_id', exam_id)
+
+        const maxScore = questions?.reduce((sum, q) => sum + (q.points || 1), 0) || 0
+
+        // Create new submission
+        const { data: submission, error } = await supabase
+            .from('exam_submissions')
+            .insert({
+                exam_id,
+                student_id: student.id,
+                question_order: questionOrder,
+                max_score: maxScore,
+                started_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+        if (error) throw error
+
+        return NextResponse.json(submission)
+    } catch (error) {
+        console.error('Error starting exam:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
+// PUT update submission (submit answers, log violations)
+export async function PUT(request: NextRequest) {
+    try {
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const body = await request.json()
+        const { submission_id, answers, submit, violation } = body
+
+        if (!submission_id) {
+            return NextResponse.json({ error: 'submission_id required' }, { status: 400 })
+        }
+
+        // Get current submission
+        const { data: currentSubmission } = await supabase
+            .from('exam_submissions')
+            .select('*, exam:exams(max_violations)')
+            .eq('id', submission_id)
+            .single()
+
+        if (!currentSubmission) {
+            return NextResponse.json({ error: 'Submission not found' }, { status: 404 })
+        }
+
+        if (currentSubmission.is_submitted) {
+            return NextResponse.json({ error: 'Already submitted' }, { status: 400 })
+        }
+
+        // Handle violation logging
+        if (violation) {
+            const currentViolations = currentSubmission.violations_log || []
+            const newViolationCount = currentSubmission.violation_count + 1
+            const maxViolations = currentSubmission.exam?.max_violations || 3
+
+            await supabase
+                .from('exam_submissions')
+                .update({
+                    violation_count: newViolationCount,
+                    violations_log: [...currentViolations, {
+                        type: violation.type,
+                        timestamp: new Date().toISOString()
+                    }]
+                })
+                .eq('id', submission_id)
+
+            // Force submit if max violations exceeded
+            if (newViolationCount >= maxViolations) {
+                // Auto submit with current answers
+                const { data: existingAnswers } = await supabase
+                    .from('exam_answers')
+                    .select('*, question:exam_questions(correct_answer, points)')
+                    .eq('submission_id', submission_id)
+
+                let totalScore = 0
+                existingAnswers?.forEach(ans => {
+                    if (ans.answer === ans.question?.correct_answer) {
+                        totalScore += ans.question?.points || 1
+                    }
+                })
+
+                await supabase
+                    .from('exam_submissions')
+                    .update({
+                        is_submitted: true,
+                        submitted_at: new Date().toISOString(),
+                        total_score: totalScore
+                    })
+                    .eq('id', submission_id)
+
+                return NextResponse.json({
+                    force_submitted: true,
+                    message: 'Ulangan otomatis dikumpulkan karena pelanggaran melebihi batas'
+                })
+            }
+
+            return NextResponse.json({
+                violation_count: newViolationCount,
+                max_violations: maxViolations
+            })
+        }
+
+        // Handle saving/submitting answers
+        if (answers && Array.isArray(answers)) {
+            for (const ans of answers) {
+                // Get question to check answer
+                const { data: question } = await supabase
+                    .from('exam_questions')
+                    .select('correct_answer, points')
+                    .eq('id', ans.question_id)
+                    .single()
+
+                const isCorrect = question?.correct_answer === ans.answer
+                const pointsEarned = isCorrect ? (question?.points || 1) : 0
+
+                // Upsert answer
+                await supabase
+                    .from('exam_answers')
+                    .upsert({
+                        submission_id,
+                        question_id: ans.question_id,
+                        answer: ans.answer,
+                        is_correct: isCorrect,
+                        points_earned: pointsEarned
+                    }, {
+                        onConflict: 'submission_id,question_id'
+                    })
+            }
+        }
+
+        // Handle final submission
+        if (submit) {
+            // Calculate total score
+            const { data: allAnswers } = await supabase
+                .from('exam_answers')
+                .select('points_earned')
+                .eq('submission_id', submission_id)
+
+            const totalScore = allAnswers?.reduce((sum, a) => sum + (a.points_earned || 0), 0) || 0
+
+            const { data: updatedSubmission, error } = await supabase
+                .from('exam_submissions')
+                .update({
+                    is_submitted: true,
+                    submitted_at: new Date().toISOString(),
+                    total_score: totalScore
+                })
+                .eq('id', submission_id)
+                .select()
+                .single()
+
+            if (error) throw error
+
+            return NextResponse.json(updatedSubmission)
+        }
+
+        return NextResponse.json({ success: true })
+    } catch (error) {
+        console.error('Error updating exam submission:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}

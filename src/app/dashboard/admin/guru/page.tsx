@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 
 interface Teacher {
     id: string
     nip: string | null
+    gender: 'L' | 'P' | null
     user: {
         id: string
         username: string
@@ -18,7 +19,8 @@ export default function GuruPage() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null)
-    const [formData, setFormData] = useState({ username: '', password: '', full_name: '', nip: '' })
+    const [formData, setFormData] = useState({ username: '', password: '', full_name: '', nip: '', gender: '' })
+    const [showPassword, setShowPassword] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
 
@@ -59,7 +61,7 @@ export default function GuruPage() {
 
             setShowModal(false)
             setEditingTeacher(null)
-            setFormData({ username: '', password: '', full_name: '', nip: '' })
+            setFormData({ username: '', password: '', full_name: '', nip: '', gender: '' })
             fetchTeachers()
         } finally {
             setSaving(false)
@@ -78,46 +80,53 @@ export default function GuruPage() {
             username: teacher.user.username,
             password: '',
             full_name: teacher.user.full_name || '',
-            nip: teacher.nip || ''
+            nip: teacher.nip || '',
+            gender: teacher.gender || ''
         })
+        setError('')
+        setShowModal(true)
+    }
+
+    const openAdd = () => {
+        setEditingTeacher(null)
+        setFormData({ username: '', password: '', full_name: '', nip: '', gender: '' })
+        setError('')
         setShowModal(true)
     }
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/admin" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+            <PageHeader
+                title="Akun Guru"
+                subtitle="Kelola akun guru"
+                backHref="/dashboard/admin"
+                action={
+                    <Button onClick={openAdd} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Akun Guru</h1>
-                        <p className="text-slate-400">Kelola akun guru</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => { setShowModal(true); setEditingTeacher(null); setFormData({ username: '', password: '', full_name: '', nip: '' }); setError(''); }}
-                    className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Guru
-                </button>
-            </div>
+                    }>
+                        Tambah Guru
+                    </Button>
+                }
+            />
 
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-slate-400">Memuat...</div>
                 ) : teachers.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">Belum ada guru</div>
+                    <EmptyState
+                        icon="👨‍🏫"
+                        title="Belum Ada Guru"
+                        description="Tambahkan akun guru untuk memulai"
+                        action={<Button onClick={openAdd}>Tambah Guru</Button>}
+                    />
                 ) : (
                     <table className="w-full">
                         <thead className="bg-slate-900/50">
                             <tr>
-                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Nama Lengkap</th>
+                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Nama</th>
+                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">L/P</th>
                                 <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Username</th>
                                 <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">NIP</th>
                                 <th className="px-6 py-4 text-right text-sm font-medium text-slate-300">Aksi</th>
@@ -129,10 +138,19 @@ export default function GuruPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold">
-                                                {teacher.user.full_name?.[0] || teacher.user.username[0]}
+                                                {teacher.user.full_name?.[0] || '?'}
                                             </div>
                                             <span className="text-white font-medium">{teacher.user.full_name || '-'}</span>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {teacher.gender ? (
+                                            <span className={`px-2 py-1 text-xs rounded-full ${teacher.gender === 'L' ? 'bg-blue-500/20 text-blue-400' : 'bg-pink-500/20 text-pink-400'}`}>
+                                                {teacher.gender === 'L' ? '👨 Laki-laki' : '👩 Perempuan'}
+                                            </span>
+                                        ) : (
+                                            <span className="text-slate-500">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-slate-300">{teacher.user.username}</td>
                                     <td className="px-6 py-4 text-slate-300">{teacher.nip || '-'}</td>
@@ -157,70 +175,96 @@ export default function GuruPage() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold text-white mb-4">
-                            {editingTeacher ? 'Edit Guru' : 'Tambah Guru'}
-                        </h2>
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>
-                        )}
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Nama Lengkap</label>
-                                <input
-                                    type="text"
-                                    value={formData.full_name}
-                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    placeholder="Nama lengkap guru"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
-                                <input
-                                    type="text"
-                                    value={formData.username}
-                                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    placeholder="Username untuk login"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Password {editingTeacher && <span className="text-slate-500">(kosongkan jika tidak diubah)</span>}
-                                </label>
-                                <input
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    placeholder="Password"
-                                    required={!editingTeacher}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">NIP (Opsional)</label>
-                                <input
-                                    type="text"
-                                    value={formData.nip}
-                                    onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                    placeholder="Nomor Induk Pegawai"
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">Batal</button>
-                                <button type="submit" disabled={saving} className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                                    {saving ? 'Menyimpan...' : 'Simpan'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={showModal}
+                onClose={() => setShowModal(false)}
+                title={editingTeacher ? 'Edit Guru' : 'Tambah Guru'}
+            >
+                {error && (
+                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>
+                )}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Nama Lengkap</label>
+                        <input
+                            type="text"
+                            value={formData.full_name}
+                            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            required
+                        />
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">NIP</label>
+                        <input
+                            type="text"
+                            value={formData.nip}
+                            onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Jenis Kelamin</label>
+                        <select
+                            value={formData.gender}
+                            onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                            <option value="">Pilih Jenis Kelamin</option>
+                            <option value="L">Laki-laki</option>
+                            <option value="P">Perempuan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Username</label>
+                        <input
+                            type="text"
+                            value={formData.username}
+                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                            Password {editingTeacher && '(kosongkan jika tidak diubah)'}
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500 pr-12"
+                                required={!editingTeacher}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-white"
+                            >
+                                {showPassword ? (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="flex-1">
+                            Simpan
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     )
 }

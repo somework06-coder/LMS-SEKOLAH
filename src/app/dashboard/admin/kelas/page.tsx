@@ -1,8 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 import { Class, AcademicYear } from '@/lib/types'
+
+interface Student {
+    id: string
+    nisn: string
+    user: {
+        full_name: string
+        email: string
+    }
+}
 
 export default function KelasPage() {
     const [classes, setClasses] = useState<Class[]>([])
@@ -12,6 +21,12 @@ export default function KelasPage() {
     const [editingClass, setEditingClass] = useState<Class | null>(null)
     const [formData, setFormData] = useState({ name: '', academic_year_id: '' })
     const [saving, setSaving] = useState(false)
+
+    // Students modal state
+    const [showStudentsModal, setShowStudentsModal] = useState(false)
+    const [selectedClass, setSelectedClass] = useState<Class | null>(null)
+    const [students, setStudents] = useState<Student[]>([])
+    const [loadingStudents, setLoadingStudents] = useState(false)
 
     const fetchData = async () => {
         try {
@@ -79,36 +94,49 @@ export default function KelasPage() {
         setShowModal(true)
     }
 
+    const viewStudents = async (cls: Class) => {
+        setSelectedClass(cls)
+        setShowStudentsModal(true)
+        setLoadingStudents(true)
+        try {
+            const res = await fetch(`/api/students?class_id=${cls.id}`)
+            const data = await res.json()
+            setStudents(Array.isArray(data) ? data : [])
+        } catch (error) {
+            console.error('Error fetching students:', error)
+            setStudents([])
+        } finally {
+            setLoadingStudents(false)
+        }
+    }
+
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/admin" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+            <PageHeader
+                title="Kelas"
+                subtitle="Kelola daftar kelas"
+                backHref="/dashboard/admin"
+                action={
+                    <Button onClick={openAdd} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Kelas</h1>
-                        <p className="text-slate-400">Kelola daftar kelas</p>
-                    </div>
-                </div>
-                <button
-                    onClick={openAdd}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah
-                </button>
-            </div>
+                    }>
+                        Tambah
+                    </Button>
+                }
+            />
 
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-slate-400">Memuat...</div>
                 ) : classes.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">Belum ada kelas</div>
+                    <EmptyState
+                        icon="🏫"
+                        title="Belum Ada Kelas"
+                        description="Tambahkan kelas untuk memulai"
+                        action={<Button onClick={openAdd}>Tambah Kelas</Button>}
+                    />
                 ) : (
                     <table className="w-full">
                         <thead className="bg-slate-900/50">
@@ -125,6 +153,15 @@ export default function KelasPage() {
                                     <td className="px-6 py-4 text-slate-300">{cls.academic_year?.name || '-'}</td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => viewStudents(cls)}
+                                                className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition-colors"
+                                                title="Lihat Siswa"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                            </button>
                                             <button onClick={() => openEdit(cls)} className="p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -144,50 +181,87 @@ export default function KelasPage() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold text-white mb-4">
-                            {editingClass ? 'Edit Kelas' : 'Tambah Kelas'}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Nama Kelas</label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    placeholder="Contoh: X IPA 1"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Tahun Ajaran</label>
-                                <select
-                                    value={formData.academic_year_id}
-                                    onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
-                                >
-                                    <option value="">Pilih Tahun Ajaran</option>
-                                    {academicYears.map((year) => (
-                                        <option key={year.id} value={year.id}>{year.name} {year.is_active && '(Aktif)'}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">
-                                    Batal
-                                </button>
-                                <button type="submit" disabled={saving} className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                                    {saving ? 'Menyimpan...' : 'Simpan'}
-                                </button>
-                            </div>
-                        </form>
+            {/* Add/Edit Class Modal */}
+            <Modal
+                open={showModal}
+                onClose={() => setShowModal(false)}
+                title={editingClass ? 'Edit Kelas' : 'Tambah Kelas'}
+            >
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Nama Kelas</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Contoh: X IPA 1"
+                            required
+                        />
                     </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Tahun Ajaran</label>
+                        <select
+                            value={formData.academic_year_id}
+                            onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        >
+                            <option value="">Pilih Tahun Ajaran</option>
+                            {academicYears.map((year) => (
+                                <option key={year.id} value={year.id}>{year.name} {year.is_active && '(Aktif)'}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="flex-1">
+                            Simpan
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Students List Modal */}
+            <Modal
+                open={showStudentsModal}
+                onClose={() => setShowStudentsModal(false)}
+                title={`👨‍🎓 Siswa Kelas ${selectedClass?.name || ''}`}
+            >
+                <div className="max-h-96 overflow-y-auto">
+                    {loadingStudents ? (
+                        <div className="text-center text-slate-400 py-8">Memuat...</div>
+                    ) : students.length === 0 ? (
+                        <div className="text-center text-slate-400 py-8">
+                            <p className="text-4xl mb-2">📭</p>
+                            <p>Belum ada siswa di kelas ini</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            <p className="text-sm text-slate-400 mb-3">Total: {students.length} siswa</p>
+                            {students.map((student, idx) => (
+                                <div key={student.id} className="flex items-center gap-3 p-3 bg-slate-700/50 rounded-xl">
+                                    <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-sm">
+                                        {idx + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-white font-medium">{student.user?.full_name || '-'}</p>
+                                        <p className="text-xs text-slate-400">NISN: {student.nisn}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-            )}
+                <div className="pt-4">
+                    <Button variant="secondary" onClick={() => setShowStudentsModal(false)} className="w-full">
+                        Tutup
+                    </Button>
+                </div>
+            </Modal>
         </div>
     )
 }
+

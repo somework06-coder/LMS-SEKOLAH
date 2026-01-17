@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { Modal, PageHeader, EmptyState } from '@/components/ui'
 
 interface Material {
     id: string
@@ -27,15 +27,12 @@ export default function SiswaMateriPage() {
     const { user } = useAuth()
     const [groupedMaterials, setGroupedMaterials] = useState<SubjectGroup[]>([])
     const [loading, setLoading] = useState(true)
-
-    // UI State
     const [selectedSubject, setSelectedSubject] = useState<SubjectGroup | null>(null)
     const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null)
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Get student class
                 const studentsRes = await fetch('/api/students')
                 const students = await studentsRes.json()
                 const myStudent = students.find((s: { user: { id: string } }) => s.user.id === user?.id)
@@ -45,16 +42,13 @@ export default function SiswaMateriPage() {
                     return
                 }
 
-                // Get materials for student's class
                 const materialsRes = await fetch('/api/materials')
                 const materialsData = await materialsRes.json()
 
-                // Filter by class
                 const classMaterials = materialsData.filter((m: Material) =>
                     m.teaching_assignment?.class?.name === myStudent.class.name
                 )
 
-                // Group by Subject
                 const groups: Record<string, Material[]> = {}
                 classMaterials.forEach((m: Material) => {
                     const subjectName = m.teaching_assignment?.subject?.name || 'Lainnya'
@@ -90,29 +84,25 @@ export default function SiswaMateriPage() {
     }
 
     if (loading) {
-        return <div className="text-center text-slate-400 py-8">Memuat mater...</div>
+        return <div className="text-center text-slate-400 py-8">Memuat materi...</div>
     }
 
     // View 1: Subject List (Default)
     if (!selectedSubject) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/siswa" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Materi Pembelajaran</h1>
-                        <p className="text-slate-400">Pilih mata pelajaran</p>
-                    </div>
-                </div>
+                <PageHeader
+                    title="📚 Materi Pembelajaran"
+                    subtitle="Pilih mata pelajaran"
+                    backHref="/dashboard/siswa"
+                />
 
                 {groupedMaterials.length === 0 ? (
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                        Belum ada materi tersedia untuk kelas Anda.
-                    </div>
+                    <EmptyState
+                        icon="📚"
+                        title="Belum Ada Materi"
+                        description="Belum ada materi tersedia untuk kelas Anda"
+                    />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {groupedMaterials.map((group) => (
@@ -141,20 +131,19 @@ export default function SiswaMateriPage() {
     // View 2: Material List for Selected Subject
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <button
-                    onClick={() => setSelectedSubject(null)}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <div>
-                    <h1 className="text-2xl font-bold text-white">{selectedSubject.subjectName}</h1>
-                    <p className="text-slate-400">Daftar Materi</p>
-                </div>
-            </div>
+            <PageHeader
+                title={selectedSubject.subjectName}
+                subtitle="Daftar Materi"
+                backHref="#"
+                action={
+                    <button
+                        onClick={() => setSelectedSubject(null)}
+                        className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+                    >
+                        ← Kembali
+                    </button>
+                }
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {selectedSubject.materials.map((material) => (
@@ -198,28 +187,19 @@ export default function SiswaMateriPage() {
             </div>
 
             {/* Material Viewer Modal (Text) */}
-            {viewingMaterial && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
-                        <div className="flex items-start justify-between mb-6 border-b border-slate-800 pb-4">
-                            <div>
-                                <h2 className="text-xl font-bold text-white">{viewingMaterial.title}</h2>
-                                <p className="text-sm text-slate-400 mt-1">{viewingMaterial.teaching_assignment.subject.name}</p>
-                            </div>
-                            <button onClick={() => setViewingMaterial(null)} className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="prose prose-invert max-w-none">
-                            <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-800 text-slate-300 leading-relaxed whitespace-pre-wrap">
-                                {viewingMaterial.content_text}
-                            </div>
-                        </div>
+            <Modal
+                open={!!viewingMaterial}
+                onClose={() => setViewingMaterial(null)}
+                title={viewingMaterial?.title || ''}
+                subtitle={viewingMaterial?.teaching_assignment?.subject?.name}
+                maxWidth="2xl"
+            >
+                {viewingMaterial && (
+                    <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-800 text-slate-300 leading-relaxed whitespace-pre-wrap">
+                        {viewingMaterial.content_text}
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
         </div>
     )
 }

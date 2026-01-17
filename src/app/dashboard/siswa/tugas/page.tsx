@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 
 interface Assignment {
     id: string
@@ -55,11 +55,13 @@ export default function SiswaTugasPage() {
                     submissionsRes.json()
                 ])
 
-                const myAssignments = assignmentsData.filter((a: Assignment) =>
+                // Handle case where API returns error object instead of array
+                const assignmentsArray = Array.isArray(assignmentsData) ? assignmentsData : []
+                const myAssignments = assignmentsArray.filter((a: Assignment) =>
                     a.teaching_assignment?.class?.name === myStudent.class.name
                 )
                 setAssignments(myAssignments)
-                setSubmissions(submissionsData)
+                setSubmissions(Array.isArray(submissionsData) ? submissionsData : [])
             } catch (error) {
                 console.error('Error:', error)
             } finally {
@@ -89,7 +91,6 @@ export default function SiswaTugasPage() {
                 })
             })
 
-            // Refresh submissions
             const res = await fetch(`/api/submissions?student_id=${studentId}`)
             setSubmissions(await res.json())
             setSubmitting(null)
@@ -105,24 +106,20 @@ export default function SiswaTugasPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/siswa" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Tugas & Ulangan</h1>
-                    <p className="text-slate-400">Kerjakan tugas dari guru</p>
-                </div>
-            </div>
+            <PageHeader
+                title="📋 Tugas"
+                subtitle="Kerjakan tugas dari guru"
+                backHref="/dashboard/siswa"
+            />
 
             {loading ? (
                 <div className="text-center text-slate-400 py-8">Memuat...</div>
             ) : assignments.length === 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                    Belum ada tugas tersedia
-                </div>
+                <EmptyState
+                    icon="📋"
+                    title="Belum Ada Tugas"
+                    description="Belum ada tugas tersedia untuk kelasmu"
+                />
             ) : (
                 <div className="space-y-4">
                     {assignments.map((assignment) => {
@@ -170,13 +167,11 @@ export default function SiswaTugasPage() {
                 </div>
             )}
 
-            {submitting && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-lg">
-                        <h2 className="text-xl font-bold text-white mb-4">Kumpulkan Tugas</h2>
-
+            <Modal open={!!submitting} onClose={() => setSubmitting(null)} title="Kumpulkan Tugas">
+                {submitting && (
+                    <div className="space-y-4">
                         {/* Tab Toggle */}
-                        <div className="flex bg-slate-900/50 p-1 rounded-xl mb-4">
+                        <div className="flex bg-slate-900/50 p-1 rounded-xl">
                             <button
                                 onClick={() => setSubmitting({ ...submitting, type: 'text' })}
                                 className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${submitting.type === 'text'
@@ -197,44 +192,44 @@ export default function SiswaTugasPage() {
                             </button>
                         </div>
 
-                        <div className="space-y-4">
-                            {submitting.type === 'text' ? (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Jawaban Teks</label>
-                                    <textarea
-                                        value={submitting.answer}
-                                        onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                        rows={6}
-                                        placeholder="Tulis jawaban kamu di sini..."
-                                    />
-                                </div>
-                            ) : (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Link Dokumen / File</label>
-                                    <input
-                                        type="url"
-                                        value={submitting.answer}
-                                        onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                                        placeholder="https://docs.google.com/..."
-                                    />
-                                    <p className="mt-2 text-xs text-slate-400">
-                                        *Pastikan link Google Drive/Docs dapat diakses (Setting: Anyone with the link)
-                                    </p>
-                                </div>
-                            )}
-
-                            <div className="flex gap-3 pt-4">
-                                <button onClick={() => setSubmitting(null)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">Batal</button>
-                                <button onClick={handleSubmit} disabled={saving || !submitting.answer} className="flex-1 px-4 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                                    {saving ? 'Mengirim...' : 'Kumpulkan'}
-                                </button>
+                        {submitting.type === 'text' ? (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Jawaban Teks</label>
+                                <textarea
+                                    value={submitting.answer}
+                                    onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                    rows={6}
+                                    placeholder="Tulis jawaban kamu di sini..."
+                                />
                             </div>
+                        ) : (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Link Dokumen / File</label>
+                                <input
+                                    type="url"
+                                    value={submitting.answer}
+                                    onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
+                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                    placeholder="https://docs.google.com/..."
+                                />
+                                <p className="mt-2 text-xs text-slate-400">
+                                    *Pastikan link Google Drive/Docs dapat diakses (Setting: Anyone with the link)
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-3 pt-4">
+                            <Button type="button" variant="secondary" onClick={() => setSubmitting(null)} className="flex-1">
+                                Batal
+                            </Button>
+                            <Button onClick={handleSubmit} loading={saving} disabled={!submitting.answer} className="flex-1">
+                                Kumpulkan
+                            </Button>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
         </div>
     )
 }

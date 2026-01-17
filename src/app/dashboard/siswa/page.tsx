@@ -84,7 +84,21 @@ export default function SiswaDashboard() {
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-white group-hover:text-amber-400 transition-colors">Tugas</h3>
-                            <p className="text-xs text-slate-400">PR & ulangan</p>
+                            <p className="text-xs text-slate-400">Kerjakan PR</p>
+                        </div>
+                    </div>
+                </Link>
+
+                <Link href="/dashboard/siswa/ulangan" className="group bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 hover:border-pink-500/50 transition-all">
+                    <div className="flex flex-col items-center text-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold text-white group-hover:text-pink-400 transition-colors">Ulangan</h3>
+                            <p className="text-xs text-slate-400">Ujian ketat</p>
                         </div>
                     </div>
                 </Link>
@@ -98,7 +112,7 @@ export default function SiswaDashboard() {
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold text-white group-hover:text-cyan-400 transition-colors">Kuis</h3>
-                            <p className="text-xs text-slate-400">Kerjakan kuis</p>
+                            <p className="text-xs text-slate-400">Kuis cepat</p>
                         </div>
                     </div>
                 </Link>

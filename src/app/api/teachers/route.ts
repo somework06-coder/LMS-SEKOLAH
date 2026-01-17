@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { username, password, full_name, nip } = await request.json()
+        const { username, password, full_name, nip, gender } = await request.json()
 
         if (!username || !password) {
             return NextResponse.json({ error: 'Username dan password harus diisi' }, { status: 400 })
@@ -84,7 +84,8 @@ export async function POST(request: NextRequest) {
             .from('teachers')
             .insert({
                 user_id: newUser.id,
-                nip
+                nip,
+                gender
             })
             .select(`
         *,

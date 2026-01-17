@@ -11,6 +11,7 @@ interface QuizQuestion {
     options: string[] | null
     points: number
     order_index: number
+    image_url?: string | null
 }
 
 interface Quiz {
@@ -288,6 +289,17 @@ export default function KerjakanKuisPage() {
                                 {q.points} Poin
                             </span>
                         </div>
+
+                        {/* Display question image if exists */}
+                        {q.image_url && (
+                            <div className="pl-12 mb-4">
+                                <img
+                                    src={q.image_url}
+                                    alt="Gambar soal"
+                                    className="max-h-64 rounded-lg border border-slate-600"
+                                />
+                            </div>
+                        )}
 
                         <div className="pl-12">
                             {q.question_type === 'MULTIPLE_CHOICE' && q.options ? (

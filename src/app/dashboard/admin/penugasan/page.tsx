@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 import { AcademicYear, Class, Subject } from '@/lib/types'
 
 interface Teacher {
@@ -101,34 +101,31 @@ export default function PenugasanPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/admin" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+            <PageHeader
+                title="Penugasan Mengajar"
+                subtitle="Assign guru ke kelas & mata pelajaran"
+                backHref="/dashboard/admin"
+                action={
+                    <Button onClick={openAdd} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Penugasan Mengajar</h1>
-                        <p className="text-slate-400">Assign guru ke kelas & mata pelajaran</p>
-                    </div>
-                </div>
-                <button
-                    onClick={openAdd}
-                    className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Penugasan
-                </button>
-            </div>
+                    }>
+                        Tambah Penugasan
+                    </Button>
+                }
+            />
 
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-slate-400">Memuat...</div>
                 ) : assignments.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">Belum ada penugasan</div>
+                    <EmptyState
+                        icon="📋"
+                        title="Belum Ada Penugasan"
+                        description="Assign guru ke kelas dan mata pelajaran"
+                        action={<Button onClick={openAdd}>Tambah Penugasan</Button>}
+                    />
                 ) : (
                     <table className="w-full">
                         <thead className="bg-slate-900/50">
@@ -172,80 +169,81 @@ export default function PenugasanPage() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold text-white mb-4">Tambah Penugasan</h2>
-                        {error && (
-                            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>
-                        )}
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Guru</label>
-                                <select
-                                    value={formData.teacher_id}
-                                    onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="">Pilih Guru</option>
-                                    {teachers.map((t) => (
-                                        <option key={t.id} value={t.id}>{t.user.full_name || t.user.username}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Mata Pelajaran</label>
-                                <select
-                                    value={formData.subject_id}
-                                    onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="">Pilih Mata Pelajaran</option>
-                                    {subjects.map((s) => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Kelas</label>
-                                <select
-                                    value={formData.class_id}
-                                    onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="">Pilih Kelas</option>
-                                    {classes.map((c) => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Tahun Ajaran</label>
-                                <select
-                                    value={formData.academic_year_id}
-                                    onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                    required
-                                >
-                                    <option value="">Pilih Tahun Ajaran</option>
-                                    {academicYears.map((y) => (
-                                        <option key={y.id} value={y.id}>{y.name} {y.is_active && '(Aktif)'}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">Batal</button>
-                                <button type="submit" disabled={saving} className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                                    {saving ? 'Menyimpan...' : 'Simpan'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={showModal}
+                onClose={() => setShowModal(false)}
+                title="Tambah Penugasan"
+            >
+                {error && (
+                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>
+                )}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Guru</label>
+                        <select
+                            value={formData.teacher_id}
+                            onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                        >
+                            <option value="">Pilih Guru</option>
+                            {teachers.map((t) => (
+                                <option key={t.id} value={t.id}>{t.user.full_name || t.user.username}</option>
+                            ))}
+                        </select>
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Mata Pelajaran</label>
+                        <select
+                            value={formData.subject_id}
+                            onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                        >
+                            <option value="">Pilih Mata Pelajaran</option>
+                            {subjects.map((s) => (
+                                <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Kelas</label>
+                        <select
+                            value={formData.class_id}
+                            onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                        >
+                            <option value="">Pilih Kelas</option>
+                            {classes.map((c) => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Tahun Ajaran</label>
+                        <select
+                            value={formData.academic_year_id}
+                            onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            required
+                        >
+                            <option value="">Pilih Tahun Ajaran</option>
+                            {academicYears.map((y) => (
+                                <option key={y.id} value={y.id}>{y.name} {y.is_active && '(Aktif)'}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="flex-1">
+                            Simpan
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     )
 }

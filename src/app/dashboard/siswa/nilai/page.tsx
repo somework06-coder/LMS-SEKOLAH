@@ -38,11 +38,28 @@ interface QuizSubmission {
     }
 }
 
+interface ExamSubmission {
+    id: string
+    exam_id: string
+    is_submitted: boolean
+    submitted_at: string
+    total_score: number
+    max_score: number
+    violation_count: number
+    exam: {
+        id: string
+        title: string
+        teaching_assignment: {
+            subject: { name: string }
+        }
+    }
+}
+
 interface SubjectGrades {
     subjectName: string
     kuis: QuizSubmission[]
     tugas: AssignmentSubmission[]
-    ulangan: AssignmentSubmission[]
+    ulangan: (AssignmentSubmission | ExamSubmission)[]
 }
 
 type TabType = 'kuis' | 'tugas' | 'ulangan'
@@ -69,15 +86,17 @@ export default function SiswaNilaiPage() {
                     return
                 }
 
-                // Fetch both data sources in parallel
-                const [submissionsRes, quizSubsRes] = await Promise.all([
+                // Fetch all data sources in parallel
+                const [submissionsRes, quizSubsRes, examSubsRes] = await Promise.all([
                     fetch(`/api/submissions?student_id=${myStudent.id}`),
-                    fetch(`/api/quiz-submissions?student_id=${myStudent.id}`)
+                    fetch(`/api/quiz-submissions?student_id=${myStudent.id}`),
+                    fetch(`/api/exam-submissions?student_id=${myStudent.id}`)
                 ])
 
-                const [submissions, quizSubmissions]: [AssignmentSubmission[], QuizSubmission[]] = await Promise.all([
+                const [submissions, quizSubmissions, examSubmissions]: [AssignmentSubmission[], QuizSubmission[], ExamSubmission[]] = await Promise.all([
                     submissionsRes.json(),
-                    quizSubsRes.json()
+                    quizSubsRes.json(),
+                    examSubsRes.json()
                 ])
 
                 // Group by Subject
@@ -104,6 +123,17 @@ export default function SiswaNilaiPage() {
                         subjectsMap[subjectName].ulangan.push(sub)
                     }
                 })
+
+                // Process Exam Submissions (new ulangan system)
+                if (Array.isArray(examSubmissions)) {
+                    examSubmissions.filter(es => es.is_submitted).forEach((es) => {
+                        const subjectName = es.exam?.teaching_assignment?.subject?.name || 'Lainnya'
+                        if (!subjectsMap[subjectName]) {
+                            subjectsMap[subjectName] = { subjectName, kuis: [], tugas: [], ulangan: [] }
+                        }
+                        subjectsMap[subjectName].ulangan.push(es)
+                    })
+                }
 
                 setGroupedGrades(Object.values(subjectsMap))
 
@@ -239,6 +269,62 @@ export default function SiswaNilaiPage() {
         )
     )
 
+    // Helper to check if item is ExamSubmission
+    const isExamSubmission = (item: AssignmentSubmission | ExamSubmission): item is ExamSubmission => {
+        return 'exam' in item && 'max_score' in item
+    }
+
+    const renderUlanganList = (items: (AssignmentSubmission | ExamSubmission)[]) => (
+        items.length === 0 ? (
+            <div className="text-center text-slate-400 py-8">Belum ada nilai ulangan.</div>
+        ) : (
+            <div className="space-y-3">
+                {items.map((item) => {
+                    if (isExamSubmission(item)) {
+                        // Render ExamSubmission
+                        return (
+                            <div key={item.id} className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-4 flex items-center justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-white font-medium">{item.exam?.title}</p>
+                                        <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Ulangan</span>
+                                    </div>
+                                    <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString('id-ID')}</p>
+                                    {item.violation_count > 0 && (
+                                        <p className="text-xs text-red-400 mt-1">⚠️ {item.violation_count} pelanggaran</p>
+                                    )}
+                                </div>
+                                <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(item.total_score, item.max_score)}`}>
+                                    {item.total_score}/{item.max_score}
+                                </span>
+                            </div>
+                        )
+                    } else {
+                        // Render AssignmentSubmission
+                        return (
+                            <div key={item.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex items-center justify-between">
+                                <div className="flex-1">
+                                    <p className="text-white font-medium">{item.assignment?.title}</p>
+                                    <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString('id-ID')}</p>
+                                    {item.grade?.[0]?.feedback && (
+                                        <p className="text-sm text-slate-400 mt-1 italic">💬 {item.grade[0].feedback}</p>
+                                    )}
+                                </div>
+                                {item.grade && item.grade.length > 0 ? (
+                                    <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(item.grade[0].score)}`}>
+                                        {item.grade[0].score}
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1 bg-slate-600/30 text-slate-400 rounded-full text-sm">⏳ Menunggu</span>
+                                )}
+                            </div>
+                        )
+                    }
+                })}
+            </div>
+        )
+    )
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -264,8 +350,8 @@ export default function SiswaNilaiPage() {
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
                         className={`px-4 py-2 rounded-t-xl font-medium transition-colors flex items-center gap-2 ${activeTab === tab.key
-                                ? `bg-${tab.color}-500/20 text-${tab.color}-400 border-b-2 border-${tab.color}-500`
-                                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            ? `bg-${tab.color}-500/20 text-${tab.color}-400 border-b-2 border-${tab.color}-500`
+                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
                             }`}
                     >
                         <span>{tab.icon}</span>
@@ -281,7 +367,7 @@ export default function SiswaNilaiPage() {
             <div>
                 {activeTab === 'kuis' && renderQuizList()}
                 {activeTab === 'tugas' && renderAssignmentList(selectedSubject.tugas)}
-                {activeTab === 'ulangan' && renderAssignmentList(selectedSubject.ulangan)}
+                {activeTab === 'ulangan' && renderUlanganList(selectedSubject.ulangan)}
             </div>
         </div>
     )

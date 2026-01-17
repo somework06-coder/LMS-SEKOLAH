@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import QuestionImageUpload from '@/components/QuestionImageUpload'
 
 interface QuizQuestion {
     id?: string
@@ -12,6 +13,7 @@ interface QuizQuestion {
     correct_answer: string | null
     points: number
     order_index: number
+    image_url?: string | null
 }
 
 interface Quiz {
@@ -47,6 +49,10 @@ export default function EditQuizPage() {
         points: 10,
         order_index: 0
     })
+
+    // Calculate total points
+    const totalPoints = questions.reduce((sum, q) => sum + (q.points || 0), 0)
+    const getDefaultPoints = () => Math.floor(100 / (questions.length + 1))
 
     // OCR mode state
     const [ocrLoading, setOcrLoading] = useState(false)
@@ -316,18 +322,74 @@ export default function EditQuizPage() {
                             Publish Kuis
                         </button>
                     )}
-                    <div className="text-right">
-                        <p className="text-2xl font-bold text-cyan-400">{questions.length}</p>
-                        <p className="text-xs text-slate-400">Soal</p>
+                    <div className="flex items-center gap-4">
+                        <div className="text-right">
+                            <p className={`text-2xl font-bold ${totalPoints > 100 ? 'text-red-400' : totalPoints === 100 ? 'text-green-400' : 'text-amber-400'}`}>
+                                {totalPoints}
+                            </p>
+                            <p className="text-xs text-slate-400">Total Poin</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-2xl font-bold text-cyan-400">{questions.length}</p>
+                            <p className="text-xs text-slate-400">Soal</p>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Points Warning */}
+            {totalPoints !== 100 && questions.length > 0 && (
+                <div className={`px-4 py-3 rounded-xl flex items-center justify-between ${totalPoints > 100 ? 'bg-red-500/20 border border-red-500/30' : 'bg-amber-500/20 border border-amber-500/30'}`}>
+                    <div className="flex items-center gap-2">
+                        <span>{totalPoints > 100 ? '⚠️' : '💡'}</span>
+                        <span className={totalPoints > 100 ? 'text-red-400' : 'text-amber-400'}>
+                            {totalPoints > 100
+                                ? `Total poin melebihi 100 (${totalPoints}). Kurangi poin beberapa soal.`
+                                : `Total poin: ${totalPoints}/100. Disarankan total = 100.`
+                            }
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => {
+                            const pointPerQuestion = Math.floor(100 / questions.length)
+                            const remainder = 100 - (pointPerQuestion * questions.length)
+                            const balanced = questions.map((q, idx) => ({
+                                ...q,
+                                points: pointPerQuestion + (idx < remainder ? 1 : 0)
+                            }))
+                            setQuestions(balanced)
+                            // Update in database
+                            balanced.forEach(async (q) => {
+                                if (q.id) {
+                                    await fetch(`/api/quizzes/${quizId}/questions`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ question_id: q.id, points: q.points })
+                                    })
+                                }
+                            })
+                        }}
+                        className="px-3 py-1.5 bg-slate-700 text-white text-sm rounded-lg hover:bg-slate-600 transition-colors"
+                    >
+                        Seimbangkan Poin
+                    </button>
+                </div>
+            )}
 
             {/* Mode Tabs */}
             {mode === 'list' && (
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setMode('manual')}
+                        onClick={() => {
+                            setManualForm({
+                                ...manualForm,
+                                points: getDefaultPoints(),
+                                question_text: '',
+                                correct_answer: '',
+                                options: ['', '', '', '']
+                            })
+                            setMode('manual')
+                        }}
                         className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl hover:border-green-500/50 transition-all text-center"
                     >
                         <div className="text-2xl mb-1">✏️</div>
@@ -392,9 +454,14 @@ export default function EditQuizPage() {
                                             <span className={`px-2 py-0.5 text-xs rounded ${q.question_type === 'MULTIPLE_CHOICE' ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'}`}>
                                                 {q.question_type === 'MULTIPLE_CHOICE' ? 'Pilihan Ganda' : 'Essay'}
                                             </span>
-                                            <span className="text-xs text-slate-500">{q.points} poin</span>
                                         </div>
                                         <p className="text-white mb-2">{q.question_text}</p>
+                                        {/* Display question image if exists */}
+                                        {q.image_url && (
+                                            <div className="mb-3">
+                                                <img src={q.image_url} alt="Gambar soal" className="max-h-40 rounded-lg border border-slate-600" />
+                                            </div>
+                                        )}
                                         {q.question_type === 'MULTIPLE_CHOICE' && q.options && (
                                             <div className="grid grid-cols-2 gap-2 text-sm">
                                                 {q.options.map((opt, optIdx) => (
@@ -405,14 +472,60 @@ export default function EditQuizPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <button
-                                        onClick={() => q.id && handleDeleteQuestion(q.id)}
-                                        className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
+                                    <div className="flex flex-col gap-2 items-end">
+                                        {/* Points edit input */}
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                type="number"
+                                                value={q.points}
+                                                onChange={(e) => {
+                                                    const newPoints = parseInt(e.target.value) || 1
+                                                    const updated = questions.map((question, i) =>
+                                                        i === idx ? { ...question, points: newPoints } : question
+                                                    )
+                                                    setQuestions(updated)
+                                                }}
+                                                onBlur={async () => {
+                                                    if (q.id) {
+                                                        await fetch(`/api/quizzes/${quizId}/questions`, {
+                                                            method: 'PUT',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ question_id: q.id, points: q.points })
+                                                        })
+                                                    }
+                                                }}
+                                                className="w-14 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-center text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                                min={1}
+                                                max={100}
+                                                disabled={quiz?.is_active}
+                                            />
+                                            <span className="text-xs text-slate-500">poin</span>
+                                        </div>
+                                        {/* Image upload button */}
+                                        <QuestionImageUpload
+                                            imageUrl={q.image_url}
+                                            onImageChange={async (url) => {
+                                                if (q.id) {
+                                                    await fetch(`/api/quizzes/${quizId}/questions`, {
+                                                        method: 'PUT',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ question_id: q.id, image_url: url })
+                                                    })
+                                                    fetchQuiz()
+                                                }
+                                            }}
+                                            disabled={quiz?.is_active}
+                                        />
+                                        <button
+                                            onClick={() => q.id && handleDeleteQuestion(q.id)}
+                                            className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                            disabled={quiz?.is_active}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         ))
@@ -730,8 +843,8 @@ export default function EditQuizPage() {
                                     <label
                                         key={q.id}
                                         className={`flex items-start gap-3 p-4 rounded-xl cursor-pointer transition-all border ${selectedBankIds.has(q.id)
-                                                ? 'bg-indigo-500/20 border-indigo-500'
-                                                : 'bg-slate-700/30 border-transparent hover:bg-slate-700/50'
+                                            ? 'bg-indigo-500/20 border-indigo-500'
+                                            : 'bg-slate-700/30 border-transparent hover:bg-slate-700/50'
                                             }`}
                                     >
                                         <input
@@ -754,7 +867,7 @@ export default function EditQuizPage() {
                                                     {q.question_type === 'MULTIPLE_CHOICE' ? 'PG' : 'Essay'}
                                                 </span>
                                                 <span className={`px-2 py-0.5 text-xs rounded ${q.difficulty === 'EASY' ? 'bg-green-500/20 text-green-400' :
-                                                        q.difficulty === 'HARD' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+                                                    q.difficulty === 'HARD' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
                                                     }`}>
                                                     {q.difficulty === 'EASY' ? 'Mudah' : q.difficulty === 'HARD' ? 'Sulit' : 'Sedang'}
                                                 </span>

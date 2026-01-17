@@ -1,0 +1,258 @@
+'use client'
+
+import { useEffect, useState, useCallback } from 'react'
+import { useParams } from 'next/navigation'
+import { Modal, PageHeader } from '@/components/ui'
+
+interface ExamSubmission {
+    id: string
+    started_at: string
+    submitted_at: string | null
+    is_submitted: boolean
+    total_score: number
+    max_score: number
+    violation_count: number
+    violations_log: Array<{ type: string; timestamp: string }>
+    student: {
+        id: string
+        nis: string
+        user: { full_name: string }
+    }
+}
+
+interface Exam {
+    id: string
+    title: string
+    description: string | null
+    start_time: string
+    duration_minutes: number
+    max_violations: number
+    teaching_assignment: {
+        subject: { name: string }
+        class: { name: string }
+    }
+}
+
+export default function GuruExamHasilPage() {
+    const params = useParams()
+    const examId = params.id as string
+
+    const [exam, setExam] = useState<Exam | null>(null)
+    const [submissions, setSubmissions] = useState<ExamSubmission[]>([])
+    const [loading, setLoading] = useState(true)
+    const [selectedSubmission, setSelectedSubmission] = useState<ExamSubmission | null>(null)
+
+    const fetchData = useCallback(async () => {
+        try {
+            const [examRes, subsRes] = await Promise.all([
+                fetch(`/api/exams/${examId}`),
+                fetch(`/api/exam-submissions?exam_id=${examId}`)
+            ])
+            const examData = await examRes.json()
+            const subsData = await subsRes.json()
+
+            setExam(examData)
+            setSubmissions(Array.isArray(subsData) ? subsData : [])
+        } catch (error) {
+            console.error('Error:', error)
+        } finally {
+            setLoading(false)
+        }
+    }, [examId])
+
+    useEffect(() => {
+        fetchData()
+    }, [fetchData])
+
+    const getScoreColor = (score: number, max: number) => {
+        const percentage = (score / max) * 100
+        if (percentage >= 80) return 'text-green-400 bg-green-500/20'
+        if (percentage >= 60) return 'text-yellow-400 bg-yellow-500/20'
+        return 'text-red-400 bg-red-500/20'
+    }
+
+    const formatDuration = (start: string, end: string | null) => {
+        if (!end) return '-'
+        const diff = new Date(end).getTime() - new Date(start).getTime()
+        const mins = Math.floor(diff / 60000)
+        const secs = Math.floor((diff % 60000) / 1000)
+        return `${mins}m ${secs}s`
+    }
+
+    const calculateStats = () => {
+        const submitted = submissions.filter(s => s.is_submitted)
+        if (submitted.length === 0) return { avg: 0, highest: 0, lowest: 0, count: 0 }
+
+        const scores = submitted.map(s => (s.total_score / s.max_score) * 100)
+        return {
+            avg: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+            highest: Math.round(Math.max(...scores)),
+            lowest: Math.round(Math.min(...scores)),
+            count: submitted.length
+        }
+    }
+
+    if (loading) {
+        return <div className="text-center text-slate-400 py-8">Memuat...</div>
+    }
+
+    if (!exam) {
+        return <div className="text-center text-slate-400 py-8">Ulangan tidak ditemukan</div>
+    }
+
+    const stats = calculateStats()
+
+    return (
+        <div className="space-y-6">
+            <PageHeader
+                title={`📊 Hasil: ${exam.title}`}
+                subtitle={`${exam.teaching_assignment?.class?.name} • ${exam.teaching_assignment?.subject?.name}`}
+                backHref={`/dashboard/guru/ulangan/${examId}`}
+            />
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-bold text-purple-400">{stats.count}</p>
+                    <p className="text-xs text-slate-400">Mengumpulkan</p>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-bold text-blue-400">{stats.avg}%</p>
+                    <p className="text-xs text-slate-400">Rata-rata</p>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-bold text-green-400">{stats.highest}%</p>
+                    <p className="text-xs text-slate-400">Tertinggi</p>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-bold text-red-400">{stats.lowest}%</p>
+                    <p className="text-xs text-slate-400">Terendah</p>
+                </div>
+            </div>
+
+            {/* Submissions Table */}
+            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="border-b border-slate-700">
+                                <th className="text-left p-4 text-slate-400 font-medium">Siswa</th>
+                                <th className="text-center p-4 text-slate-400 font-medium">Status</th>
+                                <th className="text-center p-4 text-slate-400 font-medium">Nilai</th>
+                                <th className="text-center p-4 text-slate-400 font-medium">Durasi</th>
+                                <th className="text-center p-4 text-slate-400 font-medium">Pelanggaran</th>
+                                <th className="text-center p-4 text-slate-400 font-medium">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-700/50">
+                            {submissions.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-slate-400">
+                                        Belum ada siswa yang mengerjakan
+                                    </td>
+                                </tr>
+                            ) : (
+                                submissions.map((sub) => (
+                                    <tr key={sub.id} className="hover:bg-slate-700/30">
+                                        <td className="p-4">
+                                            <p className="text-white font-medium">{sub.student?.user?.full_name}</p>
+                                            <p className="text-xs text-slate-500">{sub.student?.nis}</p>
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            {sub.is_submitted ? (
+                                                <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">✓ Selesai</span>
+                                            ) : (
+                                                <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs">⏳ Mengerjakan</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            {sub.is_submitted ? (
+                                                <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(sub.total_score, sub.max_score)}`}>
+                                                    {sub.total_score}/{sub.max_score}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500">-</span>
+                                            )}
+                                        </td>
+                                        <td className="p-4 text-center text-slate-300 text-sm">
+                                            {formatDuration(sub.started_at, sub.submitted_at)}
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <span className={`px-2 py-1 rounded ${sub.violation_count > 0 ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-400'}`}>
+                                                {sub.violation_count}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-center">
+                                            <button
+                                                onClick={() => setSelectedSubmission(sub)}
+                                                className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+                                            >
+                                                Detail
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Submission Detail Modal */}
+            <Modal
+                open={!!selectedSubmission}
+                onClose={() => setSelectedSubmission(null)}
+                title="Detail Submission"
+                maxWidth="lg"
+            >
+                {selectedSubmission && (
+                    <div className="space-y-4">
+                        <div className="bg-slate-700/50 rounded-xl p-4">
+                            <p className="text-sm text-slate-400">Siswa</p>
+                            <p className="text-lg font-bold text-white">{selectedSubmission.student?.user?.full_name}</p>
+                            <p className="text-sm text-slate-500">NIS: {selectedSubmission.student?.nis}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-slate-700/50 rounded-xl p-4 text-center">
+                                <p className="text-sm text-slate-400">Nilai</p>
+                                <p className={`text-2xl font-bold ${getScoreColor(selectedSubmission.total_score, selectedSubmission.max_score).split(' ')[0]}`}>
+                                    {selectedSubmission.total_score}/{selectedSubmission.max_score}
+                                </p>
+                            </div>
+                            <div className="bg-slate-700/50 rounded-xl p-4 text-center">
+                                <p className="text-sm text-slate-400">Pelanggaran</p>
+                                <p className={`text-2xl font-bold ${selectedSubmission.violation_count > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                    {selectedSubmission.violation_count}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-700/50 rounded-xl p-4">
+                            <p className="text-sm text-slate-400 mb-2">Waktu</p>
+                            <div className="text-sm text-slate-300 space-y-1">
+                                <p>Mulai: {new Date(selectedSubmission.started_at).toLocaleString('id-ID')}</p>
+                                <p>Selesai: {selectedSubmission.submitted_at ? new Date(selectedSubmission.submitted_at).toLocaleString('id-ID') : '-'}</p>
+                                <p>Durasi: {formatDuration(selectedSubmission.started_at, selectedSubmission.submitted_at)}</p>
+                            </div>
+                        </div>
+
+                        {selectedSubmission.violations_log && selectedSubmission.violations_log.length > 0 && (
+                            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                                <p className="text-sm text-red-400 font-medium mb-2">⚠️ Log Pelanggaran</p>
+                                <div className="space-y-1 text-sm">
+                                    {selectedSubmission.violations_log.map((v, idx) => (
+                                        <div key={idx} className="flex justify-between text-slate-300">
+                                            <span>{v.type}</span>
+                                            <span className="text-slate-500">{new Date(v.timestamp).toLocaleTimeString('id-ID')}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Modal>
+        </div>
+    )
+}

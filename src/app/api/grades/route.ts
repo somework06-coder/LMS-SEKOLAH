@@ -1,6 +1,155 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { validateSession } from '@/lib/auth'
+
+// Create admin client to bypass RLS
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+// GET all grades (for admin analytics/rekap nilai)
+export async function GET(request: NextRequest) {
+    try {
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        // Only admin can fetch all grades
+        if (user.role === 'ADMIN') {
+            const allGrades = []
+
+            // 1. Fetch Assignment Grades (TUGAS)
+            const { data: assignmentGrades, error: gradesError } = await supabaseAdmin
+                .from('grades')
+                .select(`
+                    id,
+                    score,
+                    feedback,
+                    graded_at,
+                    submission:student_submissions(
+                        id,
+                        student_id,
+                        assignment:assignments(
+                            id,
+                            title,
+                            type,
+                            teaching_assignment:teaching_assignments(
+                                subject:subjects(id, name)
+                            )
+                        )
+                    )
+                `)
+                .order('graded_at', { ascending: false })
+
+            if (!gradesError && assignmentGrades) {
+                const mappedAssignments = assignmentGrades.map((g: any) => {
+                    const submission = g.submission
+                    const assignment = submission?.assignment
+                    const subject = assignment?.teaching_assignment?.subject
+                    return {
+                        id: g.id,
+                        student_id: submission?.student_id,
+                        subject_id: subject?.id,
+                        grade_type: assignment?.type || 'TUGAS', // 'TUGAS' or 'ULANGAN' (legacy)
+                        score: g.score,
+                        subject: { name: subject?.name || '-' },
+                        graded_at: g.graded_at
+                    }
+                })
+                allGrades.push(...mappedAssignments)
+            }
+
+            // 2. Fetch Quiz Grades (KUIS)
+            const { data: quizSubmissions, error: quizzesError } = await supabaseAdmin
+                .from('quiz_submissions')
+                .select(`
+                    id,
+                    student_id,
+                    total_score,
+                    max_score,
+                    submitted_at,
+                    quiz:quizzes(
+                        id,
+                        title,
+                        teaching_assignment:teaching_assignments(
+                            subject:subjects(id, name)
+                        )
+                    )
+                `)
+                .not('submitted_at', 'is', null)
+
+            if (!quizzesError && quizSubmissions) {
+                const mappedQuizzes = quizSubmissions.map((qs: any) => {
+                    const quiz = qs.quiz
+                    const subject = quiz?.teaching_assignment?.subject
+                    const score = qs.max_score > 0 ? (qs.total_score / qs.max_score) * 100 : 0
+                    return {
+                        id: qs.id,
+                        student_id: qs.student_id,
+                        subject_id: subject?.id,
+                        grade_type: 'KUIS',
+                        score: Math.round(score * 10) / 10,
+                        subject: { name: subject?.name || '-' },
+                        graded_at: qs.submitted_at
+                    }
+                })
+                allGrades.push(...mappedQuizzes)
+            }
+
+            // 3. Fetch Exam Grades (ULANGAN)
+            const { data: examSubmissions, error: examsError } = await supabaseAdmin
+                .from('exam_submissions')
+                .select(`
+                    id,
+                    student_id,
+                    total_score,
+                    max_score,
+                    submitted_at,
+                    exam:exams(
+                        id,
+                        title,
+                        teaching_assignment:teaching_assignments(
+                            subject:subjects(id, name)
+                        )
+                    )
+                `)
+                .not('submitted_at', 'is', null)
+
+            if (!examsError && examSubmissions) {
+                const mappedExams = examSubmissions.map((es: any) => {
+                    const exam = es.exam
+                    const subject = exam?.teaching_assignment?.subject
+                    const score = es.max_score > 0 ? (es.total_score / es.max_score) * 100 : 0
+                    return {
+                        id: es.id,
+                        student_id: es.student_id,
+                        subject_id: subject?.id,
+                        grade_type: 'ULANGAN',
+                        score: Math.round(score * 10) / 10,
+                        subject: { name: subject?.name || '-' },
+                        graded_at: es.submitted_at
+                    }
+                })
+                allGrades.push(...mappedExams)
+            }
+
+            return NextResponse.json(allGrades)
+        }
+
+        // For non-admin, return empty or limited data
+        return NextResponse.json([])
+    } catch (error) {
+        console.error('Error fetching grades:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
 
 // POST grade a submission (for teachers)
 export async function POST(request: NextRequest) {
@@ -21,8 +170,8 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
         }
 
-        // Check if grade exists
-        const { data: existing } = await supabase
+        // Check if grade exists - Use regular client here since it's user action
+        const { data: existing } = await supabaseAdmin // Use admin to ensure teacher can grade
             .from('grades')
             .select('id')
             .eq('submission_id', submission_id)
@@ -32,7 +181,7 @@ export async function POST(request: NextRequest) {
 
         if (existing) {
             // Update existing grade
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('grades')
                 .update({ score, feedback, graded_at: new Date().toISOString() })
                 .eq('id', existing.id)
@@ -43,7 +192,7 @@ export async function POST(request: NextRequest) {
             gradeData = data
         } else {
             // Create new grade
-            const { data, error } = await supabase
+            const { data, error } = await supabaseAdmin
                 .from('grades')
                 .insert({ submission_id, score, feedback })
                 .select()
@@ -55,8 +204,8 @@ export async function POST(request: NextRequest) {
 
         // Send notification to student
         try {
-            const { data: submission } = await supabase
-                .from('submissions')
+            const { data: submission } = await supabaseAdmin
+                .from('student_submissions')
                 .select(`
                     student:students(user_id),
                     assignment:assignments(title, teaching_assignment:teaching_assignments(subject:subjects(name)))
@@ -69,7 +218,7 @@ export async function POST(request: NextRequest) {
                 const assignmentTitle = (submission?.assignment as any)?.title || 'Tugas'
                 const subjectName = (submission?.assignment as any)?.teaching_assignment?.subject?.name || ''
 
-                await supabase.from('notifications').insert({
+                await supabaseAdmin.from('notifications').insert({
                     user_id: studentData.user_id,
                     type: 'NILAI_KELUAR',
                     title: `Nilai Keluar: ${assignmentTitle}`,

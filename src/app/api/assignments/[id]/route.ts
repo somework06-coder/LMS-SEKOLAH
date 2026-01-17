@@ -2,6 +2,46 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { validateSession } from '@/lib/auth'
 
+// GET single assignment
+export async function GET(
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const { id } = await params
+        const token = request.cookies.get('session_token')?.value
+        if (!token) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const user = await validateSession(token)
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
+
+        const { data, error } = await supabase
+            .from('assignments')
+            .select(`
+                *,
+                teaching_assignment:teaching_assignments(
+                    id,
+                    class:classes(id, name),
+                    subject:subjects(id, name),
+                    teacher:teachers(id, user:users(full_name))
+                )
+            `)
+            .eq('id', id)
+            .single()
+
+        if (error) throw error
+
+        return NextResponse.json(data)
+    } catch (error) {
+        console.error('Error fetching assignment:', error)
+        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    }
+}
+
 // DELETE assignment
 export async function DELETE(
     request: NextRequest,

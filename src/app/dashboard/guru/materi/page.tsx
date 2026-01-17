@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 
 interface TeachingAssignment {
     id: string
@@ -84,7 +83,6 @@ export default function MateriPage() {
             let finalContentUrl = formData.content_url
 
             if (formData.type === 'PDF' && file) {
-                // Upload via API
                 const uploadFormData = new FormData()
                 uploadFormData.append('file', file)
 
@@ -102,7 +100,6 @@ export default function MateriPage() {
                 finalContentUrl = data.url
             }
 
-            // Save material data
             const res = await fetch('/api/materials', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -144,34 +141,31 @@ export default function MateriPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/guru" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+            <PageHeader
+                title="📚 Materi Pembelajaran"
+                subtitle="Upload dan kelola materi"
+                backHref="/dashboard/guru"
+                action={
+                    <Button onClick={() => setShowModal(true)} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Materi Pembelajaran</h1>
-                        <p className="text-slate-400">Upload dan kelola materi</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah Materi
-                </button>
-            </div>
+                    }>
+                        Tambah Materi
+                    </Button>
+                }
+            />
 
             <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-slate-400">Memuat...</div>
                 ) : materials.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">Belum ada materi</div>
+                    <EmptyState
+                        icon="📚"
+                        title="Belum Ada Materi"
+                        description="Upload materi pembelajaran untuk siswa"
+                        action={<Button onClick={() => setShowModal(true)}>Tambah Materi</Button>}
+                    />
                 ) : (
                     <div className="divide-y divide-slate-700/50">
                         {materials.map((material) => (
@@ -200,102 +194,100 @@ export default function MateriPage() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold text-white mb-4">Tambah Materi</h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Kelas & Mata Pelajaran</label>
-                                <select
-                                    value={formData.teaching_assignment_id}
-                                    onChange={(e) => setFormData({ ...formData, teaching_assignment_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    required
-                                >
-                                    <option value="">Pilih Kelas & Mapel</option>
-                                    {assignments.map((a) => (
-                                        <option key={a.id} value={a.id}>{a.class.name} - {a.subject.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Judul Materi</label>
-                                <input
-                                    type="text"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Deskripsi</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    rows={2}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Tipe</label>
-                                <select
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                >
-                                    <option value="TEXT">Teks</option>
-                                    <option value="LINK">Link URL</option>
-                                    <option value="PDF">Upload PDF</option>
-                                    <option value="VIDEO">Video URL</option>
-                                </select>
-                            </div>
-
-                            {formData.type === 'PDF' ? (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">File PDF</label>
-                                    <input
-                                        type="file"
-                                        accept="application/pdf"
-                                        onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-600 file:text-white hover:file:bg-slate-500"
-                                        required
-                                    />
-                                    <p className="mt-1 text-xs text-slate-500">Maksimal 5MB.</p>
-                                </div>
-                            ) : formData.type === 'TEXT' ? (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Konten</label>
-                                    <textarea
-                                        value={formData.content_text}
-                                        onChange={(e) => setFormData({ ...formData, content_text: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                        rows={4}
-                                    />
-                                </div>
-                            ) : (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">URL</label>
-                                    <input
-                                        type="url"
-                                        value={formData.content_url}
-                                        onChange={(e) => setFormData({ ...formData, content_url: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                        placeholder="https://..."
-                                    />
-                                </div>
-                            )}
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">Batal</button>
-                                <button type="submit" disabled={saving} className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                                    {saving ? 'Menyimpan...' : 'Simpan'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal open={showModal} onClose={() => setShowModal(false)} title="Tambah Materi">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Kelas & Mata Pelajaran</label>
+                        <select
+                            value={formData.teaching_assignment_id}
+                            onChange={(e) => setFormData({ ...formData, teaching_assignment_id: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            required
+                        >
+                            <option value="">Pilih Kelas & Mapel</option>
+                            {assignments.map((a) => (
+                                <option key={a.id} value={a.id}>{a.class.name} - {a.subject.name}</option>
+                            ))}
+                        </select>
                     </div>
-                </div>
-            )}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Judul Materi</label>
+                        <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Deskripsi</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            rows={2}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Tipe</label>
+                        <select
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                        >
+                            <option value="TEXT">Teks</option>
+                            <option value="LINK">Link URL</option>
+                            <option value="PDF">Upload PDF</option>
+                            <option value="VIDEO">Video URL</option>
+                        </select>
+                    </div>
+
+                    {formData.type === 'PDF' ? (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">File PDF</label>
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-600 file:text-white hover:file:bg-slate-500"
+                                required
+                            />
+                            <p className="mt-1 text-xs text-slate-500">Maksimal 5MB.</p>
+                        </div>
+                    ) : formData.type === 'TEXT' ? (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Konten</label>
+                            <textarea
+                                value={formData.content_text}
+                                onChange={(e) => setFormData({ ...formData, content_text: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                rows={4}
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">URL</label>
+                            <input
+                                type="url"
+                                value={formData.content_url}
+                                onChange={(e) => setFormData({ ...formData, content_url: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                                placeholder="https://..."
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="flex-1">
+                            Simpan
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     )
 }

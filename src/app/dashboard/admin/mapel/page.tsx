@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 import { Subject } from '@/lib/types'
 
 export default function MapelPage() {
@@ -64,36 +64,39 @@ export default function MapelPage() {
         setShowModal(true)
     }
 
+    const openAdd = () => {
+        setEditingSubject(null)
+        setFormData({ name: '' })
+        setShowModal(true)
+    }
+
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/admin" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+            <PageHeader
+                title="Mata Pelajaran"
+                subtitle="Kelola daftar mata pelajaran"
+                backHref="/dashboard/admin"
+                action={
+                    <Button onClick={openAdd} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">Mata Pelajaran</h1>
-                        <p className="text-slate-400">Kelola daftar mata pelajaran</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => { setShowModal(true); setEditingSubject(null); setFormData({ name: '' }); }}
-                    className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Tambah
-                </button>
-            </div>
+                    }>
+                        Tambah
+                    </Button>
+                }
+            />
 
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
                 {loading ? (
                     <div className="p-8 text-center text-slate-400">Memuat...</div>
                 ) : subjects.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400">Belum ada mata pelajaran</div>
+                    <EmptyState
+                        icon="📚"
+                        title="Belum Ada Mata Pelajaran"
+                        description="Tambahkan mata pelajaran untuk memulai"
+                        action={<Button onClick={openAdd}>Tambah Mapel</Button>}
+                    />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {subjects.map((subject) => (
@@ -122,36 +125,33 @@ export default function MapelPage() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md">
-                        <h2 className="text-xl font-bold text-white mb-4">
-                            {editingSubject ? 'Edit Mata Pelajaran' : 'Tambah Mata Pelajaran'}
-                        </h2>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Nama Mata Pelajaran</label>
-                                <input
-                                    type="text"
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    placeholder="Contoh: Matematika"
-                                    required
-                                />
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors">
-                                    Batal
-                                </button>
-                                <button type="submit" disabled={saving} className="flex-1 px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                                    {saving ? 'Menyimpan...' : 'Simpan'}
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                open={showModal}
+                onClose={() => setShowModal(false)}
+                title={editingSubject ? 'Edit Mata Pelajaran' : 'Tambah Mata Pelajaran'}
+            >
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">Nama Mata Pelajaran</label>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            placeholder="Contoh: Matematika"
+                            required
+                        />
                     </div>
-                </div>
-            )}
+                    <div className="flex gap-3 pt-4">
+                        <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="flex-1">
+                            Simpan
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     )
 }

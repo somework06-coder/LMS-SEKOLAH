@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
+import { PageHeader, Card, Button } from '@/components/ui'
 
 interface Answer {
     question_id: string
     answer: string
-    is_correct?: boolean | null // null for essay
+    is_correct?: boolean | null
     score?: number | null
     feedback?: string
 }
@@ -96,7 +97,6 @@ export default function GradingPage() {
             let totalScore = 0
             const updatedAnswers = submission.answers.map(ans => {
                 const grade = grades[ans.question_id]
-                // Ensure default if not graded yet
                 const currentScore = grade ? grade.score : (ans.score || 0)
                 const currentFeedback = grade ? grade.feedback : (ans.feedback || '')
 
@@ -106,18 +106,8 @@ export default function GradingPage() {
                     ...ans,
                     score: currentScore,
                     feedback: currentFeedback
-                    // is_correct logic for Essay is subjective, handled by score > 0? 
-                    // For MC, we keep existing is_correct unless we want to override it.
-                    // Let's just update score and feedback.
                 }
             })
-
-            // Also check for answers that might not be in the submission (if student skipped?)
-            // But usually submission contains all attempted.
-            // Actually, we should iterate through QUIZ questions to calculate total score correctly 
-            // incase student didn't answer some.
-            // But `submission.answers` is what we update. 
-            // Total score is sum of updated answers.
 
             await fetch(`/api/quiz-submissions/${submissionId}`, {
                 method: 'PUT',
@@ -129,6 +119,7 @@ export default function GradingPage() {
                 })
             })
 
+            // Using simple alert as per original code, could be replaced with Toast later
             alert('Penilaian berhasil disimpan!')
             router.push(`/dashboard/guru/kuis/${quizId}/hasil`)
         } catch (error) {
@@ -139,37 +130,38 @@ export default function GradingPage() {
         }
     }
 
-    if (loading) return <div className="text-center text-slate-400 py-8">Memuat data...</div>
-    if (!submission) return <div className="text-center text-slate-400 py-8">Data tidak ditemukan</div>
+    if (loading) return (
+        <div className="flex justify-center py-12">
+            <div className="animate-spin text-3xl text-primary">⏳</div>
+        </div>
+    )
+    if (!submission) return <div className="text-center text-text-secondary py-8">Data tidak ditemukan</div>
 
     // Sort questions by order
     const questions = [...(submission.quiz.questions || [])].sort((a, b) => a.order_index - b.order_index)
+    const currentTotalScore = Object.values(grades).reduce((acc, curr) => acc + (curr.score || 0), 0)
 
     return (
-        <div className="space-y-6 pb-20">
-            {/* Header Sticky */}
-            <div className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur border-b border-slate-700 pb-4 pt-2 -mx-4 px-4 md:-mx-8 md:px-8">
-                <div className="flex items-center gap-4">
-                    <Link href={`/dashboard/guru/kuis/${quizId}/hasil`} className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </Link>
-                    <div className="flex-1">
-                        <h1 className="text-xl font-bold text-white">Penilaian: {submission.student.user.full_name}</h1>
-                        <p className="text-sm text-slate-400">{submission.quiz.title}</p>
-                    </div>
-                    <div className="text-right">
-                        <span className="text-2xl font-bold text-cyan-400">
-                            {Object.values(grades).reduce((acc, curr) => acc + (curr.score || 0), 0)}
-                        </span>
-                        <span className="text-sm text-slate-500">/{submission.max_score}</span>
-                    </div>
-                </div>
+        <div className="space-y-6 pb-24">
+            {/* Header Sticky wrapper */}
+            <div className="sticky top-0 z-20 bg-white/95 dark:bg-surface-dark/95 backdrop-blur pt-4 pb-2 -mx-6 px-6 border-b border-secondary/10 dark:border-white/5">
+                <PageHeader
+                    title={`Penilaian: ${submission.student.user.full_name}`}
+                    subtitle={submission.quiz.title}
+                    backHref={`/dashboard/guru/kuis/${quizId}/hasil`}
+                    action={
+                        <div className="text-right">
+                            <span className="text-3xl font-bold text-primary">
+                                {currentTotalScore}
+                            </span>
+                            <span className="text-sm text-text-secondary ml-1">/{submission.max_score}</span>
+                        </div>
+                    }
+                />
             </div>
 
             {/* Grading List */}
-            <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="space-y-6 max-w-4xl mx-auto px-4">
                 {questions.map((q, idx) => {
                     const ans = submission.answers.find(a => a.question_id === q.id)
                     const grade = grades[q.id] || { score: 0, feedback: '' }
@@ -178,27 +170,32 @@ export default function GradingPage() {
                         : null
 
                     return (
-                        <div key={q.id} className={`border rounded-xl p-6 ${q.question_type === 'ESSAY' ? 'bg-slate-800/50 border-amber-500/30' : 'bg-slate-800/30 border-slate-700/50'
-                            }`}>
+                        <Card
+                            key={q.id}
+                            className={`p-6 transition-all ${q.question_type === 'ESSAY'
+                                ? 'border-amber-500/30'
+                                : ''
+                                }`}
+                        >
                             <div className="flex items-start gap-4 mb-4">
-                                <span className="w-8 h-8 rounded-full bg-slate-700 text-white flex items-center justify-center font-bold flex-shrink-0">
+                                <span className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold flex-shrink-0">
                                     {idx + 1}
                                 </span>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <span className={`px-2 py-0.5 text-xs rounded ${q.question_type === 'MULTIPLE_CHOICE' ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                        <span className={`px-2 py-0.5 text-xs rounded-full ${q.question_type === 'MULTIPLE_CHOICE' ? 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400' : 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400'}`}>
                                             {q.question_type === 'MULTIPLE_CHOICE' ? 'Pilihan Ganda' : 'Essay'}
                                         </span>
-                                        <span className="text-xs text-slate-500">Max: {q.points} Poin</span>
+                                        <span className="text-xs text-text-secondary">Max: {q.points} Poin</span>
                                     </div>
-                                    <p className="text-white text-lg mb-4">{q.question_text}</p>
+                                    <p className="text-text-main dark:text-white text-lg mb-4">{q.question_text}</p>
 
-                                    <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700/50 space-y-3">
+                                    <div className="bg-secondary/5 dark:bg-black/20 p-4 rounded-xl border border-secondary/20 dark:border-white/10 space-y-3">
                                         <div>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Jawaban Siswa</p>
+                                            <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">Jawaban Siswa</p>
                                             <p className={`font-medium ${q.question_type === 'MULTIPLE_CHOICE'
-                                                    ? (isCorrect ? 'text-green-400' : 'text-red-400')
-                                                    : 'text-white whitespace-pre-wrap'
+                                                ? (isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')
+                                                : 'text-text-main dark:text-white whitespace-pre-wrap'
                                                 }`}>
                                                 {q.question_type === 'MULTIPLE_CHOICE' && q.options
                                                     ? `${ans?.answer}. ${q.options[(ans?.answer.charCodeAt(0) || 65) - 65] || ''}`
@@ -208,8 +205,8 @@ export default function GradingPage() {
 
                                         {q.question_type === 'MULTIPLE_CHOICE' && !isCorrect && (
                                             <div>
-                                                <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Kunci Jawaban</p>
-                                                <p className="text-green-400">
+                                                <p className="text-xs text-text-secondary uppercase tracking-wider mb-1">Kunci Jawaban</p>
+                                                <p className="text-green-600 dark:text-green-400">
                                                     {q.correct_answer}. {q.options?.[(q.correct_answer?.charCodeAt(0) || 65) - 65]}
                                                 </p>
                                             </div>
@@ -218,9 +215,9 @@ export default function GradingPage() {
                                 </div>
                             </div>
 
-                            <div className="pl-12 grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-700/10 p-4 rounded-lg">
+                            <div className="pl-12 grid grid-cols-1 md:grid-cols-2 gap-4 bg-secondary/5 dark:bg-white/5 p-4 rounded-xl mt-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Nilai</label>
+                                    <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Nilai</label>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="number"
@@ -229,46 +226,44 @@ export default function GradingPage() {
                                                 const val = Math.min(q.points, Math.max(0, parseInt(e.target.value) || 0))
                                                 handleGradeChange(q.id, 'score', val)
                                             }}
-                                            className={`w-24 px-3 py-2 bg-slate-700 border rounded-lg text-white focus:outline-none focus:ring-2 ${q.question_type === 'ESSAY' ? 'border-amber-500 text-amber-400 focus:ring-amber-500' : 'border-slate-600 focus:ring-cyan-500'
+                                            className={`w-24 px-3 py-2 bg-secondary/5 dark:bg-white/5 border rounded-lg text-text-main dark:text-white focus:outline-none focus:ring-2 ${q.question_type === 'ESSAY' ? 'border-amber-500 focus:ring-amber-500' : 'border-secondary/30 dark:border-white/20 focus:ring-primary'
                                                 }`}
                                             max={q.points}
                                             min={0}
                                         />
-                                        <span className="text-slate-500 text-sm">/ {q.points}</span>
+                                        <span className="text-text-secondary text-sm">/ {q.points}</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Feedback</label>
+                                    <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Feedback</label>
                                     <input
                                         type="text"
                                         value={grade.feedback}
                                         onChange={(e) => handleGradeChange(q.id, 'feedback', e.target.value)}
-                                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-slate-500"
+                                        className="w-full px-3 py-2 bg-secondary/5 dark:bg-white/5 border border-secondary/30 dark:border-white/20 rounded-lg text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
                                         placeholder="Berikan catatan..."
                                     />
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     )
                 })}
             </div>
 
-            {/* Save Action */}
-            <div className="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur border-t border-slate-700 p-4 z-10">
+            {/* Save Action Sticky Footer */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-surface-dark/95 backdrop-blur border-t border-secondary/10 dark:border-white/5 p-4 z-20">
                 <div className="max-w-4xl mx-auto flex items-center justify-end gap-4">
-                    <Link
-                        href={`/dashboard/guru/kuis/${quizId}/hasil`}
-                        className="px-6 py-3 bg-slate-800 text-slate-300 rounded-xl hover:bg-slate-700 transition-colors"
-                    >
-                        Batal
+                    <Link href={`/dashboard/guru/kuis/${quizId}/hasil`}>
+                        <Button variant="secondary">Batal</Button>
                     </Link>
-                    <button
+                    <Button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold shadow-lg shadow-green-500/20 hover:opacity-90 transition-all disabled:opacity-50"
+                        loading={saving}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 px-8"
                     >
-                        {saving ? 'Menyimpan...' : 'Simpan Penilaian'}
-                    </button>
+                        Simpan Penilaian
+                    </Button>
                 </div>
             </div>
         </div>

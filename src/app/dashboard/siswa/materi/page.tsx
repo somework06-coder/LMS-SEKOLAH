@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Modal, PageHeader, EmptyState } from '@/components/ui'
+import { Modal, Button, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
+
 
 interface Material {
     id: string
@@ -31,6 +33,7 @@ export default function SiswaMateriPage() {
     const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [previewingPDF, setPreviewingPDF] = useState<string | null>(null)
+
 
     useEffect(() => {
         const fetchData = async () => {
@@ -78,7 +81,7 @@ export default function SiswaMateriPage() {
     const getTypeIcon = (type: string) => {
         switch (type) {
             case 'PDF': return '📄'
-            case 'VIDEO': return '🎬'
+            case 'VIDEO': return '🎥'
             case 'TEXT': return '📝'
             case 'LINK': return '🔗'
             default: return '📚'
@@ -91,60 +94,74 @@ export default function SiswaMateriPage() {
     )
 
     if (loading) {
-        return <div className="text-center text-slate-400 py-8">Memuat materi...</div>
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="animate-spin text-4xl text-primary">⏳</div>
+            </div>
+        )
     }
 
     // View 1: Subject List (Default)
     if (!selectedSubject) {
         return (
             <div className="space-y-6">
-                <PageHeader
-                    title="📚 Materi Pembelajaran"
-                    subtitle="Pilih mata pelajaran"
-                    backHref="/dashboard/siswa"
-                />
+                <div className="flex items-center gap-4">
+                    <a href="/dashboard/siswa" className="p-3 rounded-xl bg-white dark:bg-surface-dark border border-secondary/20 hover:border-primary text-text-secondary hover:text-primary transition-all shadow-sm">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </a>
+                    <div>
+                        <h1 className="text-2xl font-bold text-text-main dark:text-white">📚 Materi Pembelajaran</h1>
+                        <p className="text-text-secondary dark:text-[#A8BC9F]">Pilih mata pelajaran untuk melihat materi</p>
+                    </div>
+                </div>
 
                 {/* Search Bar */}
-                <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl p-6">
-                    <label className="block text-sm font-medium text-slate-300 mb-3">🔍 Cari Mata Pelajaran</label>
+                <Card className="p-6 bg-gradient-to-r from-secondary/10 to-primary/5 border-secondary/20">
+                    <label className="block text-sm font-bold text-text-main dark:text-white mb-3">🔍 Cari Mata Pelajaran</label>
                     <div className="relative">
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Ketik nama mata pelajaran..."
-                            className="w-full px-5 py-4 pl-12 bg-slate-700 border border-slate-600 rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-slate-500"
+                            placeholder="Ketik nama mata pelajaran (contoh: Biologi)..."
+                            className="w-full px-5 py-4 pl-12 bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl text-lg text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                         />
-                        <svg className="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 text-text-secondary absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                </div>
+                </Card>
 
                 {filteredSubjects.length === 0 ? (
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
-                        <p className="text-slate-400 text-lg">
-                            {searchQuery ? '🔍 Tidak ada mata pelajaran yang cocok' : '📚 Belum ada materi tersedia'}
-                        </p>
-                    </div>
+                    <EmptyState
+                        icon="🔍"
+                        title="Tidak Ditemukan"
+                        description={searchQuery ? 'Tidak ada mata pelajaran yang cocok dengan pencarian.' : 'Belum ada materi pelajaran yang tersedia untuk kelas Anda.'}
+                    />
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredSubjects.map((group) => (
-                            <button
+                            <Card
                                 key={group.subjectName}
-                                onClick={() => { setSelectedSubject(group); setSearchQuery('') }}
-                                className="group bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:border-cyan-500/50 hover:bg-slate-800 transition-all text-left"
+                                className="group cursor-pointer hover:border-primary/50 transition-all hover:scale-[1.02] hover:shadow-lg"
                             >
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white mb-4 shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
-                                    <span className="text-2xl">📚</span>
+                                <div onClick={() => { setSelectedSubject(group); setSearchQuery('') }}>
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white mb-4 shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+                                        <span className="text-3xl">📚</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-text-main dark:text-white mb-2 group-hover:text-primary transition-colors">
+                                        {group.subjectName}
+                                    </h3>
+                                    <p className="text-sm text-text-secondary dark:text-[#A8BC9F] flex items-center gap-2">
+                                        <span className="bg-secondary/20 px-2 py-0.5 rounded-full text-xs font-semibold">
+                                            {group.materials.length} File
+                                        </span>
+                                        Materi Tersedia
+                                    </p>
                                 </div>
-                                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-cyan-400 transition-colors">
-                                    {group.subjectName}
-                                </h3>
-                                <p className="text-sm text-slate-400">
-                                    {group.materials.length} Materi Tersedia
-                                </p>
-                            </button>
+                            </Card>
                         ))}
                     </div>
                 )}
@@ -156,113 +173,115 @@ export default function SiswaMateriPage() {
     return (
         <div className="space-y-6">
             {/* Header with back button on left */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setSelectedSubject(null)}
-                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                    >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">{selectedSubject.subjectName}</h1>
-                        <p className="text-slate-400">Daftar Materi</p>
-                    </div>
+            <div className="flex items-center gap-4 bg-white dark:bg-surface-dark p-6 rounded-3xl shadow-soft">
+                <button
+                    onClick={() => setSelectedSubject(null)}
+                    className="w-10 h-10 rounded-full bg-secondary/10 hover:bg-secondary/20 text-text-secondary dark:text-[#A8BC9F] flex items-center justify-center transition-colors scroll-smooth"
+                >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <div>
+                    <h1 className="text-2xl font-bold text-text-main dark:text-white leading-tight">{selectedSubject.subjectName}</h1>
+                    <p className="text-text-secondary dark:text-[#A8BC9F] text-sm">Daftar Materi Pembelajaran</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {selectedSubject.materials.map((material) => (
-                    <div key={material.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-blue-500/50 transition-all">
-                        <div className="flex items-start gap-3">
-                            <span className="text-2xl">{getTypeIcon(material.type)}</span>
-                            <div className="flex-1">
-                                <h3 className="font-semibold text-white">{material.title}</h3>
-                                <p className="text-sm text-slate-400 mb-2">{material.description || '-'}</p>
+                    <Card key={material.id} className="hover:shadow-lg transition-all border-l-4 border-l-transparent hover:border-l-primary">
+                        <div className="flex items-start gap-4">
+                            <span className="text-3xl bg-secondary/5 p-3 rounded-2xl">{getTypeIcon(material.type)}</span>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">{material.title}</h3>
+                                <p className="text-sm text-text-secondary dark:text-[#A8BC9F] mb-4 line-clamp-2">{material.description || 'Tidak ada deskripsi'}</p>
 
-                                {material.type === 'TEXT' ? (
-                                    <button
-                                        onClick={() => setViewingMaterial(material)}
-                                        className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 transition-colors font-medium"
-                                    >
-                                        Baca Materi →
-                                    </button>
-                                ) : material.type === 'PDF' && material.content_url ? (
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setPreviewingPDF(material.content_url)}
-                                            className="inline-flex items-center gap-2 text-sm text-purple-400 hover:text-purple-300 transition-colors font-medium"
+                                <div className="flex flex-wrap gap-2">
+                                    {material.type === 'TEXT' ? (
+                                        <Button
+                                            size="sm"
+                                            variant="secondary"
+                                            onClick={() => setViewingMaterial(material)}
                                         >
-                                            👁️ Preview PDF
-                                        </button>
+                                            Baca Materi
+                                        </Button>
+                                    ) : material.type === 'PDF' && material.content_url ? (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={() => setPreviewingPDF(material.content_url)}
+                                            >
+                                                Preview PDF
+                                            </Button>
+
+                                        </>
+                                    ) : (
                                         <a
-                                            href={material.content_url}
+                                            href={material.content_url || '#'}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors font-medium"
+                                            className="px-4 py-2 rounded-full bg-secondary/10 text-primary font-semibold hover:bg-secondary/20 transition-colors text-sm inline-flex items-center gap-2"
                                         >
-                                            📥 Download PDF
+                                            🔗 Buka Link
                                         </a>
-                                    </div>
-                                ) : material.content_url ? (
-                                    <a
-                                        href={material.content_url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
-                                    >
-                                        Buka Link →
-                                    </a>
-                                ) : null}
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </Card>
                 ))}
             </div>
 
-            {/* Material Viewer Modal (Text) */}
+            {/* Read Text Material Modal */}
             <Modal
                 open={!!viewingMaterial}
                 onClose={() => setViewingMaterial(null)}
                 title={viewingMaterial?.title || ''}
-                subtitle={viewingMaterial?.teaching_assignment?.subject?.name}
                 maxWidth="2xl"
             >
-                {viewingMaterial && (
-                    <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-800 text-slate-300 leading-relaxed whitespace-pre-wrap">
-                        {viewingMaterial.content_text}
+                <div className="space-y-4">
+                    <div className="bg-secondary/5 p-4 rounded-xl border border-secondary/20">
+                        <p className="text-sm text-text-secondary dark:text-[#A8BC9F] italic">
+                            {viewingMaterial?.description || 'Tidak ada deskripsi tambahan.'}
+                        </p>
                     </div>
-                )}
+                    <div className="prose prose-slate dark:prose-invert max-w-none text-text-main dark:text-white leading-relaxed whitespace-pre-wrap">
+                        {viewingMaterial?.content_text}
+                    </div>
+                    <div className="pt-4 flex justify-end">
+                        <Button variant="secondary" onClick={() => setViewingMaterial(null)}>
+                            Tutup
+                        </Button>
+                    </div>
+                </div>
             </Modal>
 
             {/* PDF Preview Modal */}
             {previewingPDF && (
-                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setPreviewingPDF(null)}>
-                    <div className="bg-slate-900 rounded-xl w-full max-w-6xl h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-slate-700">
-                            <h3 className="text-lg font-semibold text-white">📄 Preview PDF</h3>
-                            <div className="flex gap-2">
+                <div className="fixed inset-0 bg-background-dark/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewingPDF(null)}>
+                    <div className="bg-white dark:bg-surface-dark rounded-3xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 px-6 border-b border-secondary/20">
+                            <h3 className="text-lg font-bold text-text-main dark:text-white">📄 Preview Document</h3>
+                            <div className="flex gap-3">
                                 <a
                                     href={previewingPDF}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg transition-colors text-sm font-medium"
+                                    className="px-4 py-2 bg-primary/10 text-primary-dark rounded-full transition-colors text-sm font-bold hover:bg-primary hover:text-white"
                                 >
                                     📥 Download
                                 </a>
                                 <button
                                     onClick={() => setPreviewingPDF(null)}
-                                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+                                    className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-text-secondary hover:bg-red-100 hover:text-red-500 transition-colors"
                                 >
-                                    ✕ Tutup
+                                    ✕
                                 </button>
                             </div>
                         </div>
-                        {/* PDF Viewer */}
-                        <div className="flex-1 overflow-hidden">
+                        <div className="flex-1 overflow-hidden bg-slate-50">
                             <iframe
                                 src={previewingPDF}
                                 className="w-full h-full"
@@ -272,6 +291,8 @@ export default function SiswaMateriPage() {
                     </div>
                 </div>
             )}
+
+
         </div>
     )
 }

@@ -64,21 +64,21 @@ export default function SiswaUlanganPage() {
         const submission = submissions.find(s => s.exam_id === exam.id)
 
         if (submission?.is_submitted) {
-            return { status: 'submitted', label: '✅ Sudah Dikumpulkan', color: 'bg-green-500/20 text-green-400' }
+            return { status: 'submitted', label: '✅ Sudah Dikumpulkan', color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' }
         }
         if (now < startTime) {
             const diff = startTime.getTime() - now.getTime()
             const hours = Math.floor(diff / 3600000)
             const mins = Math.floor((diff % 3600000) / 60000)
-            return { status: 'scheduled', label: `⏰ Mulai dalam ${hours}j ${mins}m`, color: 'bg-blue-500/20 text-blue-400' }
+            return { status: 'scheduled', label: `⏰ Mulai dalam ${hours}j ${mins}m`, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' }
         }
         if (now >= startTime && now <= endTime) {
             if (submission) {
-                return { status: 'in_progress', label: '📝 Lanjutkan', color: 'bg-amber-500/20 text-amber-400' }
+                return { status: 'in_progress', label: '📝 Lanjutkan', color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' }
             }
-            return { status: 'available', label: '🚀 Mulai Sekarang', color: 'bg-green-500/20 text-green-400' }
+            return { status: 'available', label: '🚀 Mulai Sekarang', color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' }
         }
-        return { status: 'ended', label: '⌛ Waktu Habis', color: 'bg-slate-500/20 text-slate-400' }
+        return { status: 'ended', label: '⌛ Waktu Habis', color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400' }
     }
 
     const formatDateTime = (dateString: string) => {
@@ -97,18 +97,20 @@ export default function SiswaUlanganPage() {
             />
 
             {/* Warning card */}
-            <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4">
+            <div className="bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                     <div className="text-2xl">⚠️</div>
                     <div>
-                        <h3 className="font-semibold text-amber-400">Perhatian!</h3>
-                        <p className="text-sm text-slate-300">Saat mengerjakan ulangan, Anda <strong>tidak boleh keluar</strong> dari halaman ulangan. Jika keluar terlalu sering, ulangan akan dikumpulkan otomatis.</p>
+                        <h3 className="font-bold text-amber-700 dark:text-amber-400">Perhatian!</h3>
+                        <p className="text-sm text-amber-600/80 dark:text-amber-200/80">Saat mengerjakan ulangan, Anda <strong>tidak boleh keluar</strong> dari halaman ulangan. Jika keluar terlalu sering, ulangan akan dikumpulkan otomatis.</p>
                     </div>
                 </div>
             </div>
 
             {loading ? (
-                <div className="text-center text-slate-400 py-8">Memuat...</div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
             ) : exams.length === 0 ? (
                 <EmptyState
                     icon="📄"
@@ -116,49 +118,76 @@ export default function SiswaUlanganPage() {
                     description="Ulangan akan muncul di sini saat guru mempublishnya"
                 />
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 md:grid-cols-2">
                     {exams.map((exam) => {
                         const { status, label, color } = getExamStatus(exam)
                         const submission = submissions.find(s => s.exam_id === exam.id)
                         const canStart = status === 'available' || status === 'in_progress'
 
-                        return (
-                            <div key={exam.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-5">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="font-semibold text-white text-lg">{exam.title}</h3>
-                                            <span className={`px-3 py-1 text-xs rounded-full ${color}`}>{label}</span>
-                                        </div>
-                                        <p className="text-sm text-slate-400 mb-3">{exam.description || '-'}</p>
-                                        <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
-                                            <span className="px-2 py-1 bg-slate-700/50 rounded">{exam.teaching_assignment?.subject?.name}</span>
-                                            <span>📅 {formatDateTime(exam.start_time)}</span>
-                                            <span>⏱️ {exam.duration_minutes} menit</span>
-                                            <span>⚠️ Max {exam.max_violations} pelanggaran</span>
-                                        </div>
+                        // Adjust color for light mode if it was using hardcoded colors
+                        // We'll rely on the getExamStatus logic but ensure the classes are compatible or tweak getExamStatus if needed.
+                        // Ideally getExamStatus should return semantic variants, but for now we trust the classes returned or override them.
+                        // Actually let's assume getExamStatus returns specific colors that might need tweaking for light mode visibility.
+                        // For safetly, let's map the color classes or just ensure container contrast.
 
-                                        {submission?.is_submitted && (
-                                            <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                                                <p className="text-green-400 font-medium">Nilai: {submission.total_score} / {submission.max_score}</p>
+                        return (
+                            <div key={exam.id} className="bg-white dark:bg-surface-dark border-2 border-primary/30 rounded-xl p-5 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] transition-all cursor-pointer">
+                                <div className="flex flex-col h-full gap-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${color}`}>
+                                                    {label}
+                                                </span>
                                             </div>
-                                        )}
+                                            <h3 className="font-bold text-text-main dark:text-white text-lg">{exam.title}</h3>
+                                        </div>
                                     </div>
-                                    <div className="ml-4">
+
+                                    <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2">{exam.description || 'Tidak ada deskripsi'}</p>
+
+                                    <div className="space-y-2 pt-3 border-t border-secondary/10">
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Mata Pelajaran</span>
+                                            <span className="font-bold text-text-main dark:text-zinc-300">{exam.teaching_assignment?.subject?.name}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Waktu Mulai</span>
+                                            <span className="font-medium">{formatDateTime(exam.start_time)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Durasi</span>
+                                            <span className="font-medium">⏱️ {exam.duration_minutes} menit</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Max Pelanggaran</span>
+                                            <span className="font-medium text-red-500">⚠️ {exam.max_violations}x</span>
+                                        </div>
+                                    </div>
+
+                                    {submission?.is_submitted && (
+                                        <div className="mt-auto p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30 rounded-lg text-center">
+                                            <p className="text-green-600 dark:text-green-400 font-bold text-sm">
+                                                Nilai: {submission.total_score} / {submission.max_score}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-auto pt-2">
                                         {canStart && (
                                             <Link
                                                 href={`/dashboard/siswa/ulangan/${exam.id}`}
-                                                className="px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                                                className="w-full block text-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 hover:scale-[1.02] transition-all"
                                             >
-                                                {status === 'in_progress' ? '▶️ Lanjut' : '🚀 Mulai'}
+                                                {status === 'in_progress' ? '▶️ Lanjutkan Ulangan' : '🚀 Mulai Ulangan'}
                                             </Link>
                                         )}
                                         {status === 'submitted' && (
                                             <Link
                                                 href={`/dashboard/siswa/ulangan/${exam.id}/hasil`}
-                                                className="px-5 py-3 bg-green-500/20 text-green-400 rounded-xl font-medium hover:bg-green-500/30 transition-colors flex items-center gap-2"
+                                                className="w-full block text-center px-5 py-3 bg-secondary/10 text-primary-dark dark:text-primary rounded-xl font-bold hover:bg-secondary/20 transition-colors"
                                             >
-                                                📊 Lihat Hasil
+                                                📊 Lihat Detail Hasil
                                             </Link>
                                         )}
                                     </div>

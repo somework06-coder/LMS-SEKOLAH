@@ -261,13 +261,13 @@ export default function KerjakanKuisPage() {
     return (
         <div className="space-y-6 pb-20">
             {/* Header Sticky */}
-            <div className="sticky top-0 z-10 bg-slate-900/90 backdrop-blur border-b border-slate-700 pb-4 pt-2 -mx-4 px-4 md:-mx-8 md:px-8">
+            <div className="sticky top-0 z-10 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur border-b border-gray-200 dark:border-gray-700 pb-4 pt-2 -mx-4 px-4 md:-mx-8 md:px-8">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-xl font-bold text-white truncate max-w-xs md:max-w-md">{quiz.title}</h1>
-                        <p className="text-xs text-slate-400">Total: {quiz.questions.length} Soal</p>
+                        <h1 className="text-xl font-bold text-text-main dark:text-white truncate max-w-xs md:max-w-md">{quiz.title}</h1>
+                        <p className="text-xs text-text-secondary">Total: {quiz.questions.length} Soal</p>
                     </div>
-                    <div className={`px-4 py-2 rounded-xl font-mono text-xl font-bold shadow-lg ${(timeLeft || 0) < 60000 ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-800 text-cyan-400'
+                    <div className={`px-4 py-2 rounded-xl font-mono text-xl font-bold shadow-lg ${(timeLeft || 0) < 60000 ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 dark:bg-surface-dark text-primary dark:text-primary-light'
                         }`}>
                         {timeLeft !== null ? formatTime(timeLeft) : '--:--:--'}
                     </div>
@@ -277,15 +277,15 @@ export default function KerjakanKuisPage() {
             {/* Question List */}
             <div className="space-y-8 max-w-3xl mx-auto">
                 {quiz.questions.map((q, idx) => (
-                    <div key={q.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
+                    <div key={q.id} className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl p-6">
                         <div className="flex items-start gap-4 mb-4">
-                            <span className="w-8 h-8 flex-shrink-0 bg-slate-700 text-white rounded-full flex items-center justify-center font-bold">
+                            <span className="w-8 h-8 flex-shrink-0 bg-primary text-white rounded-full flex items-center justify-center font-bold">
                                 {idx + 1}
                             </span>
                             <div className="flex-1">
-                                <p className="text-white text-lg leading-relaxed whitespace-pre-wrap">{q.question_text}</p>
+                                <p className="text-text-main dark:text-white text-lg leading-relaxed whitespace-pre-wrap">{q.question_text}</p>
                             </div>
-                            <span className="text-xs text-slate-500 font-medium px-2 py-1 bg-slate-700/30 rounded">
+                            <span className="text-xs text-text-secondary font-medium px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
                                 {q.points} Poin
                             </span>
                         </div>
@@ -296,7 +296,7 @@ export default function KerjakanKuisPage() {
                                 <img
                                     src={q.image_url}
                                     alt="Gambar soal"
-                                    className="max-h-64 rounded-lg border border-slate-600"
+                                    className="max-h-64 rounded-lg border border-gray-200 dark:border-gray-600"
                                 />
                             </div>
                         )}
@@ -311,11 +311,11 @@ export default function KerjakanKuisPage() {
                                             <label
                                                 key={optIdx}
                                                 className={`flex items-center gap-3 p-4 rounded-xl cursor-pointer transition-all border ${isSelected
-                                                    ? 'bg-cyan-500/20 border-cyan-500 text-cyan-100'
-                                                    : 'bg-slate-700/30 border-transparent hover:bg-slate-700/50 text-slate-300'
+                                                    ? 'bg-primary/10 border-primary text-primary-dark dark:text-primary-light'
+                                                    : 'bg-gray-50 dark:bg-gray-800/50 border-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-text-secondary dark:text-slate-300'
                                                     }`}
                                             >
-                                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-cyan-400 bg-cyan-400 text-slate-900' : 'border-slate-500'
+                                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 ${isSelected ? 'border-primary bg-primary text-white' : 'border-gray-400 dark:border-slate-500'
                                                     }`}>
                                                     {isSelected && (
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,7 +343,7 @@ export default function KerjakanKuisPage() {
                                 <textarea
                                     value={answers[q.id] || ''}
                                     onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                                    className="w-full h-32 px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 placeholder-slate-500"
+                                    className="w-full h-32 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-gray-400"
                                     placeholder="Tulis jawaban Anda di sini..."
                                 />
                             )}
@@ -353,15 +353,15 @@ export default function KerjakanKuisPage() {
             </div>
 
             {/* Submit Action */}
-            <div className="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur border-t border-slate-700 p-4 z-10">
+            <div className="fixed bottom-0 left-0 right-0 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur border-t border-gray-200 dark:border-gray-700 p-4 z-10">
                 <div className="max-w-3xl mx-auto flex items-center justify-between">
-                    <p className="text-sm text-slate-400">
-                        Terjawab: <span className="text-white font-bold">{Object.keys(answers).length}</span> / {quiz.questions.length}
+                    <p className="text-sm text-text-secondary">
+                        Terjawab: <span className="text-text-main dark:text-white font-bold">{Object.keys(answers).length}</span> / {quiz.questions.length}
                     </p>
                     <button
                         onClick={() => handleSubmit(false)}
                         disabled={submitting}
-                        className="px-8 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:opacity-90 transition-all disabled:opacity-50"
+                        className="px-8 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-50"
                     >
                         {submitting ? 'Mengirim...' : 'Kumpulkan Jawaban'}
                     </button>
@@ -370,20 +370,20 @@ export default function KerjakanKuisPage() {
             {/* Submit Confirmation Modal */}
             {showSubmitConfirm && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm text-center shadow-xl">
-                        <div className="w-16 h-16 bg-cyan-500/20 text-cyan-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-2xl p-6 w-full max-w-sm text-center shadow-xl">
+                        <div className="w-16 h-16 bg-primary/20 text-primary rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Kumpulkan Kuis?</h3>
-                        <p className="text-slate-400 mb-6">
+                        <h3 className="text-xl font-bold text-text-main dark:text-white mb-2">Kumpulkan Kuis?</h3>
+                        <p className="text-text-secondary mb-6">
                             Apakah kamu yakin ingin mengumpulkan kuis ini? Jawaban tidak dapat diubah setelah dikumpulkan.
                         </p>
                         <div className="flex gap-3">
                             <button
                                 onClick={() => setShowSubmitConfirm(false)}
-                                className="flex-1 px-4 py-3 bg-slate-700 text-slate-200 rounded-xl hover:bg-slate-600 transition-colors font-medium"
+                                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-slate-700 text-text-main dark:text-slate-200 rounded-xl hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors font-medium"
                                 disabled={submitting}
                             >
                                 Nanti Dulu
@@ -391,7 +391,7 @@ export default function KerjakanKuisPage() {
                             <button
                                 onClick={() => confirmSubmit(false)}
                                 disabled={submitting}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold hover:opacity-90 transition-opacity"
+                                className="flex-1 px-4 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-opacity"
                             >
                                 {submitting ? 'Mengirim...' : 'Iya, Kumpulkan'}
                             </button>
@@ -403,19 +403,19 @@ export default function KerjakanKuisPage() {
             {/* Timeout Modal */}
             {showTimeoutModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-full max-w-sm text-center shadow-2xl">
+                    <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-2xl p-8 w-full max-w-sm text-center shadow-2xl">
                         <div className="w-20 h-20 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
                             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">⏰ Waktu Habis!</h3>
-                        <p className="text-slate-400 mb-6">
+                        <h3 className="text-2xl font-bold text-text-main dark:text-white mb-2">⏰ Waktu Habis!</h3>
+                        <p className="text-text-secondary mb-6">
                             Kuis telah otomatis dikumpulkan. Jawabanmu sudah tersimpan.
                         </p>
                         <button
                             onClick={() => router.push(`/dashboard/siswa/kuis/${quizId}/hasil`)}
-                            className="w-full px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold hover:opacity-90 transition-opacity"
+                            className="w-full px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-opacity"
                         >
                             Lihat Hasil
                         </button>

@@ -1,9 +1,9 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Modal, PageHeader, Button } from '@/components/ui'
+import Card from '@/components/ui/Card'
 
 interface Submission {
     id: string
@@ -118,11 +118,11 @@ export default function TugasHasilPage() {
     }
 
     if (loading) {
-        return <div className="text-center text-slate-400 py-8">Memuat...</div>
+        return <div className="text-center text-text-secondary py-12 flex justify-center"><div className="animate-spin text-3xl text-primary">⏳</div></div>
     }
 
     if (!assignment) {
-        return <div className="text-center text-slate-400 py-8">Tugas tidak ditemukan</div>
+        return <div className="text-center text-text-secondary py-8">Tugas tidak ditemukan</div>
     }
 
     const stats = calculateStats()
@@ -130,85 +130,91 @@ export default function TugasHasilPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title={`📋 Hasil: ${assignment.title}`}
+                title={`📊 Hasil: ${assignment.title}`}
                 subtitle={`${assignment.teaching_assignment?.class?.name} • ${assignment.teaching_assignment?.subject?.name}`}
                 backHref="/dashboard/guru/tugas"
             />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-purple-400">{submissions.length}</p>
-                    <p className="text-xs text-slate-400">Submit</p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-blue-400">{stats.avg || '-'}</p>
-                    <p className="text-xs text-slate-400">Rata-rata</p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-green-400">{stats.highest || '-'}</p>
-                    <p className="text-xs text-slate-400">Tertinggi</p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-3xl font-bold text-amber-400">{submissions.length - stats.count}</p>
-                    <p className="text-xs text-slate-400">Belum Dinilai</p>
-                </div>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                    <p className="text-3xl font-bold text-purple-500 mb-1">{submissions.length}</p>
+                    <p className="text-xs text-text-secondary font-bold uppercase tracking-wider">Total Submit</p>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                    <p className="text-3xl font-bold text-blue-500 mb-1">{stats.avg || '-'}</p>
+                    <p className="text-xs text-text-secondary font-bold uppercase tracking-wider">Rata-rata</p>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                    <p className="text-3xl font-bold text-green-500 mb-1">{stats.highest || '-'}</p>
+                    <p className="text-xs text-text-secondary font-bold uppercase tracking-wider">Tertinggi</p>
+                </Card>
+                <Card className="p-4 flex flex-col items-center justify-center text-center">
+                    <p className="text-3xl font-bold text-amber-500 mb-1">{submissions.length - stats.count}</p>
+                    <p className="text-xs text-text-secondary font-bold uppercase tracking-wider">Belum Dinilai</p>
+                </Card>
             </div>
 
             {/* Submissions Table */}
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+            <Card className="overflow-hidden p-0">
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead>
-                            <tr className="border-b border-slate-700">
-                                <th className="text-left p-4 text-slate-400 font-medium">Siswa</th>
-                                <th className="text-center p-4 text-slate-400 font-medium">Waktu</th>
-                                <th className="text-center p-4 text-slate-400 font-medium">Nilai</th>
-                                <th className="text-center p-4 text-slate-400 font-medium">Aksi</th>
+                        <thead className="bg-secondary/10 dark:bg-white/5 border-b border-secondary/20">
+                            <tr>
+                                <th className="text-left px-6 py-4 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Siswa</th>
+                                <th className="text-center px-6 py-4 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Waktu Submit</th>
+                                <th className="text-center px-6 py-4 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Nilai</th>
+                                <th className="text-center px-6 py-4 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700/50">
+                        <tbody className="divide-y divide-secondary/20 dark:divide-white/5">
                             {submissions.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-slate-400">
-                                        Belum ada siswa yang mengumpulkan
+                                    <td colSpan={4} className="p-12 text-center text-text-secondary">
+                                        Belum ada siswa yang mengumpulkan tugas ini
                                     </td>
                                 </tr>
                             ) : (
                                 submissions.map((sub) => (
-                                    <tr key={sub.id} className="hover:bg-slate-700/30">
-                                        <td className="p-4">
-                                            <p className="text-white font-medium">{sub.student?.user?.full_name}</p>
-                                            <p className="text-xs text-slate-500">{sub.student?.nis}</p>
+                                    <tr key={sub.id} className="hover:bg-secondary/5 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <p className="text-text-main dark:text-white font-bold">{sub.student?.user?.full_name}</p>
+                                            <p className="text-xs text-text-secondary dark:text-zinc-400 font-mono">{sub.student?.nis || 'No NIS'}</p>
                                         </td>
-                                        <td className="p-4 text-center text-sm text-slate-300">
-                                            {new Date(sub.submitted_at).toLocaleString('id-ID')}
+                                        <td className="px-6 py-4 text-center text-sm text-text-secondary dark:text-zinc-400">
+                                            {new Date(sub.submitted_at).toLocaleString('id-ID', {
+                                                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                                            })}
                                         </td>
-                                        <td className="p-4 text-center">
+                                        <td className="px-6 py-4 text-center">
                                             {sub.grade?.length > 0 ? (
-                                                <span className={`px-3 py-1 rounded-full font-bold ${sub.grade[0].score >= 75 ? 'bg-green-500/20 text-green-400' :
-                                                        sub.grade[0].score >= 60 ? 'bg-amber-500/20 text-amber-400' :
-                                                            'bg-red-500/20 text-red-400'
+                                                <span className={`inline-flex px-3 py-1.5 rounded-full text-sm font-bold shadow-sm ${sub.grade[0].score >= 75
+                                                        ? 'bg-green-500/10 text-green-600 border border-green-200 dark:border-green-500/20 dark:text-green-400'
+                                                        : sub.grade[0].score >= 60
+                                                            ? 'bg-amber-500/10 text-amber-600 border border-amber-200 dark:border-amber-500/20 dark:text-amber-400'
+                                                            : 'bg-red-500/10 text-red-600 border border-red-200 dark:border-red-500/20 dark:text-red-400'
                                                     }`}>
                                                     {sub.grade[0].score}
                                                 </span>
                                             ) : (
-                                                <span className="px-2 py-1 bg-slate-600/30 text-slate-400 rounded-full text-xs">Belum</span>
+                                                <span className="inline-flex px-3 py-1 bg-secondary/10 text-text-secondary rounded-full text-xs font-medium">Belum Dinilai</span>
                                             )}
                                         </td>
-                                        <td className="p-4 text-center">
-                                            <button
+                                        <td className="px-6 py-4 text-center">
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
                                                 onClick={() => setGrading({
                                                     submissionId: sub.id,
                                                     score: sub.grade?.[0]?.score?.toString() || '',
                                                     feedback: sub.grade?.[0]?.feedback || '',
                                                     answers: getAnswersText(sub.answers),
-                                                    studentName: sub.student?.user?.full_name || 'Unknown'
+                                                    studentName: sub.student?.user?.full_name || 'Siswa'
                                                 })}
-                                                className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm"
+                                                className="w-full justify-center"
                                             >
-                                                {sub.grade?.length ? '✏️ Edit' : '📝 Nilai'}
-                                            </button>
+                                                {sub.grade?.length ? '✏️ Edit Nilai' : '📝 Beri Nilai'}
+                                            </Button>
                                         </td>
                                     </tr>
                                 ))
@@ -216,54 +222,56 @@ export default function TugasHasilPage() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Card>
 
             {/* Grading Modal */}
             <Modal
                 open={!!grading}
                 onClose={() => setGrading(null)}
-                title="Input Nilai"
+                title="📝 Input Nilai"
                 subtitle={grading?.studentName}
                 maxWidth="lg"
             >
                 {grading && (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         {/* Jawaban Siswa */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">📄 Jawaban Siswa</label>
-                            <div className="bg-slate-900/50 rounded-xl p-4 max-h-48 overflow-y-auto">
-                                <pre className="text-slate-200 whitespace-pre-wrap font-mono text-sm">{grading.answers}</pre>
+                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2">📄 Jawaban Siswa</label>
+                            <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-4 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                                <pre className="text-text-main dark:text-slate-200 whitespace-pre-wrap font-mono text-sm leading-relaxed">{grading.answers}</pre>
                             </div>
                         </div>
 
-                        {/* Score Input */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Nilai (0-100)</label>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                value={grading.score}
-                                onChange={(e) => setGrading({ ...grading, score: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 text-2xl font-bold text-center"
-                                placeholder="0"
-                            />
-                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Score Input */}
+                            <div className="md:col-span-1">
+                                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Nilai (0-100)</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={grading.score}
+                                    onChange={(e) => setGrading({ ...grading, score: e.target.value })}
+                                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary text-3xl font-bold text-center placeholder-text-secondary/30"
+                                    placeholder="0"
+                                    autoFocus
+                                />
+                            </div>
 
-                        {/* Feedback */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Feedback (Opsional)</label>
-                            <textarea
-                                value={grading.feedback}
-                                onChange={(e) => setGrading({ ...grading, feedback: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                rows={3}
-                                placeholder="Berikan komentar atau feedback..."
-                            />
+                            {/* Feedback */}
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Feedback (Opsional)</label>
+                                <textarea
+                                    value={grading.feedback}
+                                    onChange={(e) => setGrading({ ...grading, feedback: e.target.value })}
+                                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary h-[88px] resize-none"
+                                    placeholder="Berikan komentar atau masukan untuk siswa..."
+                                />
+                            </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="flex gap-3 pt-2">
+                        <div className="flex gap-3 pt-4 border-t border-secondary/10 mt-2">
                             <Button variant="secondary" onClick={() => setGrading(null)} className="flex-1">
                                 Batal
                             </Button>

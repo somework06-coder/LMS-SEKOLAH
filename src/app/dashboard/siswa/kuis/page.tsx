@@ -82,7 +82,9 @@ export default function SiswaKuisPage() {
             />
 
             {loading ? (
-                <div className="text-center text-slate-400 py-8">Memuat...</div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
             ) : quizzes.length === 0 ? (
                 <EmptyState
                     icon="🎯"
@@ -90,53 +92,68 @@ export default function SiswaKuisPage() {
                     description="Belum ada kuis aktif untuk kelasmu"
                 />
             ) : (
-                <div className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
                     {quizzes.map((quiz) => {
                         const submission = getSubmission(quiz.id)
                         const isCompleted = !!submission?.submitted_at
                         const questionCount = quiz.questions?.[0]?.count || 0
 
                         return (
-                            <div key={quiz.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="font-semibold text-white text-lg">{quiz.title}</h3>
-                                            {isCompleted && (
-                                                <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
-                                                    Selesai
+                            <div key={quiz.id} className="bg-white dark:bg-surface-dark border-2 border-primary/30 rounded-xl p-5 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] transition-all group cursor-pointer">
+                                <div className="flex flex-col h-full gap-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="px-2.5 py-1 bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 text-xs font-bold rounded-full">
+                                                    Kuis
                                                 </span>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-slate-400 mb-2">{quiz.description || '-'}</p>
-                                        <div className="flex items-center gap-4 text-xs text-slate-500">
-                                            <span className="px-2 py-1 bg-slate-700/50 rounded">{quiz.teaching_assignment?.subject?.name}</span>
-                                            <span>⏱️ {quiz.duration_minutes} menit</span>
-                                            <span>📝 {questionCount} soal</span>
+                                                {isCompleted && (
+                                                    <span className="px-2.5 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-bold rounded-full">
+                                                        ✓ Selesai
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <h3 className="font-bold text-text-main dark:text-white text-lg group-hover:text-cyan-600 transition-colors">{quiz.title}</h3>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-2">
+
+                                    <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2">{quiz.description || 'Tidak ada deskripsi'}</p>
+
+                                    <div className="space-y-2 pt-3 border-t border-secondary/10">
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Mata Pelajaran</span>
+                                            <span className="font-bold text-text-main dark:text-zinc-300">{quiz.teaching_assignment?.subject?.name}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Durasi</span>
+                                            <span className="font-medium">⏱️ {quiz.duration_minutes} menit</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Jumlah Soal</span>
+                                            <span className="font-medium">📝 {questionCount} soal</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto pt-3">
                                         {isCompleted ? (
-                                            <>
-                                                <div className="text-right">
-                                                    <p className="text-2xl font-bold text-cyan-400">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 p-2 bg-secondary/10 rounded-lg text-center">
+                                                    <p className="text-xs text-text-secondary">Nilai</p>
+                                                    <p className="text-xl font-bold text-cyan-600 dark:text-cyan-400">
                                                         {submission.total_score}/{submission.max_score}
-                                                    </p>
-                                                    <p className="text-xs text-slate-400">
-                                                        {submission.is_graded ? 'Nilai Final' : 'Menunggu penilaian essay'}
                                                     </p>
                                                 </div>
                                                 <Link
                                                     href={`/dashboard/siswa/kuis/${quiz.id}/hasil`}
-                                                    className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors text-sm"
+                                                    className="flex-1 px-4 py-3 bg-secondary/20 text-text-main dark:text-white rounded-xl font-bold hover:bg-secondary/30 transition-colors text-center text-sm"
                                                 >
                                                     Lihat Hasil
                                                 </Link>
-                                            </>
+                                            </div>
                                         ) : (
                                             <Link
                                                 href={`/dashboard/siswa/kuis/${quiz.id}`}
-                                                className="px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
+                                                className="w-full block text-center px-6 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-xl font-bold shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/30 hover:scale-[1.02] transition-all"
                                             >
                                                 Mulai Kuis
                                             </Link>

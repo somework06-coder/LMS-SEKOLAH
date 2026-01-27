@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
+import { Modal, Button, EmptyState, Toast, type ToastType, PageHeader } from '@/components/ui'
+import Card from '@/components/ui/Card'
+import { supabase } from '@/lib/supabase'
 
 interface TeachingAssignment {
     id: string
@@ -18,7 +20,9 @@ interface Material {
     content_url: string | null
     content_text: string | null
     created_at: string
+
     teaching_assignment: TeachingAssignment
+
 }
 
 interface SubjectGroup {
@@ -36,7 +40,6 @@ export default function MateriPage() {
     const [selectedSubject, setSelectedSubject] = useState<SubjectGroup | null>(null)
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
     const [formData, setFormData] = useState({
         teaching_assignment_id: '',
         title: '',
@@ -46,13 +49,24 @@ export default function MateriPage() {
         content_text: ''
     })
     const [saving, setSaving] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState(0)
     const [file, setFile] = useState<File | null>(null)
+
     const [previewingPDF, setPreviewingPDF] = useState<string | null>(null)
+    const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null)
 
     const fetchData = async () => {
         try {
             const teachersRes = await fetch('/api/teachers')
             const teachers = await teachersRes.json()
+
+            if (!Array.isArray(teachers)) {
+                console.error('API Error (Teachers):', teachers)
+                setToast({ message: 'Gagal memuat data guru. Silakan refresh.', type: 'error' })
+                setLoading(false)
+                return
+            }
+
             const myTeacher = teachers.find((t: { user: { id: string } }) => t.user.id === user?.id)
 
             if (!myTeacher) {
@@ -69,15 +83,17 @@ export default function MateriPage() {
                 materialsRes.json()
             ])
 
-            const myAssignments = assignmentsData.filter((a: { teacher: { id: string } }) => a.teacher.id === myTeacher.id)
-            const myMaterials = materialsData.filter((m: Material) =>
+            const validAssignments = Array.isArray(assignmentsData) ? assignmentsData : []
+            const validMaterials = Array.isArray(materialsData) ? materialsData : []
+
+            const myAssignments = validAssignments.filter((a: { teacher: { id: string } }) => a.teacher.id === myTeacher.id)
+            const myMaterials = validMaterials.filter((m: Material) =>
                 myAssignments.some((a: TeachingAssignment) => a.id === m.teaching_assignment?.id)
             )
 
             setAssignments(myAssignments)
             setMaterials(myMaterials)
 
-            // Group materials by subject
             const groups: Record<string, SubjectGroup> = {}
             myAssignments.forEach((a: TeachingAssignment) => {
                 const subjectId = a.subject.id
@@ -94,7 +110,6 @@ export default function MateriPage() {
                 }
             })
 
-            // Add materials to groups
             myMaterials.forEach((m: Material) => {
                 const subjectId = m.teaching_assignment?.subject?.id
                 if (subjectId && groups[subjectId]) {
@@ -103,8 +118,10 @@ export default function MateriPage() {
             })
 
             setGroupedSubjects(Object.values(groups))
+            return Object.values(groups)
         } catch (error) {
             console.error('Error:', error)
+            return []
         } finally {
             setLoading(false)
         }
@@ -114,28 +131,74 @@ export default function MateriPage() {
         if (user) fetchData()
     }, [user])
 
+
+
+    const uploadFile = async (file: File, onProgress: (percent: number) => void): Promise<{ url: string }> => {
+        try {
+            const signRes = await fetch('/api/materials/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: file.name,
+                    contentType: file.type
+                })
+            })
+
+            if (!signRes.ok) {
+                const err = await signRes.json()
+                throw new Error(err.error || 'Failed to get upload token')
+            }
+
+            const { path, token } = await signRes.json()
+
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest()
+                const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+                const uploadUrl = `${supabaseUrl}/storage/v1/object/upload/sign/materials/${path}?token=${token}`
+
+                xhr.open('PUT', uploadUrl)
+                xhr.setRequestHeader('Content-Type', file.type)
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100)
+                        onProgress(percentComplete)
+                    }
+                }
+
+                xhr.onload = async () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        const { data: { publicUrl } } = supabase.storage
+                            .from('materials')
+                            .getPublicUrl(path)
+
+                        resolve({ url: publicUrl })
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`))
+                    }
+                }
+
+                xhr.onerror = () => reject(new Error('Network error during upload'))
+                xhr.send(file)
+            })
+        } catch (error) {
+            console.error('Upload error:', error)
+            throw error
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
+        setUploadProgress(0)
+
         try {
             let finalContentUrl = formData.content_url
+            let finalContentText = formData.content_text
 
             if (formData.type === 'PDF' && file) {
-                const uploadFormData = new FormData()
-                uploadFormData.append('file', file)
-
-                const uploadRes = await fetch('/api/materials/upload', {
-                    method: 'POST',
-                    body: uploadFormData
-                })
-
-                if (!uploadRes.ok) {
-                    const errorData = await uploadRes.json()
-                    throw new Error(errorData.error || 'Gagal upload file')
-                }
-
-                const data = await uploadRes.json()
-                finalContentUrl = data.url
+                const { url } = await uploadFile(file, setUploadProgress)
+                finalContentUrl = url
             }
 
             const res = await fetch('/api/materials', {
@@ -143,330 +206,187 @@ export default function MateriPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...formData,
-                    content_url: finalContentUrl
+                    content_url: finalContentUrl,
+                    content_text: finalContentText
                 })
             })
 
-            if (res.ok) {
-                setShowModal(false)
-                setFormData({ teaching_assignment_id: '', title: '', description: '', type: 'TEXT', content_url: '', content_text: '' })
-                setFile(null)
-                fetchData()
+            const data = await res.json()
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Gagal menyimpan materi')
             }
+
+
+
+            setToast({ message: 'Materi berhasil disimpan!', type: 'success' })
+            setShowModal(false)
+            setFormData({
+                teaching_assignment_id: '',
+                title: '',
+                description: '',
+                type: 'TEXT',
+                content_url: '',
+                content_text: ''
+            })
+            setFile(null)
+            fetchData()
         } catch (error: any) {
-            console.error('Error uploading/saving:', error)
-            alert(error.message || 'Gagal menyimpan materi. Pastikan file valid.')
+            setToast({ message: error.message, type: 'error' })
         } finally {
             setSaving(false)
+            setUploadProgress(0)
+        }
+    }
+
+
+
+    const getTypeLabel = (type: string) => {
+        switch (type) {
+            case 'TEXT': return '📝'
+            case 'VIDEO': return '🎥'
+            case 'PDF': return '📕'
+            case 'LINK': return '🔗'
+            default: return '📄'
         }
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Yakin ingin menghapus materi ini?')) return
-        await fetch(`/api/materials/${id}`, { method: 'DELETE' })
-        fetchData()
-    }
+        if (!confirm('Apakah Anda yakin ingin menghapus materi ini?')) return
 
-    const getTypeLabel = (type: string) => {
-        switch (type) {
-            case 'PDF': return '📄'
-            case 'VIDEO': return '🎬'
-            case 'TEXT': return '📝'
-            case 'LINK': return '🔗'
-            default: return '📚'
+        try {
+            const res = await fetch(`/api/materials?id=${id}`, {
+                method: 'DELETE'
+            })
+
+            if (!res.ok) throw new Error('Gagal menghapus materi')
+
+            setToast({ message: 'Materi berhasil dihapus', type: 'success' })
+            fetchData()
+        } catch (error) {
+            setToast({ message: 'Gagal menghapus materi', type: 'error' })
         }
     }
 
-    // Open modal with pre-selected subject if viewing a subject
     const handleAddMaterial = () => {
-        if (selectedSubject && assignments.length > 0) {
-            // Find first teaching assignment for this subject
-            const firstTA = assignments.find(a => a.subject.id === selectedSubject.subjectId)
-            if (firstTA) {
-                setFormData({ ...formData, teaching_assignment_id: firstTA.id })
-            }
+        if (assignments.length === 0) {
+            setToast({ message: 'Anda belum memiliki kelas ajar. Hubungi Admin.', type: 'error' })
+            return
         }
         setShowModal(true)
     }
 
-    // Filter subjects by search
-    const filteredSubjects = groupedSubjects.filter(group =>
-        group.subjectName.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-
-    // View 1: Subject Cards
-    if (!selectedSubject) {
+    if (loading) {
         return (
-            <div className="space-y-6">
-                <PageHeader
-                    title="📚 Materi Pembelajaran"
-                    subtitle="Pilih mata pelajaran"
-                    backHref="/dashboard/guru"
-                    action={
-                        <Button onClick={() => setShowModal(true)} icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        }>
-                            Tambah Materi
-                        </Button>
-                    }
-                />
-
-                {/* Search Bar */}
-                <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-6">
-                    <label className="block text-sm font-medium text-slate-300 mb-3">🔍 Cari Mata Pelajaran</label>
-                    <div className="relative">
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Ketik nama mata pelajaran..."
-                            className="w-full px-5 py-4 pl-12 bg-slate-700 border border-slate-600 rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-green-500 placeholder-slate-500"
-                        />
-                        <svg className="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-                </div>
-
-                {loading ? (
-                    <div className="text-center text-slate-400 py-8">Memuat...</div>
-                ) : filteredSubjects.length === 0 ? (
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
-                        <p className="text-slate-400 text-lg">
-                            {searchQuery ? '🔍 Tidak ada mata pelajaran yang cocok' : '📚 Belum ada mata pelajaran'}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {filteredSubjects.map((group) => (
-                            <button
-                                key={group.subjectId}
-                                onClick={() => { setSelectedSubject(group); setSearchQuery('') }}
-                                className="group bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:border-green-500/50 hover:bg-slate-800 transition-all text-left"
-                            >
-                                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white mb-4 shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform">
-                                    <span className="text-2xl">📚</span>
-                                </div>
-                                <h3 className="text-lg font-bold text-white mb-1 group-hover:text-green-400 transition-colors">
-                                    {group.subjectName}
-                                </h3>
-                                <p className="text-sm text-slate-400 mb-1">
-                                    {group.materials.length} Materi
-                                </p>
-                                <div className="flex flex-wrap gap-1 mt-2">
-                                    {group.classes.map((className, idx) => (
-                                        <span key={idx} className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">
-                                            {className}
-                                        </span>
-                                    ))}
-                                </div>
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                {/* Add Material Modal */}
-                <Modal open={showModal} onClose={() => setShowModal(false)} title="Tambah Materi">
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Kelas & Mata Pelajaran</label>
-                            <select
-                                value={formData.teaching_assignment_id}
-                                onChange={(e) => setFormData({ ...formData, teaching_assignment_id: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                required
-                            >
-                                <option value="">Pilih Kelas & Mapel</option>
-                                {assignments.map((a) => (
-                                    <option key={a.id} value={a.id}>{a.class.name} - {a.subject.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Judul Materi</label>
-                            <input
-                                type="text"
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Deskripsi</label>
-                            <textarea
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                rows={2}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Tipe</label>
-                            <select
-                                value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                            >
-                                <option value="TEXT">Teks</option>
-                                <option value="LINK">Link URL</option>
-                                <option value="PDF">Upload PDF</option>
-                                <option value="VIDEO">Video URL</option>
-                            </select>
-                        </div>
-
-                        {formData.type === 'PDF' ? (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">File PDF</label>
-                                <input
-                                    type="file"
-                                    accept="application/pdf"
-                                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-slate-300 focus:outline-none focus:ring-2 focus:ring-green-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-slate-600 file:text-white hover:file:bg-slate-500"
-                                    required
-                                />
-                                <p className="mt-1 text-xs text-slate-500">Maksimal 5MB.</p>
-                            </div>
-                        ) : formData.type === 'TEXT' ? (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Konten</label>
-                                <textarea
-                                    value={formData.content_text}
-                                    onChange={(e) => setFormData({ ...formData, content_text: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    rows={4}
-                                />
-                            </div>
-                        ) : (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">URL</label>
-                                <input
-                                    type="url"
-                                    value={formData.content_url}
-                                    onChange={(e) => setFormData({ ...formData, content_url: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                                    placeholder="https://..."
-                                />
-                            </div>
-                        )}
-
-                        <div className="flex gap-3 pt-4">
-                            <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
-                                Batal
-                            </Button>
-                            <Button type="submit" loading={saving} className="flex-1">
-                                Simpan
-                            </Button>
-                        </div>
-                    </form>
-                </Modal>
-
-                {/* PDF Preview Modal */}
-                {previewingPDF && (
-                    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setPreviewingPDF(null)}>
-                        <div className="bg-slate-900 rounded-xl w-full max-w-6xl h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-4 border-b border-slate-700">
-                                <h3 className="text-lg font-semibold text-white">📄 Preview PDF</h3>
-                                <div className="flex gap-2">
-                                    <a
-                                        href={previewingPDF}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors text-sm font-medium"
-                                    >
-                                        📥 Download
-                                    </a>
-                                    <button
-                                        onClick={() => setPreviewingPDF(null)}
-                                        className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
-                                    >
-                                        ✕ Tutup
-                                    </button>
-                                </div>
-                            </div>
-                            {/* PDF Viewer */}
-                            <div className="flex-1 overflow-hidden">
-                                <iframe
-                                    src={previewingPDF}
-                                    className="w-full h-full"
-                                    title="PDF Preview"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                )}
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="animate-spin text-4xl text-primary">⏳</div>
             </div>
         )
     }
 
-    // View 2: Materials List for Selected Subject
+    if (assignments.length === 0) {
+        return (
+            <EmptyState
+                icon="👨‍🏫"
+                title="Belum Ada Penugasan"
+                description="Anda belum ditugaskan di kelas manapun. Hubungi Administrator."
+            />
+        )
+    }
+
+    if (!selectedSubject) {
+        return (
+            <div className="space-y-6">
+                <PageHeader
+                    title="Materi Pembelajaran"
+                    subtitle="Pilih mata pelajaran untuk mengelola materi"
+                    backHref="/dashboard/guru"
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {groupedSubjects.map((subject) => (
+                        <Card
+                            key={subject.subjectId}
+                            className="group cursor-pointer hover:border-primary/50 transition-all hover:scale-[1.02]"
+                        >
+                            <div onClick={() => setSelectedSubject(subject)}>
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-2xl group-hover:bg-primary group-hover:text-white transition-colors">
+                                        📚
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-text-main dark:text-white group-hover:text-primary transition-colors">{subject.subjectName}</h3>
+                                        <p className="text-sm text-text-secondary dark:text-[#A8BC9F]">{subject.classes.join(', ')}</p>
+                                    </div>
+                                </div>
+                                <div className="border-t border-secondary/10 dark:border-white/5 pt-4 flex justify-between items-center text-sm text-text-secondary dark:text-[#A8BC9F]">
+                                    <span>{subject.materials.length} Materi</span>
+                                    <span className="text-primary font-medium group-hover:underline">Buka Folder →</span>
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
-            {/* Header with back button on left */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setSelectedSubject(null)}
-                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                    >
+            <PageHeader
+                title={selectedSubject.subjectName}
+                subtitle={`${selectedSubject.materials.length} file tersedia`}
+                onBack={() => setSelectedSubject(null)}
+                action={
+                    <Button onClick={handleAddMaterial} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </button>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">{selectedSubject.subjectName}</h1>
-                        <p className="text-slate-400">{selectedSubject.materials.length} Materi</p>
-                    </div>
-                </div>
-                <Button onClick={handleAddMaterial} icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                }>
-                    Tambah Materi
-                </Button>
-            </div>
+                    }>
+                        Tambah Materi
+                    </Button>
+                }
+            />
 
             {selectedSubject.materials.length === 0 ? (
                 <EmptyState
-                    icon="📚"
-                    title="Belum Ada Materi"
+                    icon="📂"
+                    title="Folder Kosong"
                     description={`Belum ada materi untuk ${selectedSubject.subjectName}`}
-                    action={<Button onClick={handleAddMaterial}>Tambah Materi</Button>}
+                    action={<Button onClick={handleAddMaterial}>Upload Materi Pertama</Button>}
                 />
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {selectedSubject.materials.map((material) => (
-                        <div key={material.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 hover:border-green-500/50 transition-all">
+                        <Card key={material.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-primary/0 hover:border-l-primary">
                             <div className="flex items-start gap-3">
-                                <span className="text-2xl">{getTypeLabel(material.type)}</span>
-                                <div className="flex-1">
-                                    <h3 className="font-semibold text-white mb-1">{material.title}</h3>
-                                    <p className="text-sm text-slate-400 mb-2">{material.description || '-'}</p>
-                                    <div className="flex items-center gap-2 text-xs mb-3">
-                                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">
+                                <span className="text-3xl bg-secondary/10 p-2 rounded-xl">{getTypeLabel(material.type)}</span>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-text-main dark:text-white mb-1 truncate">{material.title}</h3>
+                                    <p className="text-sm text-text-secondary dark:text-[#A8BC9F] mb-3 line-clamp-2">{material.description || 'Tidak ada deskripsi'}</p>
+
+                                    <div className="flex flex-wrap items-center gap-2 mb-4">
+                                        <span className="px-2.5 py-1 bg-secondary/10 text-text-secondary text-xs rounded-full font-medium border border-secondary/20">
                                             {material.teaching_assignment?.class?.name}
                                         </span>
+
                                     </div>
 
-                                    {/* Action Buttons */}
-                                    <div className="flex flex-wrap gap-2">
+                                    <div className="flex items-center gap-2 border-t border-secondary/10 dark:border-white/5 pt-3">
                                         {material.type === 'PDF' && material.content_url && (
                                             <>
                                                 <button
                                                     onClick={() => setPreviewingPDF(material.content_url)}
-                                                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors flex items-center gap-1"
+                                                    className="text-xs font-bold text-primary-dark dark:text-primary hover:text-text-main transition-colors flex items-center gap-1"
                                                 >
                                                     👁️ Preview
                                                 </button>
+                                                <span className="text-secondary/30">|</span>
                                                 <a
                                                     href={material.content_url}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="text-sm text-green-400 hover:text-green-300 transition-colors flex items-center gap-1"
+                                                    className="text-xs font-bold text-text-secondary hover:text-text-main transition-colors flex items-center gap-1"
                                                 >
                                                     📥 Download
                                                 </a>
@@ -477,26 +397,193 @@ export default function MateriPage() {
                                                 href={material.content_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                                                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                                             >
                                                 🔗 Buka Link
                                             </a>
                                         )}
+                                        <div className="flex-1"></div>
                                         <button
                                             onClick={() => handleDelete(material.id)}
-                                            className="text-sm text-red-400 hover:text-red-300 transition-colors flex items-center gap-1"
+                                            className="text-xs font-bold text-red-500/70 hover:text-red-600 transition-colors flex items-center gap-1"
                                         >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
                                             Hapus
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
+            )}
+
+            <Modal open={showModal} onClose={() => setShowModal(false)} title="Tambah Materi Baru">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Kelas & Mata Pelajaran</label>
+                        <div className="relative">
+                            <select
+                                value={formData.teaching_assignment_id}
+                                onChange={(e) => setFormData({ ...formData, teaching_assignment_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                required
+                            >
+                                <option value="">Pilih Target Kelas...</option>
+                                {assignments.map((a) => (
+                                    <option key={a.id} value={a.id}>{a.class.name} - {a.subject.name}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+                                ▼
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Judul Materi</label>
+                        <input
+                            type="text"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            placeholder="Contoh: Bab 1 - Pengenalan Aljabar"
+                            required
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Deskripsi Singkat</label>
+                        <textarea
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            rows={2}
+                            placeholder="Jelaskan sedikit tentang materi ini..."
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Tipe Konten</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {['TEXT', 'LINK', 'PDF', 'VIDEO'].map((type) => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, type })}
+                                    className={`
+                                        py-2 rounded-lg text-sm font-bold transition-all
+                                        ${formData.type === type
+                                            ? 'bg-primary text-white shadow-soft'
+                                            : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'}
+                                    `}
+                                >
+                                    {type}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {formData.type === 'PDF' ? (
+                        <div className="bg-secondary/5 border-2 border-dashed border-secondary/30 rounded-2xl p-6 text-center hover:border-primary/50 transition-colors">
+                            <div className="mb-3 text-4xl">📄</div>
+                            <label className="block text-sm font-bold text-text-main dark:text-white mb-1 cursor-pointer">
+                                <span>Klik untuk upload PDF</span>
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                                    className="hidden"
+                                    required
+                                />
+                            </label>
+                            <p className="text-xs text-text-secondary">{file ? `Terpilih: ${file.name}` : 'Maksimal ukuran 5MB'}</p>
+                        </div>
+                    ) : formData.type === 'TEXT' ? (
+                        <div>
+                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Isi Konten</label>
+                            <textarea
+                                value={formData.content_text || ''}
+                                onChange={(e) => setFormData({ ...formData, content_text: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                rows={6}
+                                placeholder="Tulis materi di sini..."
+                            />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Link URL</label>
+                            <input
+                                type="url"
+                                value={formData.content_url || ''}
+                                onChange={(e) => setFormData({ ...formData, content_url: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                placeholder="https://youtube.com/..."
+                            />
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                        <Button type="button" variant="ghost" onClick={() => setShowModal(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button type="submit" loading={saving} className="flex-1">
+                            Simpan Materi
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {previewingPDF && (
+                <div className="fixed inset-0 bg-background-dark/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setPreviewingPDF(null)}>
+                    <div className="bg-white dark:bg-surface-dark rounded-3xl w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between p-4 px-6 border-b border-secondary/20">
+                            <h3 className="text-lg font-bold text-text-main dark:text-white">📄 Preview Document</h3>
+                            <div className="flex gap-3">
+                                <a
+                                    href={previewingPDF}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-primary/10 text-primary-dark rounded-full transition-colors text-sm font-bold hover:bg-primary hover:text-white"
+                                >
+                                    📥 Download
+                                </a>
+                                <button
+                                    onClick={() => setPreviewingPDF(null)}
+                                    className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-text-secondary hover:bg-red-100 hover:text-red-500 transition-colors"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex-1 overflow-hidden bg-slate-50">
+                            <iframe
+                                src={previewingPDF}
+                                className="w-full h-full"
+                                title="PDF Preview"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {uploadProgress > 0 && (
+                <div className="fixed bottom-6 right-6 bg-white dark:bg-surface-dark px-6 py-4 rounded-2xl shadow-2xl border border-secondary/20 z-50 flex flex-col gap-2 w-80 animate-in slide-in-from-bottom duration-300">
+                    <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-text-main dark:text-white">Uploading...</span>
+                        <span className="font-bold text-primary">{uploadProgress}%</span>
+                    </div>
+                    <div className="w-full bg-secondary/10 rounded-full h-3 overflow-hidden">
+                        <div
+                            className="bg-primary h-full rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                    </div>
+                </div>
+            )}
+
+            {toast && (
+                <Toast
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast(null)}
+                />
             )}
         </div>
     )

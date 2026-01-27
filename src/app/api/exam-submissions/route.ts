@@ -23,7 +23,15 @@ export async function GET(request: NextRequest) {
             .select(`
                 *,
                 student:students(id, nis, user:users(full_name)),
-                exam:exams(id, title, duration_minutes)
+                exam:exams(
+                    id, 
+                    title, 
+                    duration_minutes,
+                    teaching_assignment:teaching_assignments(
+                        subject:subjects(id, name),
+                        class:classes(id, name)
+                    )
+                )
             `)
             .order('created_at', { ascending: false })
 

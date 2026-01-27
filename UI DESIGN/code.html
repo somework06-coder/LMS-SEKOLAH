@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Student Dashboard - Soft Sage</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6B8E6B", // Muted Sage Green
+                        "primary-dark": "#4A634A", // Earthy Deep Green
+                        "secondary": "#A8BC9F", // Softer Sage
+                        "background-light": "#F8F9F2", // Warm off-white with green undertone
+                        "background-dark": "#1A1F1A", // Dark forest background
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#242B24",
+                        "text-main": "#1B2E1B", // Dark Forest Green
+                        "text-secondary": "#5C6B5C", // Deep Warm Grey-Green
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2rem",
+                        "2xl": "2.5rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "soft": "0 8px 24px -6px rgba(107, 142, 107, 0.12)",
+                        "card": "0 4px 12px rgba(27, 46, 27, 0.05)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-text-main dark:text-[#E0E7E0] transition-colors duration-300 min-h-screen flex flex-col">
+<header class="sticky top-0 z-50 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-sm px-6 py-4 pt-12 md:pt-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="relative group cursor-pointer">
+<div class="size-12 rounded-full bg-cover bg-center ring-2 ring-primary ring-offset-2 ring-offset-background-light dark:ring-offset-background-dark transition-all hover:scale-105" data-alt="Profile picture of a smiling student" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA17oAnGS1Bmx_NtGW6ctTBrycMH2hzT9MgHpTucdGx-L66Vym2WTfbC7lX3pzVge-r19jlJA8ISnLf-EGFg2zo-Kng47USdkN4UaunTsvCHBCZDiarBjaTrmJ7DU4ee9O-OUlA6ON6iAVP3JHEOweqhagLDo9bAhIBl09zgAdt0FLTsbC388hWOa-PLPTjsGn8a1F2zX2zvuR2IYM2j8JtURFfstClTXsuI9MhNVQtswefK8DUR7q2HkZajiedTemtzQnZZT3kPi0');">
+</div>
+<div class="absolute bottom-0 right-0 size-3 bg-green-500 border-2 border-background-light dark:border-background-dark rounded-full"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-text-secondary dark:text-[#A8BC9F] text-sm font-medium">Good Morning,</span>
+<h2 class="text-xl font-bold leading-tight text-text-main dark:text-white">Alex Johnson! 👋</h2>
+</div>
+</div>
+<button class="flex items-center justify-center size-12 rounded-full bg-white dark:bg-surface-dark text-text-main dark:text-white shadow-card hover:shadow-soft active:scale-95 transition-all">
+<span aria-label="Notifications" class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-4 right-5 size-2 bg-primary rounded-full animate-pulse"></span>
+</button>
+</div>
+</header>
+<main class="flex-1 w-full max-w-md mx-auto md:max-w-3xl flex flex-col pb-24 overflow-x-hidden">
+<div class="px-6 mt-2 mb-6">
+<div class="relative">
+<input class="w-full h-12 pl-12 pr-4 rounded-full bg-white dark:bg-surface-dark border-none text-text-main dark:text-white placeholder-text-secondary/50 focus:ring-2 focus:ring-primary shadow-sm outline-none" placeholder="Search for courses..." type="text"/>
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary text-[20px]">search</span>
+</div>
+</div>
+<div class="px-6 mb-8">
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-secondary/15 dark:bg-surface-dark p-4 rounded-xl flex items-center gap-3 border border-secondary/20">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-dark dark:text-primary">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div>
+<p class="text-xs text-text-secondary dark:text-[#A8BC9F] font-medium">Hours Learned</p>
+<p class="text-lg font-bold">24.5 hrs</p>
+</div>
+</div>
+<div class="bg-[#E8F1E8] dark:bg-surface-dark p-4 rounded-xl flex items-center gap-3 border border-secondary/20">
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary-dark">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<p class="text-xs text-text-secondary dark:text-[#A8BC9F] font-medium">Completed</p>
+<p class="text-lg font-bold">12 Tasks</p>
+</div>
+</div>
+</div>
+</div>
+<section class="mb-8">
+<div class="flex items-center justify-between px-6 mb-4">
+<h3 class="text-lg font-bold text-text-main dark:text-white">Continue Learning</h3>
+<a class="text-sm font-semibold text-primary-dark dark:text-primary hover:underline" href="#">View All</a>
+</div>
+<div class="flex overflow-x-auto hide-scrollbar px-6 pb-4 -mx-2 snap-x snap-mandatory">
+<div class="snap-center shrink-0 w-[280px] md:w-[320px] bg-white dark:bg-surface-dark rounded-xl shadow-soft mr-4 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Abstract colorful 3d shapes representing AI" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA131r5fqFwuo_8cHB8Qsmo5Fc31BqCTKK-EmEGWX3aZGFAQRmzhwsPc7T1WGohlQ0DrA5-FBbSbQngfkppR61y0jlFrbGfLunwxSAfaDGeaWjUI2RBny-rDcflGEc64UAmr-BLxGN7jKD49dD-dhttMf9vNuXGxk0aHdXPqKvzzqOm0riewPdUX6XMb2ZpVgT5UU-jgPgXWCECMuonY3KIlg4lPhi7T8JWw85u_-3g-DBsEpuUddukyClVjGIh74CHP4ZbL8tlHas');"></div>
+<div class="absolute top-2 right-2 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold text-text-main dark:text-white shadow-sm">
+                            45%
+                        </div>
+</div>
+<div class="px-1">
+<h4 class="text-base font-bold text-text-main dark:text-white leading-tight mb-1 line-clamp-1">Intro to AI &amp; Machine Learning</h4>
+<p class="text-xs text-text-secondary dark:text-[#A8BC9F] mb-3">Module 3: Neural Networks</p>
+<div class="w-full bg-secondary/20 dark:bg-gray-700 h-2 rounded-full mb-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[45%]"></div>
+</div>
+<button class="w-full h-10 rounded-full bg-primary-dark hover:bg-text-main active:bg-text-main text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                            Resume
+                        </button>
+</div>
+</div>
+<div class="snap-center shrink-0 w-[280px] md:w-[320px] bg-white dark:bg-surface-dark rounded-xl shadow-soft mr-4 p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Geometric shapes and formulas representing Mathematics" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCMqUX2ml5bbYoTEUNAVCjC8po4YySFEEHZ2Tm54wJ_cFp_yFq2DKIXHkWV0qHXeHoyK9g1HbwVUFkpGou9_uMgkNoEYDIpdZ5_HVULYvRGJgzMFOMsqQSfZUqWV8oKJiH1W-murVG_T2DA4AJrlyI6zFqtLAVDepH7dlNtaiYwRP64SHqn6HZ1YHw9PDXaWj9FOo3mUxej2WpxPh9IuScWiRlv0WuYYiYb761QlL8VEULV7a0queBAyy-rHgf9PDm_0ikXIOA_V7k');"></div>
+<div class="absolute top-2 right-2 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold text-text-main dark:text-white shadow-sm">
+                            12%
+                        </div>
+</div>
+<div class="px-1">
+<h4 class="text-base font-bold text-text-main dark:text-white leading-tight mb-1 line-clamp-1">Mathematics 101: Calculus</h4>
+<p class="text-xs text-text-secondary dark:text-[#A8BC9F] mb-3">Module 1: Limits</p>
+<div class="w-full bg-secondary/20 dark:bg-gray-700 h-2 rounded-full mb-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[12%]"></div>
+</div>
+<button class="w-full h-10 rounded-full bg-primary-dark hover:bg-text-main active:bg-text-main text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                            Resume
+                        </button>
+</div>
+</div>
+<div class="snap-center shrink-0 w-[280px] md:w-[320px] bg-white dark:bg-surface-dark rounded-xl shadow-soft p-3 flex flex-col gap-3 group">
+<div class="relative w-full aspect-video rounded-lg overflow-hidden bg-gray-100">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110" data-alt="Laboratory equipment representing Science" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuChwk7oD6H0g8Vl2JhaC5tp_KL_90gA4hz4AWTCYWMAlfqbFf13Jvk3TlFzS76EPlQ2RYaxreqWc5TSrUInkOPPNZ0dC9fR-_60fHGbvqyzTfZy7XwTm7BYhoKDva4vwYT10QllfgnGkQm8BoaTcACTzGSoag5SYyqWeFgN7c8epDQdpHsG41CcpdADpSwQOL7Wv7n8ZrWNHdDuxhLmm6Abpx0hIk8MRYtLyRw1eJmDbFfppL6rpRjAWOauKlbwk6g6bOS7Fl1eYdM');"></div>
+<div class="absolute top-2 right-2 bg-white/90 dark:bg-black/60 backdrop-blur-md px-2 py-1 rounded-md text-xs font-bold text-text-main dark:text-white shadow-sm">
+                            80%
+                        </div>
+</div>
+<div class="px-1">
+<h4 class="text-base font-bold text-text-main dark:text-white leading-tight mb-1 line-clamp-1">General Science</h4>
+<p class="text-xs text-text-secondary dark:text-[#A8BC9F] mb-3">Module 8: Chemistry Basics</p>
+<div class="w-full bg-secondary/20 dark:bg-gray-700 h-2 rounded-full mb-3 overflow-hidden">
+<div class="bg-primary h-full rounded-full w-[80%]"></div>
+</div>
+<button class="w-full h-10 rounded-full bg-primary-dark hover:bg-text-main active:bg-text-main text-white font-bold text-sm transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+                            Resume
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<section class="px-6 mb-8">
+<div class="relative w-full bg-gradient-to-r from-secondary/80 to-primary rounded-2xl p-6 overflow-hidden shadow-soft">
+<div class="absolute -right-6 -top-6 size-32 bg-white/20 rounded-full blur-2xl"></div>
+<div class="absolute -left-6 -bottom-6 size-24 bg-white/20 rounded-full blur-xl"></div>
+<div class="relative z-10 flex flex-col items-start gap-4">
+<div class="inline-flex items-center justify-center size-10 rounded-full bg-white/30 backdrop-blur text-text-main dark:text-white mb-1">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h2 class="text-xl font-bold text-text-main mb-1">Stuck on a problem?</h2>
+<p class="text-text-main/80 text-sm max-w-[200px] leading-relaxed">Ask your YPP AI Tutor for instant help and guidance!</p>
+</div>
+<button class="flex items-center justify-center h-10 px-5 bg-primary-dark text-white rounded-full text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all">
+                        Ask AI Tutor
+                        <span class="material-symbols-outlined ml-2 text-[18px]">arrow_forward</span>
+</button>
+</div>
+<div class="absolute bottom-0 right-0 w-32 h-32 md:w-40 md:h-40 pointer-events-none">
+<img alt="Friendly looking 3D robot character" class="w-full h-full object-contain object-bottom opacity-90 drop-shadow-xl" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKXc9AKpSH4ZNM2BIkbOHu1Vas8DjfF8wTEnQsSk0GTa4RIAgnvpKQaW3T0aKEskJhIWcn_iEx29-atrbiA7mw8DT4dx5IEt_Bxo1J8pbXzU3Wpc5kXgOlQawuS1jjh4SgCFAx7BpDdzA_-u0e1x7mrOFqUpydWDDNZ125G-bYEx306NgPVCU79Be5tHfgxkA2ztSvdRvz_bFDuyP4DBkjs3cj4_rXiPNE5bvfE098hPPw4e3Ua9iwYUttajAnrQgm6UlMUux3nEc"/>
+</div>
+</div>
+</section>
+<section class="px-6 mb-24">
+<h3 class="text-lg font-bold text-text-main dark:text-white mb-4">Up Next</h3>
+<div class="flex flex-col gap-3">
+<div class="flex items-center gap-4 bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-secondary/10 hover:border-primary/40 transition-colors cursor-pointer group">
+<div class="size-12 rounded-full bg-primary/10 dark:bg-primary/20 text-primary-dark dark:text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">calculate</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-semibold text-text-main dark:text-white truncate">Math Assignment</h4>
+<p class="text-sm text-text-secondary dark:text-[#A8BC9F] truncate">Calculus Chapter 4</p>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md mb-1">Due Tmrw</span>
+<span class="text-xs text-text-secondary dark:text-[#A8BC9F]">11:59 PM</span>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-secondary/10 hover:border-primary/40 transition-colors cursor-pointer group">
+<div class="size-12 rounded-full bg-primary/10 dark:bg-primary/20 text-primary-dark dark:text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">science</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-semibold text-text-main dark:text-white truncate">Science Quiz</h4>
+<p class="text-sm text-text-secondary dark:text-[#A8BC9F] truncate">Periodic Table</p>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="text-xs font-bold text-primary-dark bg-secondary/10 dark:bg-primary/20 px-2 py-1 rounded-md mb-1">Friday</span>
+<span class="text-xs text-text-secondary dark:text-[#A8BC9F]">10:00 AM</span>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-surface-dark p-4 rounded-xl shadow-sm border border-secondary/10 hover:border-primary/40 transition-colors cursor-pointer group">
+<div class="size-12 rounded-full bg-primary/10 dark:bg-primary/20 text-primary-dark dark:text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">history_edu</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-base font-semibold text-text-main dark:text-white truncate">History Essay</h4>
+<p class="text-sm text-text-secondary dark:text-[#A8BC9F] truncate">World War II Analysis</p>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="text-xs font-bold text-primary-dark bg-secondary/10 dark:bg-primary/20 px-2 py-1 rounded-md mb-1">Next Mon</span>
+<span class="text-xs text-text-secondary dark:text-[#A8BC9F]">09:00 AM</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<nav class="fixed bottom-0 left-0 w-full bg-white/90 dark:bg-background-dark/95 backdrop-blur-lg border-t border-secondary/10 dark:border-white/5 pb-6 pt-2 z-50">
+<div class="flex justify-around items-center px-2 max-w-md mx-auto md:max-w-3xl">
+<button class="flex flex-col items-center gap-1 p-2 text-primary-dark dark:text-primary">
+<div class="bg-primary/10 rounded-full px-4 py-1">
+<span class="material-symbols-outlined text-[24px] fill-current">grid_view</span>
+</div>
+<span class="text-[10px] font-bold">Home</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-text-secondary dark:text-[#A8BC9F] hover:text-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[24px]">school</span>
+<span class="text-[10px] font-medium">Courses</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 -mt-8">
+<div class="size-14 rounded-full bg-primary-dark shadow-lg shadow-primary-dark/40 flex items-center justify-center text-white hover:scale-105 transition-transform">
+<span class="material-symbols-outlined text-[28px]">smart_toy</span>
+</div>
+<span class="text-[10px] font-medium text-text-secondary dark:text-[#A8BC9F]">AI Tutor</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-text-secondary dark:text-[#A8BC9F] hover:text-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[24px]">chat_bubble</span>
+<span class="text-[10px] font-medium">Chat</span>
+</button>
+<button class="flex flex-col items-center gap-1 p-2 text-text-secondary dark:text-[#A8BC9F] hover:text-primary-dark transition-colors">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="text-[10px] font-medium">Profile</span>
+</button>
+</div>
+</nav>
+
+</body></html>

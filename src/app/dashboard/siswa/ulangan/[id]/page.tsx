@@ -304,6 +304,9 @@ export default function TakeExamPage() {
     }
 
     const formatTime = (seconds: number) => {
+        if (isNaN(seconds) || seconds < 0) {
+            return '00:00'
+        }
         const hrs = Math.floor(seconds / 3600)
         const mins = Math.floor((seconds % 3600) / 60)
         const secs = seconds % 60
@@ -315,10 +318,10 @@ export default function TakeExamPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-900">
+            <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
                 <div className="text-center">
                     <div className="text-4xl mb-4 animate-pulse">📄</div>
-                    <p className="text-slate-400">Mempersiapkan ulangan...</p>
+                    <p className="text-text-secondary">Mempersiapkan ulangan...</p>
                 </div>
             </div>
         )
@@ -326,8 +329,8 @@ export default function TakeExamPage() {
 
     if (!exam || !submission || questions.length === 0) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-900">
-                <div className="text-center text-red-400">Ulangan tidak dapat dimulai</div>
+            <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+                <div className="text-center text-red-500 dark:text-red-400">Ulangan tidak dapat dimulai</div>
             </div>
         )
     }
@@ -337,7 +340,7 @@ export default function TakeExamPage() {
     const maxViolations = exam.max_violations
 
     return (
-        <div ref={containerRef} className="min-h-screen bg-slate-900 flex flex-col select-none" style={{ userSelect: 'none' }}>
+        <div ref={containerRef} className="min-h-screen bg-background-light dark:bg-background-dark flex flex-col select-none" style={{ userSelect: 'none' }}>
             {/* Violation Warning Overlay */}
             {showViolationWarning && (
                 <div className="fixed inset-0 bg-red-600/80 flex items-center justify-center z-50">
@@ -363,19 +366,19 @@ export default function TakeExamPage() {
             )}
 
             {/* Header */}
-            <div className="bg-slate-800 border-b border-slate-700 p-4">
+            <div className="bg-surface-light dark:bg-surface-dark border-b border-gray-200 dark:border-gray-700 p-4">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div>
-                        <h1 className="text-lg font-bold text-white">{exam.title}</h1>
-                        <p className="text-sm text-slate-400">{exam.teaching_assignment?.subject?.name}</p>
+                        <h1 className="text-lg font-bold text-text-main dark:text-white">{exam.title}</h1>
+                        <p className="text-sm text-text-secondary">{exam.teaching_assignment?.subject?.name}</p>
                     </div>
                     <div className="flex items-center gap-6">
                         {/* Violation counter */}
-                        <div className={`px-3 py-1 rounded-lg ${violationCount > 0 ? 'bg-red-500/20 text-red-400' : 'bg-slate-700 text-slate-400'}`}>
+                        <div className={`px-3 py-1 rounded-lg ${violationCount > 0 ? 'bg-red-500/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-text-secondary'}`}>
                             ⚠️ {violationCount}/{maxViolations}
                         </div>
                         {/* Timer */}
-                        <div className={`px-4 py-2 rounded-lg font-mono text-lg font-bold ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse' : timeLeft <= 600 ? 'bg-amber-500 text-white' : 'bg-purple-500/20 text-purple-400'}`}>
+                        <div className={`px-4 py-2 rounded-lg font-mono text-lg font-bold ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse' : timeLeft <= 600 ? 'bg-amber-500 text-white' : 'bg-primary/20 text-primary dark:text-primary-light'}`}>
                             ⏱️ {formatTime(timeLeft)}
                         </div>
                     </div>
@@ -385,34 +388,34 @@ export default function TakeExamPage() {
             {/* Main content */}
             <div className="flex-1 flex max-w-4xl mx-auto w-full">
                 {/* Question navigation sidebar */}
-                <div className="w-20 bg-slate-800/50 border-r border-slate-700 p-3 overflow-y-auto">
-                    <p className="text-xs text-slate-500 mb-3 text-center">Navigasi</p>
+                <div className="w-20 bg-surface-light dark:bg-surface-dark border-r border-gray-200 dark:border-gray-700 p-3 overflow-y-auto">
+                    <p className="text-xs text-text-secondary mb-3 text-center">Navigasi</p>
                     <div className="grid grid-cols-2 gap-2">
                         {questions.map((q, idx) => (
                             <button
                                 key={q.id}
                                 onClick={() => setCurrentIndex(idx)}
-                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentIndex === idx ? 'bg-purple-500 text-white' : answers[q.id] ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${currentIndex === idx ? 'bg-primary text-white' : answers[q.id] ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-500/30' : 'bg-gray-100 dark:bg-gray-700 text-text-secondary dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-600'}`}
                             >
                                 {idx + 1}
                             </button>
                         ))}
                     </div>
-                    <p className="text-xs text-slate-500 mt-4 text-center">{answeredCount}/{questions.length}</p>
+                    <p className="text-xs text-text-secondary mt-4 text-center">{answeredCount}/{questions.length}</p>
                 </div>
 
                 {/* Question area */}
                 <div className="flex-1 p-6">
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 min-h-[400px]">
+                    <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl p-6 min-h-[400px]">
                         <div className="flex items-center gap-3 mb-4">
-                            <span className="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">{currentIndex + 1}</span>
-                            <span className={`px-2 py-0.5 text-xs rounded ${currentQuestion.question_type === 'MULTIPLE_CHOICE' ? 'bg-blue-500/20 text-blue-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                            <span className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">{currentIndex + 1}</span>
+                            <span className={`px-2 py-0.5 text-xs rounded ${currentQuestion.question_type === 'MULTIPLE_CHOICE' ? 'bg-blue-500/20 text-blue-500 dark:text-blue-400' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'}`}>
                                 {currentQuestion.question_type === 'MULTIPLE_CHOICE' ? 'Pilihan Ganda' : 'Essay'}
                             </span>
-                            <span className="text-xs text-slate-500">({currentQuestion.points} poin)</span>
+                            <span className="text-xs text-text-secondary">({currentQuestion.points} poin)</span>
                         </div>
 
-                        <p className="text-white text-lg mb-4">{currentQuestion.question_text}</p>
+                        <p className="text-text-main dark:text-white text-lg mb-4">{currentQuestion.question_text}</p>
 
                         {/* Display question image if exists */}
                         {currentQuestion.image_url && (
@@ -420,7 +423,7 @@ export default function TakeExamPage() {
                                 <img
                                     src={currentQuestion.image_url}
                                     alt="Gambar soal"
-                                    className="max-h-64 rounded-lg border border-slate-600 mx-auto"
+                                    className="max-h-64 rounded-lg border border-gray-200 dark:border-gray-600 mx-auto"
                                 />
                             </div>
                         )}
@@ -434,9 +437,9 @@ export default function TakeExamPage() {
                                         <button
                                             key={optIdx}
                                             onClick={() => saveAnswer(currentQuestion.id, letter)}
-                                            className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${isSelected ? 'bg-purple-500/20 border-purple-500 text-white' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}
+                                            className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${isSelected ? 'bg-primary/10 border-primary text-text-main dark:text-white' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-600 text-text-secondary dark:text-slate-300 hover:border-gray-400 dark:hover:border-slate-500'}`}
                                         >
-                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mr-3 font-bold ${isSelected ? 'bg-purple-500 text-white' : 'bg-slate-600 text-slate-300'}`}>{letter}</span>
+                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg mr-3 font-bold ${isSelected ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-slate-600 text-text-secondary dark:text-slate-300'}`}>{letter}</span>
                                             {opt}
                                         </button>
                                     )
@@ -448,7 +451,7 @@ export default function TakeExamPage() {
                             <textarea
                                 value={answers[currentQuestion.id] || ''}
                                 onChange={(e) => saveAnswer(currentQuestion.id, e.target.value)}
-                                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                                className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                                 rows={6}
                                 placeholder="Tulis jawaban Anda di sini..."
                             />
@@ -460,7 +463,7 @@ export default function TakeExamPage() {
                         <button
                             onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
                             disabled={currentIndex === 0}
-                            className="px-6 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-3 bg-gray-200 dark:bg-slate-700 text-text-main dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             ← Sebelumnya
                         </button>
@@ -475,7 +478,7 @@ export default function TakeExamPage() {
                         ) : (
                             <button
                                 onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
-                                className="px-6 py-3 bg-purple-500 text-white rounded-xl hover:bg-purple-600 transition-colors"
+                                className="px-6 py-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors"
                             >
                                 Selanjutnya →
                             </button>
@@ -487,23 +490,23 @@ export default function TakeExamPage() {
             {/* Submit Confirmation Modal */}
             {showConfirmSubmit && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm text-center">
+                    <div className="bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-2xl p-6 w-full max-w-sm text-center">
                         <div className="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Kumpulkan Ulangan?</h3>
-                        <p className="text-slate-400 mb-2">
-                            Anda telah menjawab <strong className="text-white">{answeredCount}</strong> dari <strong className="text-white">{questions.length}</strong> soal.
+                        <h3 className="text-xl font-bold text-text-main dark:text-white mb-2">Kumpulkan Ulangan?</h3>
+                        <p className="text-text-secondary mb-2">
+                            Anda telah menjawab <strong className="text-text-main dark:text-white">{answeredCount}</strong> dari <strong className="text-text-main dark:text-white">{questions.length}</strong> soal.
                         </p>
                         {answeredCount < questions.length && (
-                            <p className="text-amber-400 text-sm mb-4">⚠️ Masih ada {questions.length - answeredCount} soal yang belum dijawab!</p>
+                            <p className="text-amber-500 dark:text-amber-400 text-sm mb-4">⚠️ Masih ada {questions.length - answeredCount} soal yang belum dijawab!</p>
                         )}
                         <div className="flex gap-3 mt-6">
                             <button
                                 onClick={() => setShowConfirmSubmit(false)}
-                                className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors"
+                                className="flex-1 px-4 py-3 bg-gray-200 dark:bg-slate-700 text-text-main dark:text-white rounded-xl hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
                                 disabled={submitting}
                             >
                                 Kembali

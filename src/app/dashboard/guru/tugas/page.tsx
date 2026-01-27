@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface TeachingAssignment {
@@ -40,6 +41,10 @@ export default function TugasPage() {
         try {
             const teachersRes = await fetch('/api/teachers')
             const teachers = await teachersRes.json()
+            if (!Array.isArray(teachers)) {
+                setLoading(false)
+                return
+            }
             const myTeacher = teachers.find((t: { user: { id: string } }) => t.user.id === user?.id)
 
             if (!myTeacher) {
@@ -62,7 +67,7 @@ export default function TugasPage() {
             const myTA = taArray.filter((a: { teacher: { id: string } }) => a.teacher.id === myTeacher.id)
             const myAssignments = assignmentsArray.filter((a: Assignment) =>
                 myTA.some((ta: TeachingAssignment) => ta.id === a.teaching_assignment?.id)
-            )
+            ).sort((a: Assignment, b: Assignment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
             setTeachingAssignments(myTA)
             setAssignments(myAssignments)
@@ -110,7 +115,7 @@ export default function TugasPage() {
         <div className="space-y-6">
             <PageHeader
                 title="📋 Tugas"
-                subtitle="Buat dan kelola tugas"
+                subtitle="Buat dan kelola tugas siswa"
                 backHref="/dashboard/guru"
                 action={
                     <Button onClick={() => setShowModal(true)} icon={
@@ -123,114 +128,127 @@ export default function TugasPage() {
                 }
             />
 
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
-                {loading ? (
-                    <div className="p-8 text-center text-slate-400">Memuat...</div>
-                ) : assignments.length === 0 ? (
-                    <EmptyState
-                        icon="📝"
-                        title="Belum Ada Tugas"
-                        description="Buat tugas untuk siswa"
-                        action={<Button onClick={() => setShowModal(true)}>Buat Tugas</Button>}
-                    />
-                ) : (
-                    <div className="divide-y divide-slate-700/50">
-                        {assignments.map((assignment) => (
-                            <div key={assignment.id} className="p-4 hover:bg-slate-800/30">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className="px-2 py-1 text-xs rounded bg-amber-500/20 text-amber-400">
-                                                {assignment.type}
-                                            </span>
-                                            <h3 className="font-semibold text-white">{assignment.title}</h3>
-                                        </div>
-                                        <p className="text-sm text-slate-400 mb-2">{assignment.description || '-'}</p>
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded">{assignment.teaching_assignment?.subject?.name}</span>
-                                            <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">{assignment.teaching_assignment?.class?.name}</span>
-                                            {assignment.due_date && (
-                                                <span className="text-slate-400">
-                                                    📅 {new Date(assignment.due_date).toLocaleDateString('id-ID')}
-                                                </span>
-                                            )}
-                                        </div>
+            {loading ? (
+                <div className="p-12 flex justify-center">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
+            ) : assignments.length === 0 ? (
+                <EmptyState
+                    icon="📝"
+                    title="Belum Ada Tugas"
+                    description="Buat tugas baru untuk siswa Anda"
+                    action={<Button onClick={() => setShowModal(true)}>Buat Tugas</Button>}
+                />
+            ) : (
+                <div className="grid grid-cols-1 gap-4">
+                    {assignments.map((assignment) => (
+                        <Card key={assignment.id} className="group hover:border-primary/30 transition-all hover:shadow-md">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                        <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                                            {assignment.type}
+                                        </span>
+                                        <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                                            {assignment.teaching_assignment?.class?.name}
+                                        </span>
+                                        <span className="px-2.5 py-1 text-xs font-bold rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-200 dark:border-green-500/20">
+                                            {assignment.teaching_assignment?.subject?.name}
+                                        </span>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        <Link
-                                            href={`/dashboard/guru/tugas/${assignment.id}/hasil`}
-                                            className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
-                                        >
-                                            📊 Hasil
-                                        </Link>
-                                        <button onClick={() => handleDelete(assignment.id)} className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                    <h3 className="text-xl font-bold text-text-main dark:text-white mb-1 group-hover:text-primary transition-colors">{assignment.title}</h3>
+                                    <p className="text-sm text-text-secondary dark:text-zinc-400 mb-3 line-clamp-2">
+                                        {assignment.description || 'Tidak ada deskripsi'}
+                                    </p>
+                                    <div className="flex items-center gap-4 text-xs text-text-secondary dark:text-zinc-500">
+                                        <div className="flex items-center gap-1.5">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <span>Deadline: {assignment.due_date ? new Date(assignment.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div className="flex flex-col gap-2">
+                                    <Link
+                                        href={`/dashboard/guru/tugas/${assignment.id}/hasil`}
+                                    >
+                                        <Button variant="secondary" size="sm" className="w-full justify-center">
+                                            📊 Hasil
+                                        </Button>
+                                    </Link>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleDelete(assignment.id)}
+                                        className="w-full justify-center text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900/30"
+                                    >
+                                        Hapus
+                                    </Button>
+                                </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
 
             <Modal
                 open={showModal}
                 onClose={() => setShowModal(false)}
-                title="Buat Tugas"
+                title="📝 Buat Tugas Baru"
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Kelas & Mata Pelajaran</label>
-                        <select
-                            value={formData.teaching_assignment_id}
-                            onChange={(e) => setFormData({ ...formData, teaching_assignment_id: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            required
-                        >
-                            <option value="">Pilih Kelas & Mapel</option>
-                            {teachingAssignments.map((a) => (
-                                <option key={a.id} value={a.id}>{a.class.name} - {a.subject.name}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Kelas & Mata Pelajaran</label>
+                        <div className="relative">
+                            <select
+                                value={formData.teaching_assignment_id}
+                                onChange={(e) => setFormData({ ...formData, teaching_assignment_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                required
+                            >
+                                <option value="">Pilih Kelas & Mapel</option>
+                                {teachingAssignments.map((a) => (
+                                    <option key={a.id} value={a.id}>{a.class.name} - {a.subject.name}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                        </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Judul</label>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Judul Tugas</label>
                         <input
                             type="text"
                             value={formData.title}
                             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            placeholder="Contoh: Tugas Matematika Bab 1"
                             required
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Deskripsi</label>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Deskripsi (Opsional)</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-                            rows={2}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50 min-h-[100px]"
+                            placeholder="Jelaskan detail tugas di sini..."
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Deadline</label>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Batas Waktu (Deadline)</label>
                         <input
                             type="datetime-local"
                             value={formData.due_date}
                             onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                     </div>
 
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 pt-4 border-t border-secondary/10 mt-4">
                         <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
                             Batal
                         </Button>
                         <Button type="submit" loading={saving} className="flex-1">
-                            Simpan
+                            Simpan Tugas
                         </Button>
                     </div>
                 </form>

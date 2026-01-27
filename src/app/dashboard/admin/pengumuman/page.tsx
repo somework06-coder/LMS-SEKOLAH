@@ -1,0 +1,398 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { PageHeader, Button, Modal, Card, EmptyState } from '@/components/ui'
+
+interface Class {
+    id: string
+    name: string
+}
+
+interface Announcement {
+    id: string
+    title: string
+    content: string
+    is_global: boolean
+    class_ids: string[]
+    published_at: string
+    expires_at: string | null
+    is_active: boolean
+    created_by_user?: { id: string; full_name: string }
+}
+
+export default function AdminPengumumanPage() {
+    const [announcements, setAnnouncements] = useState<Announcement[]>([])
+    const [classes, setClasses] = useState<Class[]>([])
+    const [loading, setLoading] = useState(true)
+    const [showCreate, setShowCreate] = useState(false)
+    const [showEdit, setShowEdit] = useState(false)
+    const [saving, setSaving] = useState(false)
+    const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null)
+
+    const [form, setForm] = useState({
+        title: '',
+        content: '',
+        is_global: true,
+        class_ids: [] as string[],
+        expires_at: ''
+    })
+
+    useEffect(() => {
+        fetchData()
+    }, [])
+
+    const fetchData = async () => {
+        try {
+            const [announcementsRes, classesRes] = await Promise.all([
+                fetch('/api/announcements'),
+                fetch('/api/classes')
+            ])
+
+            if (announcementsRes.ok) {
+                const data = await announcementsRes.json()
+                setAnnouncements(Array.isArray(data) ? data : [])
+            }
+
+            if (classesRes.ok) {
+                const data = await classesRes.json()
+                setClasses(Array.isArray(data) ? data : [])
+            }
+        } catch (error) {
+            console.error('Error:', error)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const resetForm = () => {
+        setForm({
+            title: '',
+            content: '',
+            is_global: true,
+            class_ids: [],
+            expires_at: ''
+        })
+    }
+
+    const handleCreate = async () => {
+        if (!form.title || !form.content) return
+        setSaving(true)
+        try {
+            const res = await fetch('/api/announcements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...form,
+                    expires_at: form.expires_at || null
+                })
+            })
+            if (res.ok) {
+                setShowCreate(false)
+                resetForm()
+                fetchData()
+            }
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleEdit = (announcement: Announcement) => {
+        setEditingAnnouncement(announcement)
+        setForm({
+            title: announcement.title,
+            content: announcement.content,
+            is_global: announcement.is_global,
+            class_ids: announcement.class_ids || [],
+            expires_at: announcement.expires_at ? announcement.expires_at.slice(0, 16) : ''
+        })
+        setShowEdit(true)
+    }
+
+    const handleUpdate = async () => {
+        if (!editingAnnouncement || !form.title || !form.content) return
+        setSaving(true)
+        try {
+            const res = await fetch(`/api/announcements/${editingAnnouncement.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ...form,
+                    expires_at: form.expires_at || null
+                })
+            })
+            if (res.ok) {
+                setShowEdit(false)
+                setEditingAnnouncement(null)
+                resetForm()
+                fetchData()
+            }
+        } finally {
+            setSaving(false)
+        }
+    }
+
+    const handleDelete = async (id: string) => {
+        if (!confirm('Hapus pengumuman ini?')) return
+        await fetch(`/api/announcements/${id}`, { method: 'DELETE' })
+        fetchData()
+    }
+
+    const handleToggleActive = async (announcement: Announcement) => {
+        await fetch(`/api/announcements/${announcement.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_active: !announcement.is_active })
+        })
+        fetchData()
+    }
+
+    const toggleClassSelection = (classId: string) => {
+        setForm(prev => ({
+            ...prev,
+            class_ids: prev.class_ids.includes(classId)
+                ? prev.class_ids.filter(id => id !== classId)
+                : [...prev.class_ids, classId]
+        }))
+    }
+
+    const formatDate = (dateString: string) => {
+        return new Date(dateString).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })
+    }
+
+    const getClassNames = (classIds: string[]) => {
+        if (!classIds || classIds.length === 0) return '-'
+        return classIds
+            .map(id => classes.find(c => c.id === id)?.name || '?')
+            .join(', ')
+    }
+
+    // Form fields JSX - reused in both modals
+    const formFields = (
+        <div className="space-y-4">
+            <div>
+                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Judul</label>
+                <input
+                    type="text"
+                    value={form.title}
+                    onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Judul pengumuman..."
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Isi Pengumuman</label>
+                <textarea
+                    value={form.content}
+                    onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
+                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
+                    placeholder="Tulis isi pengumuman..."
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Target Penerima</label>
+                <div className="flex gap-2 mb-3">
+                    <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, is_global: true, class_ids: [] }))}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${form.is_global
+                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                            : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
+                            }`}
+                    >
+                        🌐 Semua Kelas
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, is_global: false }))}
+                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${!form.is_global
+                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                            : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
+                            }`}
+                    >
+                        🎯 Pilih Kelas
+                    </button>
+                </div>
+                {!form.is_global && (
+                    <div className="flex flex-wrap gap-2 p-3 bg-secondary/5 rounded-xl border border-secondary/10">
+                        {classes.length === 0 ? (
+                            <p className="text-sm text-text-secondary">Tidak ada kelas tersedia</p>
+                        ) : (
+                            classes.map(cls => (
+                                <button
+                                    type="button"
+                                    key={cls.id}
+                                    onClick={() => toggleClassSelection(cls.id)}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${form.class_ids.includes(cls.id)
+                                        ? 'bg-primary text-white'
+                                        : 'bg-white dark:bg-surface-dark border border-secondary/20 text-text-secondary hover:border-primary hover:text-primary'
+                                        }`}
+                                >
+                                    {cls.name}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+            <div>
+                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Kadaluarsa (Opsional)</label>
+                <input
+                    type="datetime-local"
+                    value={form.expires_at}
+                    onChange={(e) => setForm(prev => ({ ...prev, expires_at: e.target.value }))}
+                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <p className="text-xs text-text-secondary mt-1">Kosongkan jika tidak ada batas waktu</p>
+            </div>
+        </div>
+    )
+
+    return (
+        <div className="space-y-6 pb-24 lg:pb-0">
+            <PageHeader
+                title="📢 Pengumuman"
+                subtitle="Kelola pengumuman untuk siswa"
+                backHref="/dashboard/admin"
+                action={
+                    <Button onClick={() => setShowCreate(true)} icon={
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                    }>
+                        Buat Pengumuman
+                    </Button>
+                }
+            />
+
+            {loading ? (
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
+            ) : announcements.length === 0 ? (
+                <EmptyState
+                    icon="📢"
+                    title="Belum Ada Pengumuman"
+                    description="Buat pengumuman pertama untuk siswa Anda."
+                    action={<Button onClick={() => setShowCreate(true)}>Buat Pengumuman</Button>}
+                />
+            ) : (
+                <div className="space-y-4">
+                    {announcements.map((announcement) => (
+                        <Card key={announcement.id} className="p-5">
+                            <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                        <h3 className="font-bold text-text-main dark:text-white text-lg">{announcement.title}</h3>
+                                        {announcement.is_global ? (
+                                            <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 text-xs rounded-full font-medium">
+                                                🌐 Semua Kelas
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs rounded-full font-medium">
+                                                🎯 {announcement.class_ids?.length || 0} Kelas
+                                            </span>
+                                        )}
+                                        {!announcement.is_active && (
+                                            <span className="px-2 py-0.5 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-xs rounded-full font-medium">
+                                                Nonaktif
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-text-secondary dark:text-zinc-400 text-sm mb-3 whitespace-pre-wrap line-clamp-3">
+                                        {announcement.content}
+                                    </p>
+                                    <div className="flex items-center gap-4 text-xs text-text-secondary">
+                                        <span>📅 {formatDate(announcement.published_at)}</span>
+                                        {!announcement.is_global && (
+                                            <span>📍 {getClassNames(announcement.class_ids)}</span>
+                                        )}
+                                        {announcement.expires_at && (
+                                            <span className="text-amber-600 dark:text-amber-400">
+                                                ⏰ Expired: {formatDate(announcement.expires_at)}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleToggleActive(announcement)}
+                                    >
+                                        {announcement.is_active ? '🔕' : '🔔'}
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleEdit(announcement)}
+                                    >
+                                        ✏️
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => handleDelete(announcement.id)}
+                                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                    >
+                                        🗑️
+                                    </Button>
+                                </div>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
+            )}
+
+            {/* Create Modal */}
+            <Modal
+                open={showCreate}
+                onClose={() => { setShowCreate(false); resetForm() }}
+                title="📢 Buat Pengumuman Baru"
+            >
+                {formFields}
+                <div className="flex gap-3 pt-6 border-t border-secondary/10 mt-4">
+                    <Button variant="secondary" onClick={() => { setShowCreate(false); resetForm() }} className="flex-1">
+                        Batal
+                    </Button>
+                    <Button
+                        onClick={handleCreate}
+                        loading={saving}
+                        disabled={!form.title || !form.content || (!form.is_global && form.class_ids.length === 0)}
+                        className="flex-1"
+                    >
+                        Publikasikan
+                    </Button>
+                </div>
+            </Modal>
+
+            {/* Edit Modal */}
+            <Modal
+                open={showEdit}
+                onClose={() => { setShowEdit(false); setEditingAnnouncement(null); resetForm() }}
+                title="✏️ Edit Pengumuman"
+            >
+                {formFields}
+                <div className="flex gap-3 pt-6 border-t border-secondary/10 mt-4">
+                    <Button variant="secondary" onClick={() => { setShowEdit(false); setEditingAnnouncement(null); resetForm() }} className="flex-1">
+                        Batal
+                    </Button>
+                    <Button
+                        onClick={handleUpdate}
+                        loading={saving}
+                        disabled={!form.title || !form.content || (!form.is_global && form.class_ids.length === 0)}
+                        className="flex-1"
+                    >
+                        Simpan Perubahan
+                    </Button>
+                </div>
+            </Modal>
+        </div>
+    )
+}
+

@@ -227,14 +227,14 @@ export default function RekapNilaiPage() {
             />
 
             {/* Filters */}
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6">
+            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-6 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Tahun Ajaran</label>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Tahun Ajaran</label>
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                         >
                             <option value="">Pilih Tahun Ajaran</option>
                             {academicYears.map(y => (
@@ -245,11 +245,11 @@ export default function RekapNilaiPage() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Kelas</label>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Kelas</label>
                         <select
                             value={selectedClass}
                             onChange={(e) => setSelectedClass(e.target.value)}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                             disabled={!selectedYear}
                         >
                             <option value="">Pilih Kelas</option>
@@ -277,7 +277,9 @@ export default function RekapNilaiPage() {
 
             {/* Results */}
             {loading ? (
-                <div className="text-center text-slate-400 py-8">Memuat...</div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
             ) : !selectedYear || !selectedClass ? (
                 <EmptyState
                     icon="📋"
@@ -285,7 +287,9 @@ export default function RekapNilaiPage() {
                     description="Pilih tahun ajaran dan kelas untuk melihat rekap nilai"
                 />
             ) : loadingData ? (
-                <div className="text-center text-slate-400 py-8">Memuat data nilai...</div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
             ) : studentGrades.length === 0 ? (
                 <EmptyState
                     icon="📊"
@@ -293,46 +297,48 @@ export default function RekapNilaiPage() {
                     description="Belum ada data nilai untuk kelas ini"
                 />
             ) : (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
-                    <div className="p-4 border-b border-slate-700/50">
-                        <h3 className="font-semibold text-white">
-                            Rekap Nilai: {classes.find(c => c.id === selectedClass)?.name}
-                        </h3>
-                        <p className="text-sm text-slate-400">{studentGrades.length} siswa</p>
+                <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-secondary/10 flex items-center justify-between">
+                        <div>
+                            <h3 className="font-bold text-text-main dark:text-white">
+                                Rekap Nilai: {classes.find(c => c.id === selectedClass)?.name}
+                            </h3>
+                            <p className="text-sm text-text-secondary dark:text-zinc-400">{studentGrades.length} siswa</p>
+                        </div>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[800px]">
-                            <thead className="bg-slate-900/50">
+                            <thead className="bg-secondary/10 dark:bg-surface-dark">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-300 sticky left-0 bg-slate-900/50">No</th>
-                                    <th className="px-4 py-3 text-left text-sm font-medium text-slate-300 sticky left-12 bg-slate-900/50">Nama Siswa</th>
+                                    <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white sticky left-0 bg-secondary/10 dark:bg-surface-dark">No</th>
+                                    <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white sticky left-12 bg-secondary/10 dark:bg-surface-dark">Nama Siswa</th>
                                     {subjects.map(s => (
-                                        <th key={s.id} className="px-4 py-3 text-center text-sm font-medium text-slate-300 whitespace-nowrap">
+                                        <th key={s.id} className="px-4 py-3 text-center text-sm font-bold text-text-main dark:text-white whitespace-nowrap">
                                             {s.name}
                                         </th>
                                     ))}
-                                    <th className="px-4 py-3 text-center text-sm font-medium text-purple-400">Rata-rata</th>
+                                    <th className="px-4 py-3 text-center text-sm font-bold text-primary-dark dark:text-primary">Rata-rata</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-700/50">
+                            <tbody className="divide-y divide-secondary/10">
                                 {studentGrades.map((sg, idx) => (
-                                    <tr key={sg.student.id} className="hover:bg-slate-800/30">
-                                        <td className="px-4 py-3 text-slate-400 sticky left-0 bg-slate-800/50">{idx + 1}</td>
-                                        <td className="px-4 py-3 text-white sticky left-12 bg-slate-800/50">
+                                    <tr key={sg.student.id} className="hover:bg-secondary/5">
+                                        <td className="px-4 py-3 text-text-secondary dark:text-zinc-400 sticky left-0 bg-white dark:bg-surface-dark">{idx + 1}</td>
+                                        <td className="px-4 py-3 text-text-main dark:text-white sticky left-12 bg-white dark:bg-surface-dark">
                                             <div>
                                                 <p className="font-medium">{sg.student.user.full_name || '-'}</p>
-                                                <p className="text-xs text-slate-500">{sg.student.nis || '-'}</p>
+                                                <p className="text-xs text-text-secondary dark:text-zinc-500">{sg.student.nis || '-'}</p>
                                             </div>
                                         </td>
                                         {sg.grades.map(g => (
                                             <td key={g.subject_id} className="px-4 py-3 text-center">
                                                 <span className={`font-medium ${g.rata_rata !== null
-                                                        ? g.rata_rata >= 75
-                                                            ? 'text-green-400'
-                                                            : g.rata_rata >= 60
-                                                                ? 'text-amber-400'
-                                                                : 'text-red-400'
-                                                        : 'text-slate-500'
+                                                    ? g.rata_rata >= 75
+                                                        ? 'text-green-700 dark:text-green-400'
+                                                        : g.rata_rata >= 60
+                                                            ? 'text-amber-700 dark:text-amber-400'
+                                                            : 'text-red-700 dark:text-red-400'
+                                                    : 'text-text-secondary dark:text-zinc-500'
                                                     }`}>
                                                     {formatScore(g.rata_rata)}
                                                 </span>
@@ -340,12 +346,12 @@ export default function RekapNilaiPage() {
                                         ))}
                                         <td className="px-4 py-3 text-center">
                                             <span className={`font-bold ${sg.average !== null
-                                                    ? sg.average >= 75
-                                                        ? 'text-green-400'
-                                                        : sg.average >= 60
-                                                            ? 'text-amber-400'
-                                                            : 'text-red-400'
-                                                    : 'text-slate-500'
+                                                ? sg.average >= 75
+                                                    ? 'text-green-700 dark:text-green-400'
+                                                    : sg.average >= 60
+                                                        ? 'text-amber-700 dark:text-amber-400'
+                                                        : 'text-red-700 dark:text-red-400'
+                                                : 'text-text-secondary dark:text-zinc-500'
                                                 }`}>
                                                 {formatScore(sg.average)}
                                             </span>

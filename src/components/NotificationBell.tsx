@@ -99,7 +99,7 @@ export default function NotificationBell() {
             {/* Bell Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                className="relative p-2 rounded-xl bg-secondary/10 hover:bg-secondary/20 text-text-secondary hover:text-text-main dark:hover:text-white transition-colors"
             >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -115,15 +115,15 @@ export default function NotificationBell() {
 
             {/* Dropdown */}
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl overflow-hidden z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-surface-dark border border-secondary/20 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-                        <h3 className="font-semibold text-white">Notifikasi</h3>
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-secondary/20 dark:border-white/10">
+                        <h3 className="font-semibold text-text-main dark:text-white">Notifikasi</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllAsRead}
                                 disabled={loading}
-                                className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+                                className="text-xs text-primary hover:text-primary/80 disabled:opacity-50"
                             >
                                 Tandai semua dibaca
                             </button>
@@ -133,7 +133,7 @@ export default function NotificationBell() {
                     {/* Notifications List */}
                     <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-slate-400">
+                            <div className="p-8 text-center text-text-secondary">
                                 <div className="text-4xl mb-2">🔔</div>
                                 <p className="text-sm">Belum ada notifikasi</p>
                             </div>
@@ -144,27 +144,27 @@ export default function NotificationBell() {
                                         key={notification.id}
                                         href={notification.link}
                                         onClick={() => handleNotificationClick(notification)}
-                                        className={`block px-4 py-3 hover:bg-slate-700/50 transition-colors border-b border-slate-700/50 ${!notification.is_read ? 'bg-cyan-500/5' : ''}`}
+                                        className={`block px-4 py-3 hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors border-b border-secondary/10 dark:border-white/5 ${!notification.is_read ? 'bg-primary/5' : ''}`}
                                     >
                                         <div className="flex gap-3">
                                             <span className="text-xl flex-shrink-0">
                                                 {getNotificationIcon(notification.type as any)}
                                             </span>
                                             <div className="flex-1 min-w-0">
-                                                <p className={`text-sm ${!notification.is_read ? 'text-white font-medium' : 'text-slate-300'}`}>
+                                                <p className={`text-sm ${!notification.is_read ? 'text-text-main dark:text-white font-medium' : 'text-text-secondary dark:text-zinc-300'}`}>
                                                     {notification.title}
                                                 </p>
                                                 {notification.message && (
-                                                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                                                    <p className="text-xs text-text-secondary dark:text-zinc-400 truncate mt-0.5">
                                                         {notification.message}
                                                     </p>
                                                 )}
-                                                <p className="text-xs text-slate-500 mt-1">
+                                                <p className="text-xs text-text-secondary/70 dark:text-zinc-500 mt-1">
                                                     {timeAgo(notification.created_at)}
                                                 </p>
                                             </div>
                                             {!notification.is_read && (
-                                                <span className="w-2 h-2 bg-cyan-400 rounded-full flex-shrink-0 mt-2"></span>
+                                                <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></span>
                                             )}
                                         </div>
                                     </Link>
@@ -172,27 +172,27 @@ export default function NotificationBell() {
                                     <div
                                         key={notification.id}
                                         onClick={() => handleNotificationClick(notification)}
-                                        className={`px-4 py-3 cursor-pointer hover:bg-slate-700/50 transition-colors border-b border-slate-700/50 ${!notification.is_read ? 'bg-cyan-500/5' : ''}`}
+                                        className={`px-4 py-3 cursor-pointer hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors border-b border-secondary/10 dark:border-white/5 ${!notification.is_read ? 'bg-primary/5' : ''}`}
                                     >
                                         <div className="flex gap-3">
                                             <span className="text-xl flex-shrink-0">
                                                 {getNotificationIcon(notification.type as any)}
                                             </span>
                                             <div className="flex-1 min-w-0">
-                                                <p className={`text-sm ${!notification.is_read ? 'text-white font-medium' : 'text-slate-300'}`}>
+                                                <p className={`text-sm ${!notification.is_read ? 'text-text-main dark:text-white font-medium' : 'text-text-secondary dark:text-zinc-300'}`}>
                                                     {notification.title}
                                                 </p>
                                                 {notification.message && (
-                                                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                                                    <p className="text-xs text-text-secondary dark:text-zinc-400 truncate mt-0.5">
                                                         {notification.message}
                                                     </p>
                                                 )}
-                                                <p className="text-xs text-slate-500 mt-1">
+                                                <p className="text-xs text-text-secondary/70 dark:text-zinc-500 mt-1">
                                                     {timeAgo(notification.created_at)}
                                                 </p>
                                             </div>
                                             {!notification.is_read && (
-                                                <span className="w-2 h-2 bg-cyan-400 rounded-full flex-shrink-0 mt-2"></span>
+                                                <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></span>
                                             )}
                                         </div>
                                     </div>

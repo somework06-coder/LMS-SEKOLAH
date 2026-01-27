@@ -10,10 +10,7 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
     try {
-        const formData = await request.formData()
-        const file = formData.get('file') as File
         const token = request.cookies.get('session_token')?.value
-
         if (!token) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
@@ -23,34 +20,43 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        if (!file) {
-            return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
+        const { filename, contentType } = await request.json()
+
+        if (!filename) {
+            return NextResponse.json({ error: 'Filename required' }, { status: 400 })
         }
 
-        const fileExt = file.name.split('.').pop()
-        const fileName = `${Math.random()}.${fileExt}`
-        const filePath = `${fileName}`
+        // Generate distinctive path
+        const fileExt = filename.split('.').pop() || 'pdf'
+        const uniqueId = Math.random().toString(36).substring(2, 15)
+        const timestamp = Date.now()
+        const storagePath = `${timestamp}-${uniqueId}.${fileExt}`
 
-        const { error: uploadError } = await supabaseAdmin.storage
+        console.log(`Generating signed upload URL for: ${storagePath}`)
+
+        // Create Signed Upload URL
+        const { data, error } = await supabaseAdmin.storage
             .from('materials')
-            .upload(filePath, file, {
-                contentType: 'application/pdf',
-                upsert: false
-            })
+            .createSignedUploadUrl(storagePath)
 
-        if (uploadError) {
-            console.error('Upload Error:', uploadError)
-            return NextResponse.json({ error: uploadError.message }, { status: 500 })
+        if (error) {
+            console.error('Signed URL Error:', error)
+            return NextResponse.json({ error: error.message }, { status: 500 })
         }
 
-        const { data: { publicUrl } } = supabaseAdmin.storage
-            .from('materials')
-            .getPublicUrl(filePath)
+        // Return path and token/signedUrl
+        // data contains { signedUrl, token, path }
+        return NextResponse.json({
+            path: data.path,
+            token: data.token,
+            signedUrl: data.signedUrl
+        })
 
-        return NextResponse.json({ url: publicUrl })
-
-    } catch (error) {
-        console.error('Server Upload Error:', error)
-        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    } catch (error: any) {
+        console.error('Server Error:', error)
+        return NextResponse.json({
+            error: error.message || 'Server error',
+            details: error.toString()
+        }, { status: 500 })
     }
 }

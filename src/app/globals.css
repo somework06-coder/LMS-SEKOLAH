@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Tailwind v4 dark mode configuration
+ * Override the default dark: variant to only work with .dark class
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #6B8E6B;
+  --color-primary-dark: #4A634A;
+  --color-secondary: #A8BC9F;
+  --color-background-light: #C8D4C0;
+  --color-background-dark: #1A1F1A;
+  --color-surface-light: #ffffff;
+  --color-surface-dark: #242B24;
+  --color-text-main: #2D4A2D;
+  --color-text-secondary: #5C6B5C;
+
+  --font-display: "Lexend", sans-serif;
+  --font-sans: "Lexend", sans-serif;
+
+  --radius-lg: 1.5rem;
+  --radius-xl: 2rem;
+  --radius-2xl: 2.5rem;
+  --radius-full: 9999px;
+
+  --shadow-soft: 0 8px 24px -6px rgba(107, 142, 107, 0.12);
+  --shadow-card: 0 4px 12px rgba(27, 46, 27, 0.05);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* Utilities for hiding scrollbar */
+@utility hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }
 
+/* 
+ * FORCE LIGHT MODE - Override system dark mode preference
+ * This ensures the app shows in light mode regardless of browser/OS settings
+ */
+:root {
+  color-scheme: light only;
+}
+
+/* Base body styles - always light mode unless .dark class is applied */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #C8D4C0 !important;
+  color: #1B2E1B !important;
+  font-family: var(--font-sans);
+}
+
+/* Only apply dark styles when .dark class is present on html or body */
+html.dark body,
+body.dark {
+  background-color: #1A1F1A !important;
+  color: #E0E7E0 !important;
 }

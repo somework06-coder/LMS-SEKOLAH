@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { PageHeader } from '@/components/ui'
+import Card from '@/components/ui/Card'
 
 interface QuizResult {
     total_score: number
@@ -70,8 +72,8 @@ export default function HasilKuisPage() {
         if (user) fetchData()
     }, [user, quizId])
 
-    if (loading) return <div className="text-center text-slate-400 py-8">Memuat hasil...</div>
-    if (!result || !quiz) return <div className="text-center text-slate-400 py-8">Hasil tidak ditemukan</div>
+    if (loading) return <div className="text-center text-text-secondary py-8">Memuat hasil...</div>
+    if (!result || !quiz) return <div className="text-center text-text-secondary py-8">Hasil tidak ditemukan</div>
 
     const getAnswerForQuestion = (qId: string) => {
         return result.answers.find(a => a.question_id === qId)
@@ -79,55 +81,61 @@ export default function HasilKuisPage() {
 
     return (
         <div className="space-y-6 max-w-3xl mx-auto">
+            <PageHeader
+                title="Hasil Kuis"
+                subtitle={quiz.title}
+                backHref="/dashboard/siswa/kuis"
+            />
+
             <div className="text-center space-y-4">
-                <div className="inline-block p-4 rounded-full bg-slate-800 border border-slate-700 mb-4">
+                <div className="inline-block p-4 rounded-full bg-primary/10 border border-primary/20 mb-4">
                     <div className="text-6xl">🏆</div>
                 </div>
-                <h1 className="text-3xl font-bold text-white">{quiz.title}</h1>
-                <p className="text-slate-400">Kuis Selesai Dikerjakan</p>
+                <h2 className="text-2xl font-bold text-text-main dark:text-white">{quiz.title}</h2>
+                <p className="text-text-secondary">Kuis Selesai Dikerjakan</p>
 
                 <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto mt-6">
-                    <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-sm text-slate-400 mb-1">Total Skor</p>
-                        <p className="text-3xl font-bold text-cyan-400">
+                    <Card className="text-center">
+                        <p className="text-sm text-text-secondary mb-1">Total Skor</p>
+                        <p className="text-3xl font-bold text-primary">
                             {result.total_score}
-                            <span className="text-sm text-slate-500 font-normal">/{result.max_score}</span>
+                            <span className="text-sm text-text-secondary font-normal">/{result.max_score}</span>
                         </p>
-                    </div>
-                    <div className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
-                        <p className="text-sm text-slate-400 mb-1">Status</p>
-                        <p className={`text-lg font-bold ${result.is_graded ? 'text-green-400' : 'text-amber-400'}`}>
+                    </Card>
+                    <Card className="text-center">
+                        <p className="text-sm text-text-secondary mb-1">Status</p>
+                        <p className={`text-lg font-bold ${result.is_graded ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
                             {result.is_graded ? 'Selesai Dinilai' : 'Menunggu Koreksi'}
                         </p>
-                    </div>
+                    </Card>
                 </div>
             </div>
 
-            <div className="border-t border-slate-700 pt-8 mt-8">
-                <h2 className="text-xl font-bold text-white mb-6">Review Jawaban</h2>
-                <div className="space-y-6">
+            <div className="border-t border-secondary/20 pt-8 mt-8">
+                <h3 className="text-xl font-bold text-text-main dark:text-white mb-6">Review Jawaban</h3>
+                <div className="space-y-4">
                     {quiz.questions.map((q, idx) => {
                         const userAnswer = getAnswerForQuestion(q.id)
                         const isCorrect = q.question_type === 'MULTIPLE_CHOICE'
                             ? userAnswer?.answer === q.correct_answer
-                            : (userAnswer?.score === q.points) // Basic check for essay if fully scored
+                            : (userAnswer?.score === q.points)
 
                         return (
-                            <div key={q.id} className="bg-slate-800/30 border border-slate-700/30 rounded-xl p-6">
+                            <Card key={q.id}>
                                 <div className="flex items-start gap-4">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${q.question_type === 'MULTIPLE_CHOICE'
-                                        ? (isCorrect ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400')
-                                        : 'bg-slate-600 text-slate-300'
+                                        ? (isCorrect ? 'bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-red-500/20 text-red-600 dark:text-red-400')
+                                        : 'bg-secondary/20 text-text-secondary'
                                         }`}>
                                         {idx + 1}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-white mb-3">{q.question_text}</p>
+                                        <p className="text-text-main dark:text-white mb-3">{q.question_text}</p>
 
-                                        <div className="bg-slate-900/50 rounded-lg p-4 text-sm space-y-2">
+                                        <div className="bg-secondary/10 rounded-lg p-4 text-sm space-y-2">
                                             <div>
-                                                <p className="text-slate-500 text-xs mb-1">Jawaban Kamu:</p>
-                                                <p className="text-white font-medium">
+                                                <p className="text-text-secondary text-xs mb-1">Jawaban Kamu:</p>
+                                                <p className="text-text-main dark:text-white font-medium">
                                                     {q.question_type === 'MULTIPLE_CHOICE' && q.options && userAnswer?.answer
                                                         ? `${userAnswer.answer}. ${q.options[(userAnswer.answer.charCodeAt(0) - 65)] || ''}`
                                                         : userAnswer?.answer || '-'}
@@ -136,9 +144,9 @@ export default function HasilKuisPage() {
 
                                             {/* Show correct answer for Multiple Choice only if graded */}
                                             {result.is_graded && q.question_type === 'MULTIPLE_CHOICE' && !isCorrect && (
-                                                <div className="pt-2 border-t border-slate-700/50">
-                                                    <p className="text-green-400 text-xs mb-1">Kunci Jawaban:</p>
-                                                    <p className="text-green-300">
+                                                <div className="pt-2 border-t border-secondary/20">
+                                                    <p className="text-green-600 dark:text-green-400 text-xs mb-1">Kunci Jawaban:</p>
+                                                    <p className="text-green-700 dark:text-green-300">
                                                         {q.correct_answer}. {q.options?.[(q.correct_answer?.charCodeAt(0) || 65) - 65]}
                                                     </p>
                                                 </div>
@@ -146,23 +154,23 @@ export default function HasilKuisPage() {
 
                                             {/* Feedback for Essay */}
                                             {q.question_type === 'ESSAY' && userAnswer?.feedback && (
-                                                <div className="pt-2 border-t border-slate-700/50">
-                                                    <p className="text-cyan-400 text-xs mb-1">Feedback Guru:</p>
-                                                    <p className="text-cyan-100">{userAnswer.feedback}</p>
+                                                <div className="pt-2 border-t border-secondary/20">
+                                                    <p className="text-primary text-xs mb-1">Feedback Guru:</p>
+                                                    <p className="text-text-main dark:text-white">{userAnswer.feedback}</p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     <div className="text-right">
                                         <span className={`text-sm font-bold ${q.question_type !== 'MULTIPLE_CHOICE' && !result.is_graded
-                                            ? 'text-slate-500'
-                                            : (userAnswer?.score || 0) === q.points ? 'text-green-400' : 'text-slate-400'
+                                            ? 'text-text-secondary'
+                                            : (userAnswer?.score || 0) === q.points ? 'text-green-600 dark:text-green-400' : 'text-text-secondary'
                                             }`}>
                                             {userAnswer?.score || 0}/{q.points}
                                         </span>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
                         )
                     })}
                 </div>
@@ -171,7 +179,7 @@ export default function HasilKuisPage() {
             <div className="flex justify-center pt-8 pb-12">
                 <Link
                     href="/dashboard/siswa/kuis"
-                    className="px-8 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors"
+                    className="px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors font-semibold"
                 >
                     Kembali ke Daftar Kuis
                 </Link>

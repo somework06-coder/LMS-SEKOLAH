@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { validateSession } from '@/lib/auth'
+
+// Initialize Supabase with Service Role Key for admin privileges
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // GET all materials
 export async function GET(request: NextRequest) {
@@ -17,11 +23,11 @@ export async function GET(request: NextRequest) {
 
         const teachingAssignmentId = request.nextUrl.searchParams.get('teaching_assignment_id')
 
-        let query = supabase
+        let query = supabaseAdmin
             .from('materials')
             .select(`
         *,
-        teaching_assignment:teaching_assignments(
+          teaching_assignment:teaching_assignments(
           id,
           teacher:teachers(id, user:users(full_name)),
           subject:subjects(id, name),
@@ -39,9 +45,9 @@ export async function GET(request: NextRequest) {
         if (error) throw error
 
         return NextResponse.json(data)
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error fetching materials:', error)
-        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+        return NextResponse.json({ error: 'Server error', details: error.message }, { status: 500 })
     }
 }
 
@@ -64,17 +70,26 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Data tidak lengkap' }, { status: 400 })
         }
 
-        const { data, error } = await supabase
+        // Use supabaseAdmin to bypass RLS for insert
+        const { data, error } = await supabaseAdmin
             .from('materials')
             .insert({ teaching_assignment_id, title, description, type, content_url, content_text })
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            console.error('Supabase Insert Error:', error)
+            return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+
 
         return NextResponse.json(data)
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating material:', error)
-        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+        return NextResponse.json({
+            error: error.message || 'Server error',
+            details: error.toString()
+        }, { status: 500 })
     }
 }

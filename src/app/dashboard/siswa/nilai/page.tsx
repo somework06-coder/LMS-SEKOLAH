@@ -147,11 +147,14 @@ export default function SiswaNilaiPage() {
         if (user) fetchData()
     }, [user])
 
-    const getScoreColor = (score: number, max: number = 100) => {
+    const getScoreColor = (score: number | undefined | null, max: number = 100) => {
+        if (score === undefined || score === null || max === 0) {
+            return 'text-gray-700 bg-gray-100 dark:text-gray-400 dark:bg-gray-500/20'
+        }
         const percentage = (score / max) * 100
-        if (percentage >= 80) return 'text-green-400 bg-green-500/20'
-        if (percentage >= 60) return 'text-yellow-400 bg-yellow-500/20'
-        return 'text-red-400 bg-red-500/20'
+        if (percentage >= 80) return 'text-green-700 bg-green-100 dark:text-green-400 dark:bg-green-500/20'
+        if (percentage >= 60) return 'text-yellow-700 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-500/20'
+        return 'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-500/20'
     }
 
     if (loading) {
@@ -163,44 +166,47 @@ export default function SiswaNilaiPage() {
         return (
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                    <Link href="/dashboard/siswa" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                    <Link href="/dashboard/siswa" className="p-3 rounded-xl bg-white dark:bg-surface-dark border border-secondary/20 hover:border-primary text-text-secondary hover:text-primary transition-all shadow-sm">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-white">Nilai Saya</h1>
-                        <p className="text-slate-400">Pilih mata pelajaran untuk lihat detail nilai</p>
+                        <h1 className="text-2xl font-bold text-text-main dark:text-white">Nilai Saya</h1>
+                        <p className="text-text-secondary dark:text-zinc-400">Pilih mata pelajaran untuk lihat detail nilai</p>
                     </div>
                 </div>
 
                 {groupedGrades.length === 0 ? (
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
+                    <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-12 text-center text-text-secondary dark:text-zinc-500 shadow-sm">
+                        <span className="text-4xl mb-4 block">📭</span>
                         Belum ada nilai yang tercatat.
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {groupedGrades.map((subject) => {
-                            const totalItems = subject.kuis.length + subject.tugas.length + subject.ulangan.length
+                            const totalItems = (subject.kuis?.length ?? 0) + (subject.tugas?.length ?? 0) + (subject.ulangan?.length ?? 0)
                             return (
                                 <button
                                     key={subject.subjectName}
                                     onClick={() => { setSelectedSubject(subject); setActiveTab('kuis'); }}
-                                    className="group bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:border-purple-500/50 hover:bg-slate-800 transition-all text-left"
+                                    className="group bg-white dark:bg-surface-dark border-2 border-primary/30 rounded-2xl p-6 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-[0.98] transition-all text-left relative overflow-hidden cursor-pointer"
                                 >
-                                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white mb-4 shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+
+                                    <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary dark:text-primary-light flex items-center justify-center mb-4 group-hover:scale-110 transition-transform relative z-10">
                                         <span className="text-2xl">📊</span>
                                     </div>
-                                    <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition-colors">
+                                    <h3 className="text-lg font-bold text-text-main dark:text-white mb-1 group-hover:text-primary transition-colors relative z-10">
                                         {subject.subjectName}
                                     </h3>
-                                    <p className="text-sm text-slate-400">
+                                    <p className="text-sm text-text-secondary dark:text-zinc-400 relative z-10">
                                         {totalItems} Nilai Tercatat
                                     </p>
-                                    <div className="flex gap-2 mt-3 text-xs">
-                                        <span className="px-2 py-1 bg-cyan-500/20 text-cyan-400 rounded">Kuis: {subject.kuis.length}</span>
-                                        <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded">Tugas: {subject.tugas.length}</span>
-                                        <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded">Ulangan: {subject.ulangan.length}</span>
+                                    <div className="flex gap-2 mt-4 text-xs relative z-10 flex-wrap">
+                                        <span className="px-2 py-1 bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 rounded-md font-medium">Kuis: {subject.kuis?.length ?? 0}</span>
+                                        <span className="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-md font-medium">Tugas: {subject.tugas?.length ?? 0}</span>
+                                        <span className="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-md font-medium">Ulangan: {subject.ulangan?.length ?? 0}</span>
                                     </div>
                                 </button>
                             )
@@ -220,21 +226,24 @@ export default function SiswaNilaiPage() {
 
     const renderQuizList = () => (
         selectedSubject.kuis.length === 0 ? (
-            <div className="text-center text-slate-400 py-8">Belum ada nilai kuis.</div>
+            <div className="text-center text-text-secondary dark:text-zinc-500 py-12 bg-white dark:bg-surface-dark rounded-xl border border-secondary/20 border-dashed">
+                <div className="text-4xl mb-2">📝</div>
+                Belum ada nilai kuis.
+            </div>
         ) : (
             <div className="space-y-3">
                 {selectedSubject.kuis.map((qs) => (
-                    <div key={qs.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex items-center justify-between">
+                    <div key={qs.id} className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 flex items-center justify-between shadow-sm">
                         <div>
-                            <p className="text-white font-medium">{qs.quiz?.title}</p>
-                            <p className="text-xs text-slate-500">{new Date(qs.submitted_at).toLocaleDateString('id-ID')}</p>
+                            <p className="text-text-main dark:text-white font-bold">{qs.quiz?.title}</p>
+                            <p className="text-xs text-text-secondary dark:text-zinc-400">{new Date(qs.submitted_at).toLocaleDateString('id-ID')}</p>
                         </div>
                         {qs.is_graded ? (
-                            <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(qs.total_score, qs.max_score)}`}>
-                                {qs.total_score}/{qs.max_score}
+                            <span className={`px-3 py-1 rounded-full font-bold text-sm ${getScoreColor(qs.total_score, qs.max_score)}`}>
+                                {qs.total_score ?? 0}/{qs.max_score ?? 0}
                             </span>
                         ) : (
-                            <span className="px-3 py-1 bg-slate-600/30 text-slate-400 rounded-full text-sm">⏳ Menunggu</span>
+                            <span className="px-3 py-1 bg-secondary/10 text-text-secondary rounded-full text-sm font-medium">⏳ Menunggu</span>
                         )}
                     </div>
                 ))}
@@ -244,24 +253,27 @@ export default function SiswaNilaiPage() {
 
     const renderAssignmentList = (items: AssignmentSubmission[]) => (
         items.length === 0 ? (
-            <div className="text-center text-slate-400 py-8">Belum ada nilai.</div>
+            <div className="text-center text-text-secondary dark:text-zinc-500 py-12 bg-white dark:bg-surface-dark rounded-xl border border-secondary/20 border-dashed">
+                <div className="text-4xl mb-2">📋</div>
+                Belum ada nilai tugas.
+            </div>
         ) : (
             <div className="space-y-3">
                 {items.map((sub) => (
-                    <div key={sub.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex items-center justify-between">
+                    <div key={sub.id} className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 flex items-center justify-between shadow-sm">
                         <div className="flex-1">
-                            <p className="text-white font-medium">{sub.assignment?.title}</p>
-                            <p className="text-xs text-slate-500">{new Date(sub.submitted_at).toLocaleDateString('id-ID')}</p>
+                            <p className="text-text-main dark:text-white font-bold">{sub.assignment?.title}</p>
+                            <p className="text-xs text-text-secondary dark:text-zinc-400">{new Date(sub.submitted_at).toLocaleDateString('id-ID')}</p>
                             {sub.grade?.[0]?.feedback && (
-                                <p className="text-sm text-slate-400 mt-1 italic">💬 {sub.grade[0].feedback}</p>
+                                <p className="text-sm text-text-secondary dark:text-zinc-400 mt-2 italic bg-secondary/5 p-2 rounded-lg inline-block border border-secondary/10">" {sub.grade[0].feedback} "</p>
                             )}
                         </div>
                         {sub.grade && sub.grade.length > 0 ? (
-                            <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(sub.grade[0].score)}`}>
-                                {sub.grade[0].score}
+                            <span className={`px-3 py-1 rounded-full font-bold text-sm ml-4 ${getScoreColor(sub.grade[0].score)}`}>
+                                {sub.grade[0].score ?? 0}
                             </span>
                         ) : (
-                            <span className="px-3 py-1 bg-slate-600/30 text-slate-400 rounded-full text-sm">⏳ Menunggu</span>
+                            <span className="px-3 py-1 bg-secondary/10 text-text-secondary rounded-full text-sm font-medium ml-4">⏳ Menunggu</span>
                         )}
                     </div>
                 ))}
@@ -276,46 +288,49 @@ export default function SiswaNilaiPage() {
 
     const renderUlanganList = (items: (AssignmentSubmission | ExamSubmission)[]) => (
         items.length === 0 ? (
-            <div className="text-center text-slate-400 py-8">Belum ada nilai ulangan.</div>
+            <div className="text-center text-text-secondary dark:text-zinc-500 py-12 bg-white dark:bg-surface-dark rounded-xl border border-secondary/20 border-dashed">
+                <div className="text-4xl mb-2">📄</div>
+                Belum ada nilai ulangan.
+            </div>
         ) : (
             <div className="space-y-3">
                 {items.map((item) => {
                     if (isExamSubmission(item)) {
                         // Render ExamSubmission
                         return (
-                            <div key={item.id} className="bg-slate-800/50 border border-purple-500/30 rounded-xl p-4 flex items-center justify-between">
+                            <div key={item.id} className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 flex items-center justify-between shadow-sm">
                                 <div className="flex-1">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-white font-medium">{item.exam?.title}</p>
-                                        <span className="px-2 py-0.5 text-xs bg-purple-500/20 text-purple-400 rounded">Ulangan</span>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <p className="text-text-main dark:text-white font-bold">{item.exam?.title}</p>
+                                        <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-md font-bold">Ulangan</span>
                                     </div>
-                                    <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString('id-ID')}</p>
+                                    <p className="text-xs text-text-secondary dark:text-zinc-400">{new Date(item.submitted_at).toLocaleDateString('id-ID')}</p>
                                     {item.violation_count > 0 && (
-                                        <p className="text-xs text-red-400 mt-1">⚠️ {item.violation_count} pelanggaran</p>
+                                        <p className="text-xs text-red-500 mt-1 font-medium">⚠️ {item.violation_count} pelanggaran</p>
                                     )}
                                 </div>
-                                <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(item.total_score, item.max_score)}`}>
-                                    {item.total_score}/{item.max_score}
+                                <span className={`px-3 py-1 rounded-full font-bold text-sm ${getScoreColor(item.total_score, item.max_score)}`}>
+                                    {item.total_score ?? 0}/{item.max_score ?? 0}
                                 </span>
                             </div>
                         )
                     } else {
                         // Render AssignmentSubmission
                         return (
-                            <div key={item.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex items-center justify-between">
+                            <div key={item.id} className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 flex items-center justify-between shadow-sm">
                                 <div className="flex-1">
-                                    <p className="text-white font-medium">{item.assignment?.title}</p>
-                                    <p className="text-xs text-slate-500">{new Date(item.submitted_at).toLocaleDateString('id-ID')}</p>
+                                    <p className="text-text-main dark:text-white font-bold">{item.assignment?.title}</p>
+                                    <p className="text-xs text-text-secondary dark:text-zinc-400">{new Date(item.submitted_at).toLocaleDateString('id-ID')}</p>
                                     {item.grade?.[0]?.feedback && (
-                                        <p className="text-sm text-slate-400 mt-1 italic">💬 {item.grade[0].feedback}</p>
+                                        <p className="text-sm text-text-secondary dark:text-zinc-400 mt-2 italic bg-secondary/5 p-2 rounded-lg inline-block border border-secondary/10">" {item.grade[0].feedback} "</p>
                                     )}
                                 </div>
                                 {item.grade && item.grade.length > 0 ? (
-                                    <span className={`px-3 py-1 rounded-full font-bold ${getScoreColor(item.grade[0].score)}`}>
+                                    <span className={`px-3 py-1 rounded-full font-bold text-sm ml-4 ${getScoreColor(item.grade[0].score)}`}>
                                         {item.grade[0].score}
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 bg-slate-600/30 text-slate-400 rounded-full text-sm">⏳ Menunggu</span>
+                                    <span className="px-3 py-1 bg-secondary/10 text-text-secondary rounded-full text-sm font-medium ml-4">⏳ Menunggu</span>
                                 )}
                             </div>
                         )
@@ -331,40 +346,41 @@ export default function SiswaNilaiPage() {
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => setSelectedSubject(null)}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+                    className="p-3 rounded-xl bg-white dark:bg-surface-dark border border-secondary/20 hover:border-primary text-text-secondary hover:text-primary transition-all shadow-sm"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-white">{selectedSubject.subjectName}</h1>
-                    <p className="text-slate-400">Detail Nilai</p>
+                    <h1 className="text-2xl font-bold text-text-main dark:text-white">{selectedSubject.subjectName}</h1>
+                    <p className="text-text-secondary dark:text-zinc-400">Detail Nilai</p>
                 </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 border-b border-slate-700 pb-2">
+            <div className="flex gap-2 border-b border-secondary/20 pb-2 overflow-x-auto">
                 {tabs.map((tab) => (
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`px-4 py-2 rounded-t-xl font-medium transition-colors flex items-center gap-2 ${activeTab === tab.key
-                            ? `bg-${tab.color}-500/20 text-${tab.color}-400 border-b-2 border-${tab.color}-500`
-                            : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                        className={`px-4 py-2 rounded-t-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.key
+                            ? `bg-${tab.color}-50 border-b-2 border-${tab.color}-500 text-${tab.color}-700 dark:bg-${tab.color}-900/20 dark:text-${tab.color}-400`
+                            : 'text-text-secondary dark:text-zinc-400 hover:text-text-main hover:bg-secondary/5'
                             }`}
                     >
                         <span>{tab.icon}</span>
                         {tab.label}
-                        <span className="text-xs opacity-70">
-                            ({tab.key === 'kuis' ? selectedSubject.kuis.length : tab.key === 'tugas' ? selectedSubject.tugas.length : selectedSubject.ulangan.length})
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full ml-1 ${activeTab === tab.key ? `bg-${tab.color}-100 dark:bg-${tab.color}-900/40` : 'bg-secondary/10'
+                            }`}>
+                            {tab.key === 'kuis' ? (selectedSubject.kuis?.length ?? 0) : tab.key === 'tugas' ? (selectedSubject.tugas?.length ?? 0) : (selectedSubject.ulangan?.length ?? 0)}
                         </span>
                     </button>
                 ))}
             </div>
 
             {/* Tab Content */}
-            <div>
+            <div className="min-h-[300px]">
                 {activeTab === 'kuis' && renderQuizList()}
                 {activeTab === 'tugas' && renderAssignmentList(selectedSubject.tugas)}
                 {activeTab === 'ulangan' && renderUlanganList(selectedSubject.ulangan)}

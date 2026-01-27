@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface Exam {
@@ -135,226 +137,264 @@ export default function GuruUlanganPage() {
         const startTime = new Date(exam.start_time)
         const endTime = new Date(startTime.getTime() + exam.duration_minutes * 60000)
 
-        if (!exam.is_active) return { label: 'Draft', color: 'bg-yellow-500/20 text-yellow-500 border-yellow-500/20' }
-        if (now < startTime) return { label: 'Terjadwal', color: 'bg-blue-500/20 text-blue-400' }
-        if (now >= startTime && now <= endTime) return { label: 'Berlangsung', color: 'bg-green-500/20 text-green-400' }
-        return { label: 'Selesai', color: 'bg-slate-500/20 text-slate-400' }
+        if (!exam.is_active) return { label: 'Draft', color: 'bg-amber-500/10 text-amber-600 border-amber-200 dark:border-amber-500/20 dark:text-amber-400' }
+        if (now < startTime) return { label: 'Terjadwal', color: 'bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-500/20 dark:text-blue-400' }
+        if (now >= startTime && now <= endTime) return { label: 'Berlangsung', color: 'bg-green-500/10 text-green-600 border-green-200 dark:border-green-500/20 dark:text-green-400' }
+        return { label: 'Selesai', color: 'bg-secondary/10 text-text-secondary border-secondary/20' }
     }
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/dashboard/guru" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+            <PageHeader
+                title="📄 Ulangan"
+                subtitle="Buat ulangan dengan fitur pengawasan yang aman"
+                backHref="/dashboard/guru"
+                action={
+                    <Button onClick={() => setShowCreate(true)} icon={
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-white">📄 Ulangan</h1>
-                        <p className="text-slate-400">Buat ulangan dengan pengawasan ketat</p>
-                    </div>
-                </div>
-                <button
-                    onClick={() => setShowCreate(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Buat Ulangan
-                </button>
-            </div>
+                    }>
+                        Buat Ulangan
+                    </Button>
+                }
+            />
 
             {/* Info cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-4">
-                    <div className="text-3xl mb-2">🔒</div>
-                    <h3 className="font-semibold text-white">Tab Lock</h3>
-                    <p className="text-sm text-slate-400">Siswa tidak bisa keluar tab</p>
-                </div>
-                <div className="bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-xl p-4">
-                    <div className="text-3xl mb-2">⏰</div>
-                    <h3 className="font-semibold text-white">Waktu Mulai</h3>
-                    <p className="text-sm text-slate-400">Jadwalkan waktu start ulangan</p>
-                </div>
-                <div className="bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 rounded-xl p-4">
-                    <div className="text-3xl mb-2">⚠️</div>
-                    <h3 className="font-semibold text-white">Violation Limit</h3>
-                    <p className="text-sm text-slate-400">Auto-submit jika melebihi batas</p>
-                </div>
+                <Card padding="p-4" className="bg-gradient-to-br from-purple-500/5 to-purple-600/5 border-purple-200/50">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 shadow-sm">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-text-main dark:text-white">Tab Lock Mode</h3>
+                            <p className="text-sm text-text-secondary">Siswa tidak bisa keluar tab</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card padding="p-4" className="bg-gradient-to-br from-orange-500/5 to-orange-600/5 border-orange-200/50">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-orange-600 dark:text-orange-400 shadow-sm">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-text-main dark:text-white">Waktu & Durasi</h3>
+                            <p className="text-sm text-text-secondary">Kontrol waktu yang ketat</p>
+                        </div>
+                    </div>
+                </Card>
+                <Card padding="p-4" className="bg-gradient-to-br from-cyan-500/5 to-cyan-600/5 border-cyan-200/50">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shadow-sm">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-text-main dark:text-white">Violation Limit</h3>
+                            <p className="text-sm text-text-secondary">Auto-submit jika curang</p>
+                        </div>
+                    </div>
+                </Card>
             </div>
 
             {loading ? (
-                <div className="text-center text-slate-400 py-8">Memuat...</div>
-            ) : exams.length === 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
-                    <div className="text-6xl mb-4">📄</div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Belum Ada Ulangan</h3>
-                    <p className="text-slate-400 mb-4">Buat ulangan dengan fitur pengawasan!</p>
-                    <button
-                        onClick={() => setShowCreate(true)}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
-                    >
-                        Buat Ulangan Sekarang
-                    </button>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
                 </div>
+            ) : exams.length === 0 ? (
+                <EmptyState
+                    icon="📄"
+                    title="Belum Ada Ulangan"
+                    description="Buat ulangan baru untuk kelas Anda dengan fitur pengawasan."
+                    action={<Button onClick={() => setShowCreate(true)}>Buat Ulangan Sekarang</Button>}
+                />
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {exams.map((exam) => {
                         const status = getExamStatus(exam)
                         return (
-                            <div key={exam.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="font-semibold text-white text-lg">{exam.title}</h3>
-                                            <span className={`px-2 py-0.5 text-xs rounded-full ${status.color}`}>{status.label}</span>
+                            <Card key={exam.id} padding="p-5" className="group hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all">
+                                <div className="flex flex-col h-full gap-4">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex-1">
+                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${status.color}`}>{status.label}</span>
+                                                {exam.is_randomized && <span className="text-xs text-text-secondary flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded-full">🔀 Acak</span>}
+                                            </div>
+                                            <h3 className="font-bold text-text-main dark:text-white text-lg group-hover:text-primary transition-colors line-clamp-2">{exam.title}</h3>
                                         </div>
-                                        <p className="text-sm text-slate-400 mb-2">{exam.description || '-'}</p>
-                                        <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
-                                            <span className="px-2 py-1 bg-slate-700/50 rounded">{exam.teaching_assignment?.subject?.name}</span>
-                                            <span className="px-2 py-1 bg-slate-700/50 rounded">{exam.teaching_assignment?.class?.name}</span>
-                                            <span>📅 {formatDateTime(exam.start_time)}</span>
-                                            <span>⏱️ {exam.duration_minutes} menit</span>
-                                            <span>📝 {exam.question_count || 0} soal</span>
-                                            <span>⚠️ Max {exam.max_violations} pelanggaran</span>
-                                            {exam.is_randomized && <span>🔀 Acak</span>}
+                                        <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-text-secondary group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                        {exam.is_active && (
-                                            <Link
-                                                href={`/dashboard/guru/ulangan/${exam.id}/hasil`}
-                                                className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm"
-                                            >
-                                                📊 Hasil
+
+                                    <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2 flex-grow">{exam.description || 'Tidak ada deskripsi'}</p>
+
+                                    <div className="space-y-3 pt-4 border-t border-secondary/10">
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Kelas & Mapel</span>
+                                            <div className="flex gap-1">
+                                                <span className="px-2 py-1 bg-secondary/10 rounded font-bold text-text-main dark:text-white">{exam.teaching_assignment?.class?.name}</span>
+                                                <span className="px-2 py-1 bg-primary/10 rounded font-bold text-primary">{exam.teaching_assignment?.subject?.name}</span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-text-secondary">
+                                            <span>Waktu & Soal</span>
+                                            <div className="flex gap-3">
+                                                <span className="flex items-center gap-1 font-medium">
+                                                    ⏰ {exam.duration_minutes}m
+                                                </span>
+                                                <span className="flex items-center gap-1 font-medium">
+                                                    📝 {exam.question_count || 0}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-text-secondary text-right">
+                                            🗓️ {formatDateTime(exam.start_time)}
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 mt-auto pt-2">
+                                        {exam.is_active ? (
+                                            <Link href={`/dashboard/guru/ulangan/${exam.id}/hasil`} className="w-full">
+                                                <Button variant="secondary" size="sm" className="w-full justify-center">
+                                                    📊 Hasil
+                                                </Button>
                                             </Link>
+                                        ) : (
+                                            <Button variant="secondary" size="sm" disabled className="w-full justify-center opacity-50 cursor-not-allowed">
+                                                📊 Hasil
+                                            </Button>
                                         )}
-                                        <Link
-                                            href={`/dashboard/guru/ulangan/${exam.id}`}
-                                            className="px-3 py-1.5 bg-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/30 transition-colors text-sm"
-                                        >
-                                            ✏️ Edit
-                                        </Link>
-                                        <button
-                                            onClick={() => handleDelete(exam.id)}
-                                            className="px-3 py-1.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm"
-                                        >
-                                            🗑️
-                                        </button>
+
+                                        <div className="flex gap-2">
+                                            <Link href={`/dashboard/guru/ulangan/${exam.id}`} className="flex-1">
+                                                <Button variant="outline" size="sm" className="w-full justify-center border-primary/20 text-primary hover:bg-primary/5">
+                                                    ✏️
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleDelete(exam.id)}
+                                                className="flex-1 justify-center text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 dark:border-red-900/30"
+                                            >
+                                                🗑️
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </Card>
                         )
                     })}
                 </div>
             )}
 
             {/* Create Modal */}
-            {showCreate && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold text-white mb-4">Buat Ulangan Baru</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Kelas & Mata Pelajaran</label>
-                                <select
-                                    value={form.teaching_assignment_id}
-                                    onChange={(e) => setForm({ ...form, teaching_assignment_id: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                >
-                                    <option value="">Pilih kelas...</option>
-                                    {teachingAssignments.map((ta) => (
-                                        <option key={ta.id} value={ta.id}>
-                                            {ta.class.name} - {ta.subject.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Judul Ulangan</label>
-                                <input
-                                    type="text"
-                                    value={form.title}
-                                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    placeholder="Contoh: UTS Matematika Bab 1-3"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Deskripsi (Opsional)</label>
-                                <textarea
-                                    value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    rows={2}
-                                    placeholder="Materi yang diujikan..."
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Waktu Mulai</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={form.start_time}
-                                        onChange={(e) => setForm({ ...form, start_time: e.target.value })}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Durasi (menit)</label>
-                                    <input
-                                        type="number"
-                                        value={form.duration_minutes}
-                                        onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 60 })}
-                                        className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        min={5}
-                                        max={180}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Max Pelanggaran (auto-submit)</label>
-                                <input
-                                    type="number"
-                                    value={form.max_violations}
-                                    onChange={(e) => setForm({ ...form, max_violations: parseInt(e.target.value) || 3 })}
-                                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    min={1}
-                                    max={10}
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Jika siswa keluar tab melebihi batas, ulangan auto-submit</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="randomize"
-                                    checked={form.is_randomized}
-                                    onChange={(e) => setForm({ ...form, is_randomized: e.target.checked })}
-                                    className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-purple-500 focus:ring-purple-500"
-                                />
-                                <label htmlFor="randomize" className="text-sm text-slate-300">Acak urutan soal per siswa</label>
-                            </div>
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    onClick={() => setShowCreate(false)}
-                                    className="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-colors"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={handleCreate}
-                                    disabled={creating || !form.teaching_assignment_id || !form.title || !form.start_time}
-                                    className="flex-1 px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                                >
-                                    {creating ? 'Membuat...' : 'Buat & Tambah Soal'}
-                                </button>
-                            </div>
+            <Modal
+                open={showCreate}
+                onClose={() => setShowCreate(false)}
+                title="📝 Buat Ulangan Baru"
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Kelas & Mata Pelajaran</label>
+                        <div className="relative">
+                            <select
+                                value={form.teaching_assignment_id}
+                                onChange={(e) => setForm({ ...form, teaching_assignment_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                            >
+                                <option value="">Pilih kelas...</option>
+                                {teachingAssignments.map((ta) => (
+                                    <option key={ta.id} value={ta.id}>
+                                        {ta.class.name} - {ta.subject.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
                         </div>
                     </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Judul Ulangan</label>
+                        <input
+                            type="text"
+                            value={form.title}
+                            onChange={(e) => setForm({ ...form, title: e.target.value })}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            placeholder="Contoh: UTS Matematika Bab 1-3"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Deskripsi (Opsional)</label>
+                        <textarea
+                            value={form.description}
+                            onChange={(e) => setForm({ ...form, description: e.target.value })}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            rows={2}
+                            placeholder="Materi yang diujikan..."
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Waktu Mulai</label>
+                            <input
+                                type="datetime-local"
+                                value={form.start_time}
+                                onChange={(e) => setForm({ ...form, start_time: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Durasi (menit)</label>
+                            <input
+                                type="number"
+                                value={form.duration_minutes}
+                                onChange={(e) => setForm({ ...form, duration_minutes: parseInt(e.target.value) || 60 })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                min={5}
+                                max={180}
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Max Pelanggaran (auto-submit)</label>
+                        <input
+                            type="number"
+                            value={form.max_violations}
+                            onChange={(e) => setForm({ ...form, max_violations: parseInt(e.target.value) || 3 })}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                            min={1}
+                            max={10}
+                        />
+                        <p className="text-xs text-text-secondary mt-1">Jika siswa keluar tab melebihi batas, ulangan auto-submit</p>
+                    </div>
+                    <div className="flex items-center gap-2 p-3 bg-secondary/5 rounded-xl border border-secondary/10">
+                        <input
+                            type="checkbox"
+                            id="randomize"
+                            checked={form.is_randomized}
+                            onChange={(e) => setForm({ ...form, is_randomized: e.target.checked })}
+                            className="w-5 h-5 rounded border-secondary/30 text-primary focus:ring-primary"
+                        />
+                        <label htmlFor="randomize" className="text-sm font-medium text-text-main dark:text-white cursor-pointer select-none">Acak urutan soal per siswa</label>
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t border-secondary/10 mt-2">
+                        <Button variant="secondary" onClick={() => setShowCreate(false)} className="flex-1">
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={handleCreate}
+                            loading={creating}
+                            disabled={!form.teaching_assignment_id || !form.title || !form.start_time}
+                            className="flex-1"
+                        >
+                            Buat & Tambah Soal
+                        </Button>
+                    </div>
                 </div>
-            )}
+            </Modal>
         </div>
     )
 }

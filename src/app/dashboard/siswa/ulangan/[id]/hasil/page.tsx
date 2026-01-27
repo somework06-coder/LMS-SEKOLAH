@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { PageHeader } from '@/components/ui'
+import Card from '@/components/ui/Card'
 
 interface ExamResult {
     id: string
@@ -76,14 +78,14 @@ export default function ExamResultPage() {
     }
 
     if (loading) {
-        return <div className="text-center text-slate-400 py-8">Memuat hasil...</div>
+        return <div className="text-center text-text-secondary py-8">Memuat hasil...</div>
     }
 
     if (!result) {
         return (
-            <div className="text-center text-slate-400 py-8">
+            <div className="text-center text-text-secondary py-8">
                 <p>Hasil tidak ditemukan</p>
-                <Link href="/dashboard/siswa/ulangan" className="text-purple-400 underline mt-2 inline-block">
+                <Link href="/dashboard/siswa/ulangan" className="text-primary underline mt-2 inline-block">
                     Kembali
                 </Link>
             </div>
@@ -94,56 +96,50 @@ export default function ExamResultPage() {
 
     return (
         <div className="space-y-6 max-w-3xl mx-auto">
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/siswa/ulangan" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Hasil Ulangan</h1>
-                    <p className="text-slate-400">{result.exam?.title}</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Hasil Ulangan"
+                subtitle={result.exam?.title}
+                backHref="/dashboard/siswa/ulangan"
+            />
 
             {/* Score Card */}
-            <div className={`bg-gradient-to-r ${getGradeColor(percentage)} p-6 rounded-2xl text-white text-center`}>
-                <p className="text-lg opacity-80 mb-2">{result.exam?.teaching_assignment?.subject?.name}</p>
-                <p className="text-6xl font-bold mb-2">{result.total_score}<span className="text-3xl opacity-70">/{result.max_score}</span></p>
-                <p className="text-2xl">{percentage}%</p>
-                <p className="mt-4 text-lg">
+            <div className={`bg-gradient-to-r ${getGradeColor(percentage)} p-6 rounded-2xl text-white text-center shadow-lg`}>
+                <p className="text-lg opacity-90 mb-2 font-medium">{result.exam?.teaching_assignment?.subject?.name}</p>
+                <p className="text-6xl font-bold mb-2">{result.total_score}<span className="text-3xl opacity-80">/{result.max_score}</span></p>
+                <p className="text-2xl font-bold">{percentage}%</p>
+                <p className="mt-4 text-lg font-medium bg-white/20 inline-block px-4 py-1 rounded-full backdrop-blur-sm">
                     {percentage >= 80 ? '🎉 Excellent!' : percentage >= 60 ? '👍 Good Job!' : percentage >= 40 ? '💪 Keep Trying!' : '📚 Need More Study'}
                 </p>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-bold text-white">{formatDuration(result.started_at, result.submitted_at)}</p>
-                    <p className="text-sm text-slate-400">Waktu Pengerjaan</p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-bold text-white">{result.exam?.duration_minutes} menit</p>
-                    <p className="text-sm text-slate-400">Batas Waktu</p>
-                </div>
-                <div className={`bg-slate-800/50 border rounded-xl p-4 text-center ${result.violation_count > 0 ? 'border-red-500/50' : 'border-slate-700/50'}`}>
-                    <p className={`text-2xl font-bold ${result.violation_count > 0 ? 'text-red-400' : 'text-green-400'}`}>{result.violation_count}</p>
-                    <p className="text-sm text-slate-400">Pelanggaran</p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="text-center">
+                    <p className="text-2xl font-bold text-text-main dark:text-white">{formatDuration(result.started_at, result.submitted_at)}</p>
+                    <p className="text-sm text-text-secondary">Waktu Pengerjaan</p>
+                </Card>
+                <Card className="text-center">
+                    <p className="text-2xl font-bold text-text-main dark:text-white">{result.exam?.duration_minutes} menit</p>
+                    <p className="text-sm text-text-secondary">Batas Waktu</p>
+                </Card>
+                <Card className={`text-center ${result.violation_count > 0 ? 'border-red-500/50 bg-red-50 dark:bg-red-900/10' : ''}`}>
+                    <p className={`text-2xl font-bold ${result.violation_count > 0 ? 'text-red-500' : 'text-green-500'}`}>{result.violation_count}</p>
+                    <p className="text-sm text-text-secondary">Pelanggaran</p>
+                </Card>
             </div>
 
             {/* Completion notice */}
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-center gap-3">
-                <div className="text-3xl">✅</div>
+                <div className="text-2xl">✅</div>
                 <div>
-                    <p className="text-green-400 font-medium">Ulangan Selesai</p>
-                    <p className="text-sm text-slate-400">Dikumpulkan pada {new Date(result.submitted_at).toLocaleString('id-ID')}</p>
+                    <p className="text-green-600 dark:text-green-400 font-bold">Ulangan Selesai</p>
+                    <p className="text-sm text-text-secondary">Dikumpulkan pada {new Date(result.submitted_at).toLocaleString('id-ID')}</p>
                 </div>
             </div>
 
             <Link
                 href="/dashboard/siswa/ulangan"
-                className="block w-full text-center px-6 py-3 bg-purple-500/20 text-purple-400 rounded-xl hover:bg-purple-500/30 transition-colors"
+                className="block w-full text-center px-6 py-3 bg-primary/10 text-primary-dark dark:text-primary rounded-xl hover:bg-primary/20 transition-colors font-bold"
             >
                 ← Kembali ke Daftar Ulangan
             </Link>

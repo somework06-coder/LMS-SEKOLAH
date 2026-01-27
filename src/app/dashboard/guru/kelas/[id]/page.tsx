@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { PageHeader, Card, EmptyState, Button } from '@/components/ui'
 
 interface Student {
     id: string
@@ -62,59 +63,57 @@ export default function ClassStudentsPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/guru" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-white">
-                        Daftar Siswa {className ? `- ${className}` : ''}
-                    </h1>
-                    <p className="text-slate-400">Kelola data siswa di kelas ini</p>
-                </div>
-            </div>
+            <PageHeader
+                title={`Daftar Siswa ${className ? `- ${className}` : ''}`}
+                subtitle="Kelola data siswa yang terdaftar di kelas ini"
+                backHref="/dashboard/guru"
+                icon={
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl">
+                        👥
+                    </div>
+                }
+            />
 
             {loading ? (
-                <div className="text-center text-slate-400 py-8">Memuat data siswa...</div>
-            ) : students.length === 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
-                    <div className="text-5xl mb-4">👥</div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Belum Ada Siswa</h3>
-                    <p className="text-slate-400">Belum ada siswa yang terdaftar di kelas ini.</p>
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+                    <p className="text-text-secondary dark:text-zinc-400 animate-pulse">Memuat data siswa...</p>
                 </div>
+            ) : students.length === 0 ? (
+                <EmptyState
+                    icon="👥"
+                    title="Belum Ada Siswa"
+                    description="Belum ada siswa yang terdaftar di kelas ini."
+                />
             ) : (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                <Card className="overflow-hidden bg-white dark:bg-surface-dark border-secondary/20">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-700/50 text-slate-300">
+                        <table className="w-full text-left bg-transparent">
+                            <thead className="bg-secondary/10 dark:bg-black/20 text-text-secondary dark:text-zinc-300 sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-4 font-semibold">No</th>
-                                    <th className="px-6 py-4 font-semibold">NIS</th>
-                                    <th className="px-6 py-4 font-semibold">Nama Lengkap</th>
-                                    <th className="px-6 py-4 font-semibold">Username</th>
-                                    <th className="px-6 py-4 font-semibold text-right">Aksi</th>
+                                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">No</th>
+                                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">NIS</th>
+                                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Nama Lengkap</th>
+                                    <th className="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Username</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-700/50">
+                            <tbody className="divide-y divide-secondary/20 dark:divide-white/10">
                                 {students.map((student, idx) => (
-                                    <tr key={student.id} className="hover:bg-slate-700/20 transition-colors">
-                                        <td className="px-6 py-4 text-slate-400 w-16">{idx + 1}</td>
-                                        <td className="px-6 py-4 text-slate-300 font-mono">{student.nis}</td>
-                                        <td className="px-6 py-4 text-white font-medium">{student.user.full_name}</td>
-                                        <td className="px-6 py-4 text-slate-400">{student.user.username}</td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">
-                                                Detail
-                                            </button>
+                                    <tr key={student.id} className="hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors group">
+                                        <td className="px-6 py-4 text-text-secondary dark:text-zinc-400 w-16">{idx + 1}</td>
+                                        <td className="px-6 py-4 text-text-main dark:text-zinc-300 font-mono text-sm">{student.nis}</td>
+                                        <td className="px-6 py-4">
+                                            <p className="font-bold text-text-main dark:text-white group-hover:text-primary transition-colors">
+                                                {student.user.full_name}
+                                            </p>
                                         </td>
+                                        <td className="px-6 py-4 text-text-secondary dark:text-zinc-400 text-sm">{student.user.username}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </Card>
             )}
         </div>
     )

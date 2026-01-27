@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { PageHeader, Card, Button, StatsCard, EmptyState } from '@/components/ui'
 
 interface Student {
     id: string
@@ -299,75 +300,69 @@ export default function NilaiPage() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/guru" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </Link>
-                <div>
-                    <h1 className="text-2xl font-bold text-white">📊 Nilai</h1>
-                    <p className="text-slate-400">Lihat rekap nilai siswa</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Nilai"
+                subtitle="Lihat dan kelola rekap nilai siswa"
+                backHref="/dashboard/guru"
+            />
 
             {/* Selection View - Cards */}
             {!selectedTA && (
                 <>
                     {/* Search Bar */}
-                    <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-6">
-                        <label className="block text-sm font-medium text-slate-300 mb-3">🔍 Cari Kelas atau Mata Pelajaran</label>
+                    <Card padding="p-6" className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-3">🔍 Cari Kelas atau Mata Pelajaran</label>
                         <div className="relative">
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Ketik nama kelas atau mata pelajaran..."
-                                className="w-full px-5 py-4 pl-12 bg-slate-700 border border-slate-600 rounded-xl text-white text-lg focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
+                                className="w-full px-5 py-4 pl-12 bg-white dark:bg-surface-dark border border-secondary/20 rounded-full text-text-main dark:text-white text-lg focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
                             />
-                            <svg className="w-6 h-6 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-6 h-6 text-text-secondary absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
-                    </div>
+                    </Card>
 
                     {/* Class Cards Grid */}
                     {loading ? (
-                        <div className="text-center text-slate-400 py-8">Memuat...</div>
+                        <div className="text-center text-text-secondary py-8">Memuat...</div>
                     ) : filteredTAs.length === 0 ? (
-                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
-                            <p className="text-slate-400 text-lg">
-                                {searchQuery ? '🔍 Tidak ada kelas yang cocok dengan pencarian' : '📚 Belum ada kelas'}
-                            </p>
-                        </div>
+                        <EmptyState
+                            icon="📚"
+                            title={searchQuery ? 'Tidak ada yang cocok' : 'Belum ada kelas'}
+                            description={searchQuery ? 'Cobalah kata kunci yang lain.' : 'Anda belum memiliki kelas yang diampu.'}
+                        />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {filteredTAs.map((ta) => (
-                                <button
+                                <Card
                                     key={ta.id}
+                                    padding="p-6"
+                                    className="hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 transition-all duration-200 cursor-pointer group"
                                     onClick={() => { setSelectedTA(ta.id); setActiveTab('rekap'); setSearchQuery('') }}
-                                    className="bg-gradient-to-br from-slate-800/80 to-slate-800/50 border border-slate-700/50 rounded-2xl p-6 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20 transition-all duration-200 text-left group"
                                 >
                                     <div className="flex items-start justify-between mb-4">
                                         <div className="flex-1">
-                                            <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">
+                                            <h3 className="text-2xl font-bold text-text-main dark:text-white mb-2 group-hover:text-primary transition-colors">
                                                 {ta.class.name}
                                             </h3>
                                             <div className="flex items-center gap-2">
-                                                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-sm font-medium">
+                                                <span className="px-3 py-1 bg-primary/10 text-primary-dark dark:text-primary rounded-full text-sm font-bold">
                                                     {ta.subject.name}
                                                 </span>
                                             </div>
                                         </div>
-                                        <div className="p-3 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors">
-                                            <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="p-3 bg-secondary/10 rounded-full group-hover:bg-primary/20 transition-colors">
+                                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                             </svg>
                                         </div>
                                     </div>
-                                    <p className="text-slate-400 text-sm">Klik untuk melihat nilai</p>
-                                </button>
+                                    <p className="text-text-secondary text-sm">Klik untuk melihat nilai</p>
+                                </Card>
                             ))}
                         </div>
                     )}
@@ -377,128 +372,124 @@ export default function NilaiPage() {
             {/* Content after class selected */}
             {selectedTA && (
                 <>
-                    {/* Change Class Button */}
-                    <div className="flex items-center justify-between bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+                    {/* Change Class Header */}
+                    <Card padding="p-4" className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <h3 className="text-lg font-semibold text-white">{selectedTAData?.class.name}</h3>
-                            <p className="text-sm text-slate-400">{selectedTAData?.subject.name}</p>
+                            <h3 className="text-lg font-bold text-text-main dark:text-white">{selectedTAData?.class.name}</h3>
+                            <p className="text-sm text-text-secondary">{selectedTAData?.subject.name}</p>
                         </div>
-                        <button
+                        <Button
+                            variant="secondary"
+                            size="sm"
                             onClick={() => setSelectedTA('')}
-                            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+                            icon={
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                            }
                         >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
                             Ganti Kelas
-                        </button>
-                    </div>
+                        </Button>
+                    </Card>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-4 gap-4">
-                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-cyan-400">{students.length}</p>
-                            <p className="text-xs text-slate-400">Siswa</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-green-400">{totalGraded}</p>
-                            <p className="text-xs text-slate-400">Sudah Dinilai</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-amber-400">{totalUngraded}</p>
-                            <p className="text-xs text-slate-400">Belum Dinilai</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                            <p className="text-2xl font-bold text-purple-400">{classAverage || '-'}</p>
-                            <p className="text-xs text-slate-400">Rata-rata Kelas</p>
-                        </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <StatsCard
+                            label="Siswa"
+                            value={students.length}
+                            icon={<>👥</>}
+                        />
+                        <StatsCard
+                            label="Sudah Dinilai"
+                            value={totalGraded}
+                            icon={<>✅</>}
+                            trend="submissions"
+                        />
+                        <StatsCard
+                            label="Belum Dinilai"
+                            value={totalUngraded}
+                            icon={<>⏳</>}
+                        />
+                        <StatsCard
+                            label="Rata-rata Kelas"
+                            value={classAverage || '-'}
+                            icon={<>📊</>}
+                        />
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex gap-1 bg-slate-800/50 p-1 rounded-xl overflow-x-auto">
-                        <button
-                            onClick={() => setActiveTab('rekap')}
-                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'rekap' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                        >
-                            📋 Rekap
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('tugas')}
-                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'tugas' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                        >
-                            📝 Tugas ({tugasAssignments.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('kuis')}
-                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'kuis' ? 'bg-green-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                        >
-                            🎯 Kuis ({quizzes.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('ulangan')}
-                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'ulangan' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                        >
-                            📄 Ulangan ({exams.length})
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('export')}
-                            className={`flex-1 px-4 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${activeTab === 'export' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}
-                        >
-                            📥 Export
-                        </button>
+                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                        {[
+                            { id: 'rekap', label: '📋 Rekap', color: 'bg-primary' },
+                            { id: 'tugas', label: `📝 Tugas (${tugasAssignments.length})`, color: 'bg-amber-500' },
+                            { id: 'kuis', label: `🎯 Kuis (${quizzes.length})`, color: 'bg-emerald-500' },
+                            { id: 'ulangan', label: `📄 Ulangan (${exams.length})`, color: 'bg-purple-500' },
+                            { id: 'export', label: '📥 Export', color: 'bg-blue-500' }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as TabType)}
+                                className={`px-4 py-2 rounded-full font-bold transition-all whitespace-nowrap text-sm ${activeTab === tab.id
+                                    ? `${tab.color} text-white shadow-lg shadow-${tab.color.replace('bg-', '')}/20`
+                                    : 'bg-white dark:bg-surface-dark border border-secondary/20 text-text-secondary hover:text-primary hover:border-primary/30'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Tab Content */}
                     {loadingData ? (
-                        <div className="text-center text-slate-400 py-8">Memuat data...</div>
+                        <div className="text-center text-text-secondary py-8">Memuat data...</div>
                     ) : (
                         <>
                             {/* Tab: Rekap */}
                             {activeTab === 'rekap' && (
-                                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
-                                    <div className="overflow-x-auto">
+                                <Card padding="p-0" className="overflow-hidden">
+                                    <div className="overflow-x-auto custom-scrollbar">
                                         <table className="w-full text-sm">
-                                            <thead className="bg-slate-900/50">
+                                            <thead className="bg-secondary/5 border-b border-secondary/10">
                                                 <tr>
-                                                    <th className="px-4 py-3 text-left text-slate-300 font-medium sticky left-0 bg-slate-900">Nama Siswa</th>
+                                                    <th className="px-6 py-4 text-left text-text-secondary font-bold sticky left-0 z-10 bg-white/95 dark:bg-surface-dark/95 min-w-[200px]">Nama Siswa</th>
                                                     {tugasAssignments.map((a, i) => (
-                                                        <th key={a.id} className="px-3 py-3 text-center text-slate-300 font-medium">
-                                                            <span className="px-1.5 py-0.5 text-xs rounded bg-amber-500/20 text-amber-400">T{i + 1}</span>
+                                                        <th key={a.id} className="px-4 py-4 text-center text-text-secondary font-bold min-w-[60px]">
+                                                            <span className="px-2 py-1 text-xs rounded-full bg-amber-500/10 text-amber-600 border border-amber-200">T{i + 1}</span>
                                                         </th>
                                                     ))}
                                                     {quizzes.map((q, i) => (
-                                                        <th key={q.id} className="px-3 py-3 text-center text-slate-300 font-medium">
-                                                            <span className="px-1.5 py-0.5 text-xs rounded bg-green-500/20 text-green-400">K{i + 1}</span>
+                                                        <th key={q.id} className="px-4 py-4 text-center text-text-secondary font-bold min-w-[60px]">
+                                                            <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">K{i + 1}</span>
                                                         </th>
                                                     ))}
                                                     {exams.map((e, i) => (
-                                                        <th key={e.id} className="px-3 py-3 text-center text-slate-300 font-medium">
-                                                            <span className="px-1.5 py-0.5 text-xs rounded bg-purple-500/20 text-purple-400">U{i + 1}</span>
+                                                        <th key={e.id} className="px-4 py-4 text-center text-text-secondary font-bold min-w-[60px]">
+                                                            <span className="px-2 py-1 text-xs rounded-full bg-purple-500/10 text-purple-600 border border-purple-200">U{i + 1}</span>
                                                         </th>
                                                     ))}
-                                                    <th className="px-4 py-3 text-center text-cyan-400 font-bold">Rata-rata</th>
+                                                    <th className="px-6 py-4 text-center text-primary font-bold min-w-[80px]">Rata-rata</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-700/50">
+                                            <tbody className="divide-y divide-secondary/10">
                                                 {students.map((student) => {
                                                     const avg = calculateAverage(student.id)
                                                     return (
-                                                        <tr key={student.id} className="hover:bg-slate-800/30">
-                                                            <td className="px-4 py-3 sticky left-0 bg-slate-800/80">
-                                                                <p className="text-white font-medium">{student.user.full_name}</p>
-                                                                <p className="text-xs text-slate-500">{student.nis}</p>
+                                                        <tr key={student.id} className="hover:bg-secondary/5 transition-colors">
+                                                            <td className="px-6 py-4 sticky left-0 bg-white/80 dark:bg-surface-dark/80 backdrop-blur-sm z-10 border-r border-secondary/10">
+                                                                <p className="text-text-main dark:text-white font-bold truncate max-w-[180px]">{student.user.full_name}</p>
+                                                                <p className="text-xs text-text-secondary">{student.nis}</p>
                                                             </td>
                                                             {tugasAssignments.map(a => {
                                                                 const sub = allSubmissions.find(s => s.student?.id === student.id && s.assignment?.id === a.id)
                                                                 const score = sub?.grade?.[0]?.score
                                                                 return (
-                                                                    <td key={a.id} className="px-3 py-3 text-center">
+                                                                    <td key={a.id} className="px-4 py-4 text-center">
                                                                         {score !== undefined ? (
-                                                                            <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded font-bold text-sm">{score}</span>
+                                                                            <span className="text-text-main dark:text-white font-bold">{score}</span>
                                                                         ) : sub ? (
-                                                                            <span className="text-amber-400 text-xs">⏳</span>
+                                                                            <span className="text-amber-500 text-xs">⏳</span>
                                                                         ) : (
-                                                                            <span className="text-slate-600">-</span>
+                                                                            <span className="text-text-secondary/30">-</span>
                                                                         )}
                                                                     </td>
                                                                 )
@@ -506,15 +497,15 @@ export default function NilaiPage() {
                                                             {quizzes.map(q => {
                                                                 const qs = quizSubmissions.find(qs => qs.student_id === student.id && qs.quiz.id === q.id)
                                                                 return (
-                                                                    <td key={q.id} className="px-3 py-3 text-center">
+                                                                    <td key={q.id} className="px-4 py-4 text-center">
                                                                         {qs?.is_graded ? (
-                                                                            <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded font-bold text-sm">
+                                                                            <span className="text-text-main dark:text-white font-bold">
                                                                                 {Math.round((qs.total_score / qs.max_score) * 100)}
                                                                             </span>
                                                                         ) : qs ? (
-                                                                            <span className="text-amber-400 text-xs">⏳</span>
+                                                                            <span className="text-amber-500 text-xs">⏳</span>
                                                                         ) : (
-                                                                            <span className="text-slate-600">-</span>
+                                                                            <span className="text-text-secondary/30">-</span>
                                                                         )}
                                                                     </td>
                                                                 )
@@ -522,24 +513,24 @@ export default function NilaiPage() {
                                                             {exams.map(e => {
                                                                 const es = examSubmissions.find(es => es.student?.id === student.id && es.exam.id === e.id)
                                                                 return (
-                                                                    <td key={e.id} className="px-3 py-3 text-center">
+                                                                    <td key={e.id} className="px-4 py-4 text-center">
                                                                         {es ? (
-                                                                            <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded font-bold text-sm">
+                                                                            <span className="text-text-main dark:text-white font-bold">
                                                                                 {Math.round((es.total_score / es.max_score) * 100)}
                                                                             </span>
                                                                         ) : (
-                                                                            <span className="text-slate-600">-</span>
+                                                                            <span className="text-text-secondary/30">-</span>
                                                                         )}
                                                                     </td>
                                                                 )
                                                             })}
-                                                            <td className="px-4 py-3 text-center">
+                                                            <td className="px-6 py-4 text-center">
                                                                 {avg !== null ? (
-                                                                    <span className={`px-3 py-1 rounded-full font-bold ${avg >= 75 ? 'bg-green-500/20 text-green-400' : avg >= 60 ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}`}>
+                                                                    <span className={`px-2 py-1 rounded-md font-bold text-sm ${avg >= 75 ? 'bg-green-500/10 text-green-600' : avg >= 60 ? 'bg-amber-500/10 text-amber-600' : 'bg-red-500/10 text-red-600'}`}>
                                                                         {avg}
                                                                     </span>
                                                                 ) : (
-                                                                    <span className="text-slate-600">-</span>
+                                                                    <span className="text-text-secondary/30">-</span>
                                                                 )}
                                                             </td>
                                                         </tr>
@@ -548,36 +539,35 @@ export default function NilaiPage() {
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </Card>
                             )}
 
                             {/* Tab: Tugas - Links to hasil pages */}
                             {activeTab === 'tugas' && (
                                 <div className="space-y-4">
                                     {tugasAssignments.length === 0 ? (
-                                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                                            Belum ada tugas
-                                        </div>
+                                        <EmptyState title="Belum ada tugas" description="Anda belum membuat tugas untuk kelas ini." icon="📝" />
                                     ) : (
-                                        <div className="grid gap-4">
+                                        <div className="grid gap-4 md:grid-cols-2">
                                             {tugasAssignments.map(assignment => {
                                                 const subs = allSubmissions.filter(s => s.assignment?.id === assignment.id)
                                                 const graded = subs.filter(s => s.grade?.length > 0).length
                                                 return (
-                                                    <div key={assignment.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <div>
-                                                                <h3 className="text-lg font-semibold text-white">{assignment.title}</h3>
-                                                                <p className="text-sm text-slate-400">{subs.length} submission • {graded} dinilai</p>
+                                                    <Card key={assignment.id} padding="p-5" className="hover:border-amber-500/50 transition-colors">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl">
+                                                                📝
                                                             </div>
-                                                            <Link
-                                                                href={`/dashboard/guru/tugas/${assignment.id}/hasil`}
-                                                                className="px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg hover:bg-amber-500/30 transition-colors text-sm font-medium"
-                                                            >
-                                                                Lihat & Nilai →
-                                                            </Link>
+                                                            <span className="text-xs text-text-secondary bg-secondary/10 px-2 py-1 rounded-full font-medium">{assignment.type}</span>
                                                         </div>
-                                                    </div>
+                                                        <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">{assignment.title}</h3>
+                                                        <p className="text-sm text-text-secondary mb-4">{subs.length} submission • {graded} dinilai</p>
+                                                        <Link href={`/dashboard/guru/tugas/${assignment.id}/hasil`} className="w-full block">
+                                                            <Button size="sm" variant="outline" className="w-full">
+                                                                Lihat & Nilai →
+                                                            </Button>
+                                                        </Link>
+                                                    </Card>
                                                 )
                                             })}
                                         </div>
@@ -589,29 +579,28 @@ export default function NilaiPage() {
                             {activeTab === 'kuis' && (
                                 <div className="space-y-4">
                                     {quizzes.length === 0 ? (
-                                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                                            Belum ada kuis
-                                        </div>
+                                        <EmptyState title="Belum ada kuis" description="Anda belum membuat kuis untuk kelas ini." icon="🎯" />
                                     ) : (
-                                        <div className="grid gap-4">
+                                        <div className="grid gap-4 md:grid-cols-2">
                                             {quizzes.map(quiz => {
                                                 const subs = quizSubmissions.filter(qs => qs.quiz.id === quiz.id)
                                                 const graded = subs.filter(s => s.is_graded).length
                                                 return (
-                                                    <div key={quiz.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <div>
-                                                                <h3 className="text-lg font-semibold text-white">{quiz.title}</h3>
-                                                                <p className="text-sm text-slate-400">{subs.length} submission • {graded} dinilai</p>
+                                                    <Card key={quiz.id} padding="p-5" className="hover:border-emerald-500/50 transition-colors">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xl">
+                                                                🎯
                                                             </div>
-                                                            <Link
-                                                                href={`/dashboard/guru/kuis/${quiz.id}/hasil`}
-                                                                className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium"
-                                                            >
-                                                                Lihat Hasil →
-                                                            </Link>
+                                                            <span className="text-xs text-text-secondary bg-secondary/10 px-2 py-1 rounded-full font-medium">KUIS</span>
                                                         </div>
-                                                    </div>
+                                                        <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">{quiz.title}</h3>
+                                                        <p className="text-sm text-text-secondary mb-4">{subs.length} submission • {graded} dinilai</p>
+                                                        <Link href={`/dashboard/guru/kuis/${quiz.id}/hasil`} className="w-full block">
+                                                            <Button size="sm" variant="outline" className="w-full">
+                                                                Lihat Hasil →
+                                                            </Button>
+                                                        </Link>
+                                                    </Card>
                                                 )
                                             })}
                                         </div>
@@ -623,28 +612,27 @@ export default function NilaiPage() {
                             {activeTab === 'ulangan' && (
                                 <div className="space-y-4">
                                     {exams.length === 0 ? (
-                                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                                            Belum ada ulangan
-                                        </div>
+                                        <EmptyState title="Belum ada ulangan" description="Anda belum membuat ulangan untuk kelas ini." icon="📄" />
                                     ) : (
-                                        <div className="grid gap-4">
+                                        <div className="grid gap-4 md:grid-cols-2">
                                             {exams.map(exam => {
                                                 const subs = examSubmissions.filter(es => es.exam.id === exam.id)
                                                 return (
-                                                    <div key={exam.id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                                        <div className="flex items-center justify-between">
-                                                            <div>
-                                                                <h3 className="text-lg font-semibold text-white">{exam.title}</h3>
-                                                                <p className="text-sm text-slate-400">{subs.length} submission</p>
+                                                    <Card key={exam.id} padding="p-5" className="hover:border-purple-500/50 transition-colors">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <div className="w-10 h-10 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center text-xl">
+                                                                📄
                                                             </div>
-                                                            <Link
-                                                                href={`/dashboard/guru/ulangan/${exam.id}/hasil`}
-                                                                className="px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors text-sm font-medium"
-                                                            >
-                                                                Lihat Hasil →
-                                                            </Link>
+                                                            <span className="text-xs text-text-secondary bg-secondary/10 px-2 py-1 rounded-full font-medium">ULANGAN</span>
                                                         </div>
-                                                    </div>
+                                                        <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">{exam.title}</h3>
+                                                        <p className="text-sm text-text-secondary mb-4">{subs.length} submission</p>
+                                                        <Link href={`/dashboard/guru/ulangan/${exam.id}/hasil`} className="w-full block">
+                                                            <Button size="sm" variant="outline" className="w-full">
+                                                                Lihat Hasil →
+                                                            </Button>
+                                                        </Link>
+                                                    </Card>
                                                 )
                                             })}
                                         </div>
@@ -654,40 +642,41 @@ export default function NilaiPage() {
 
                             {/* Tab: Export */}
                             {activeTab === 'export' && (
-                                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center">
-                                    <div className="text-6xl mb-4">📥</div>
-                                    <h3 className="text-xl font-semibold text-white mb-2">Export Nilai ke Excel</h3>
-                                    <p className="text-slate-400 mb-6">
-                                        Download rekap nilai dalam format buku nilai untuk kelas <span className="text-white font-medium">{selectedTAData?.class.name}</span> - <span className="text-white font-medium">{selectedTAData?.subject.name}</span>
+                                <Card padding="p-8" className="text-center flex flex-col items-center justify-center min-h-[400px]">
+                                    <div className="w-20 h-20 bg-blue-500/10 text-blue-600 rounded-full flex items-center justify-center text-4xl mb-6 shadow-xl shadow-blue-500/10">
+                                        📥
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-text-main dark:text-white mb-2">Export Nilai ke Excel</h3>
+                                    <p className="text-text-secondary mb-8 max-w-lg">
+                                        Download rekap nilai dalam format buku nilai untuk kelas <span className="text-text-main dark:text-white font-bold">{selectedTAData?.class.name}</span> - <span className="text-text-main dark:text-white font-bold">{selectedTAData?.subject.name}</span>
                                     </p>
-                                    <div className="bg-slate-900/50 rounded-xl p-4 mb-6 max-w-md mx-auto text-left">
-                                        <p className="text-sm text-slate-400 mb-2">Format export meliputi:</p>
-                                        <ul className="text-sm text-slate-300 space-y-1">
-                                            <li>✅ Nama dan NIS siswa</li>
-                                            <li>✅ Nilai Tugas (T1, T2, ...)</li>
-                                            <li>✅ Nilai Kuis (K1, K2, ...)</li>
-                                            <li>✅ Nilai Ulangan (U1, U2, ...)</li>
-                                            <li>✅ Rata-rata nilai</li>
+
+                                    <div className="bg-secondary/5 rounded-2xl p-6 mb-8 max-w-md w-full text-left border border-secondary/10">
+                                        <p className="text-sm text-text-secondary mb-3 uppercase tracking-wider font-bold">Format export meliputi:</p>
+                                        <ul className="text-sm text-text-main dark:text-white space-y-3">
+                                            <li className="flex items-center gap-3"><span className="text-success">✅</span> Nama dan NIS siswa</li>
+                                            <li className="flex items-center gap-3"><span className="text-success">✅</span> Nilai Tugas (T1, T2, ...)</li>
+                                            <li className="flex items-center gap-3"><span className="text-success">✅</span> Nilai Kuis (K1, K2, ...)</li>
+                                            <li className="flex items-center gap-3"><span className="text-success">✅</span> Nilai Ulangan (U1, U2, ...)</li>
+                                            <li className="flex items-center gap-3"><span className="text-success">✅</span> Rata-rata nilai</li>
                                         </ul>
                                     </div>
-                                    <button
+
+                                    <Button
                                         onClick={handleExport}
                                         disabled={students.length === 0}
-                                        className="px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold hover:opacity-90 transition-opacity flex items-center gap-3 mx-auto disabled:opacity-50"
+                                        className="px-8 py-4 text-lg bg-gradient-to-r from-emerald-500 to-green-600 shadow-xl shadow-green-500/20 hover:shadow-green-500/30 text-white border-0"
                                     >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
                                         Download Excel
-                                    </button>
-                                </div>
+                                    </Button>
+                                </Card>
                             )}
                         </>
                     )}
                 </>
             )}
 
-            {loading && <div className="text-center text-slate-400 py-8">Memuat...</div>}
+            {loading && <div className="text-center text-text-secondary py-8">Memuat...</div>}
         </div>
     )
 }

@@ -7,12 +7,14 @@ export async function GET(request: NextRequest) {
     try {
         const token = request.cookies.get('session_token')?.value
         if (!token) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            console.error('API Teachers: No session_token cookie found')
+            return NextResponse.json({ error: 'Unauthorized: No token' }, { status: 401 })
         }
 
         const user = await validateSession(token)
         if (!user) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+            console.error('API Teachers: Session invalid or expired')
+            return NextResponse.json({ error: 'Unauthorized: Invalid session' }, { status: 401 })
         }
 
         const { data, error } = await supabase
@@ -26,9 +28,16 @@ export async function GET(request: NextRequest) {
         if (error) throw error
 
         return NextResponse.json(data)
-    } catch (error) {
-        console.error('Error fetching teachers:', error)
-        return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    } catch (error: any) {
+        console.error('Error fetching teachers (Detailed):', {
+            message: error.message,
+            stack: error.stack,
+            details: error
+        })
+        return NextResponse.json({
+            error: 'Server error',
+            details: error.message
+        }, { status: 500 })
     }
 }
 

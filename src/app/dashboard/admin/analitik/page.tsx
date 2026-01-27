@@ -99,26 +99,26 @@ export default function AnalitikPage() {
     }
 
     const getScoreColor = (score: number | null) => {
-        if (score === null) return 'text-slate-500'
-        if (score >= 80) return 'text-green-400'
-        if (score >= 70) return 'text-amber-400'
-        if (score >= 60) return 'text-orange-400'
-        return 'text-red-400'
+        if (score === null) return 'text-text-secondary dark:text-zinc-500'
+        if (score >= 80) return 'text-green-700 dark:text-green-400'
+        if (score >= 70) return 'text-amber-700 dark:text-amber-400'
+        if (score >= 60) return 'text-orange-700 dark:text-orange-400'
+        return 'text-red-700 dark:text-red-400'
     }
 
     const getBarColor = (score: number) => {
-        if (score >= 80) return '#4ade80'
-        if (score >= 70) return '#fbbf24'
-        if (score >= 60) return '#fb923c'
-        return '#f87171'
+        if (score >= 80) return '#22c55e'
+        if (score >= 70) return '#f59e0b'
+        if (score >= 60) return '#f97316'
+        return '#ef4444'
     }
 
     const getScoreBgColor = (score: number | null) => {
-        if (score === null) return 'bg-slate-700/50'
-        if (score >= 80) return 'bg-green-500/20 border-green-500/30'
-        if (score >= 70) return 'bg-amber-500/20 border-amber-500/30'
-        if (score >= 60) return 'bg-orange-500/20 border-orange-500/30'
-        return 'bg-red-500/20 border-red-500/30'
+        if (score === null) return 'bg-secondary/10 border-secondary/20'
+        if (score >= 80) return 'bg-green-100 border-green-200 dark:bg-green-900/20 dark:border-green-900/40'
+        if (score >= 70) return 'bg-amber-100 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900/40'
+        if (score >= 60) return 'bg-orange-100 border-orange-200 dark:bg-orange-900/20 dark:border-orange-900/40'
+        return 'bg-red-100 border-red-200 dark:bg-red-900/20 dark:border-red-900/40'
     }
 
     const formatScore = (score: number | null) => {
@@ -183,13 +183,13 @@ export default function AnalitikPage() {
             />
 
             {/* Filter Tahun Ajaran */}
-            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
+            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-4">
-                    <label className="text-sm font-medium text-slate-300">Tahun Ajaran:</label>
+                    <label className="text-sm font-bold text-text-main dark:text-white">Tahun Ajaran:</label>
                     <select
                         value={selectedYear}
                         onChange={(e) => setSelectedYear(e.target.value)}
-                        className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="px-4 py-2.5 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
                         disabled={loading}
                     >
                         <option value="">Pilih Tahun Ajaran</option>
@@ -204,7 +204,9 @@ export default function AnalitikPage() {
 
             {/* Content */}
             {loading ? (
-                <div className="text-center text-slate-400 py-8">Memuat...</div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
             ) : !selectedYear ? (
                 <EmptyState
                     icon="📅"
@@ -212,7 +214,9 @@ export default function AnalitikPage() {
                     description="Pilih tahun ajaran untuk melihat analitik"
                 />
             ) : loadingData ? (
-                <div className="text-center text-slate-400 py-8">Memuat data analitik...</div>
+                <div className="flex justify-center py-12">
+                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                </div>
             ) : classData.length === 0 ? (
                 <EmptyState
                     icon="📊"
@@ -222,20 +226,35 @@ export default function AnalitikPage() {
             ) : (
                 <>
                     {/* Overall Stats */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl p-4">
-                            <p className="text-sm text-slate-400">Total Kelas</p>
-                            <p className="text-2xl font-bold text-white">{overallStats.totalClasses}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xl">🏫</div>
+                                <div>
+                                    <p className="text-xs text-text-secondary dark:text-zinc-400">Total Kelas</p>
+                                    <p className="text-2xl font-bold text-text-main dark:text-white">{overallStats.totalClasses}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/30 rounded-xl p-4">
-                            <p className="text-sm text-slate-400">Mapel dengan Nilai</p>
-                            <p className="text-2xl font-bold text-white">{overallStats.totalSubjectsWithGrades}</p>
+                        <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">📚</div>
+                                <div>
+                                    <p className="text-xs text-text-secondary dark:text-zinc-400">Mapel dengan Nilai</p>
+                                    <p className="text-2xl font-bold text-text-main dark:text-white">{overallStats.totalSubjectsWithGrades}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-4">
-                            <p className="text-sm text-slate-400">Rata-rata Keseluruhan</p>
-                            <p className={`text-2xl font-bold ${getScoreColor(overallStats.overallAverage)}`}>
-                                {formatScore(overallStats.overallAverage)}
-                            </p>
+                        <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-xl">📊</div>
+                                <div>
+                                    <p className="text-xs text-text-secondary dark:text-zinc-400">Rata-rata</p>
+                                    <p className={`text-2xl font-bold ${getScoreColor(overallStats.overallAverage)}`}>
+                                        {formatScore(overallStats.overallAverage)}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -243,17 +262,17 @@ export default function AnalitikPage() {
                     <div className="grid grid-cols-1 gap-6">
                         {/* Bar Chart - Class Comparison */}
                         {classChartData.length > 0 && (
-                            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                <h3 className="text-lg font-semibold text-white mb-4">📊 Perbandingan Rata-rata Kelas</h3>
+                            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
+                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">📊 Perbandingan Rata-rata Kelas</h3>
                                 <div className="h-64" style={{ minWidth: 0, minHeight: 200, position: 'relative' }}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                         <BarChart data={classChartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                            <XAxis type="number" domain={[0, 100]} stroke="#94a3b8" fontSize={12} />
-                                            <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={12} width={80} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <XAxis type="number" domain={[0, 100]} stroke="#64748b" fontSize={12} />
+                                            <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={12} width={80} />
                                             <Tooltip
-                                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
-                                                labelStyle={{ color: '#fff' }}
+                                                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                                                labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
                                                 formatter={(value) => [`${value}`, 'Rata-rata']}
                                             />
                                             <Bar dataKey="average" radius={[0, 4, 4, 0]}>
@@ -269,17 +288,17 @@ export default function AnalitikPage() {
 
                         {/* Bar Chart - Subject Averages */}
                         {subjectChartData.length > 0 && (
-                            <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4">
-                                <h3 className="text-lg font-semibold text-white mb-4">📚 Rata-rata per Mata Pelajaran</h3>
+                            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
+                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">📚 Rata-rata per Mata Pelajaran</h3>
                                 <div className="h-64" style={{ minWidth: 0, minHeight: 200, position: 'relative' }}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                         <BarChart data={subjectChartData} layout="vertical" margin={{ left: 20, right: 30 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                                            <XAxis type="number" domain={[0, 100]} stroke="#94a3b8" fontSize={12} />
-                                            <YAxis type="category" dataKey="name" stroke="#94a3b8" fontSize={11} width={100} />
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <XAxis type="number" domain={[0, 100]} stroke="#64748b" fontSize={12} />
+                                            <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={11} width={100} />
                                             <Tooltip
-                                                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
-                                                labelStyle={{ color: '#fff' }}
+                                                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                                                labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
                                                 formatter={(value, _name, props) => [`${value}`, (props?.payload as any)?.fullName || 'Mapel']}
                                             />
                                             <Bar dataKey="average" radius={[0, 4, 4, 0]}>
@@ -297,16 +316,16 @@ export default function AnalitikPage() {
                     {/* Class Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {classData.map(cls => (
-                            <div key={cls.class_id} className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
+                            <div key={cls.class_id} className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                                 {/* Class Header */}
-                                <div className="p-4 border-b border-slate-700/50 bg-gradient-to-r from-purple-500/10 to-pink-500/10">
+                                <div className="p-4 border-b border-secondary/10 bg-gradient-to-r from-primary/5 to-secondary/5">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-xl">
+                                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl">
                                             🏫
                                         </div>
                                         <div>
-                                            <h3 className="font-semibold text-white">{cls.class_name}</h3>
-                                            <p className="text-xs text-slate-400">{cls.total_students} siswa</p>
+                                            <h3 className="font-bold text-text-main dark:text-white">{cls.class_name}</h3>
+                                            <p className="text-xs text-text-secondary dark:text-zinc-400">{cls.total_students} siswa</p>
                                         </div>
                                     </div>
                                 </div>
@@ -314,7 +333,7 @@ export default function AnalitikPage() {
                                 {/* Subject Averages */}
                                 <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
                                     {cls.subjects.filter(s => s.student_count > 0).length === 0 ? (
-                                        <p className="text-sm text-slate-500 text-center py-4">
+                                        <p className="text-sm text-text-secondary dark:text-zinc-500 text-center py-4">
                                             Belum ada nilai
                                         </p>
                                     ) : (
@@ -325,11 +344,11 @@ export default function AnalitikPage() {
                                                 <button
                                                     key={subject.subject_id}
                                                     onClick={() => handleSubjectClick(cls, subject)}
-                                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-all hover:opacity-80 ${getScoreBgColor(subject.average)}`}
+                                                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border transition-all hover:scale-[1.01] ${getScoreBgColor(subject.average)}`}
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-white">{subject.subject_name}</span>
-                                                        <span className="text-xs text-slate-500">({subject.student_count})</span>
+                                                        <span className="text-sm font-medium text-text-main dark:text-white">{subject.subject_name}</span>
+                                                        <span className="text-xs text-text-secondary dark:text-zinc-400">({subject.student_count})</span>
                                                     </div>
                                                     <span className={`font-bold ${getScoreColor(subject.average)}`}>
                                                         {formatScore(subject.average)}
@@ -343,13 +362,13 @@ export default function AnalitikPage() {
                     </div>
 
                     {/* Legend */}
-                    <div className="bg-slate-800/30 border border-slate-700/50 rounded-xl p-4">
-                        <p className="text-sm text-slate-400">
-                            <strong className="text-white">Keterangan:</strong> Klik pada mata pelajaran untuk melihat daftar siswa.
-                            Warna: <span className="text-green-400">≥80</span> |
-                            <span className="text-amber-400"> 70-79</span> |
-                            <span className="text-orange-400"> 60-69</span> |
-                            <span className="text-red-400"> &lt;60</span>
+                    <div className="bg-secondary/5 border border-secondary/20 rounded-xl p-4">
+                        <p className="text-sm text-text-secondary dark:text-zinc-400">
+                            <strong className="text-text-main dark:text-white">Keterangan:</strong> Klik pada mata pelajaran untuk melihat daftar siswa.
+                            Warna: <span className="text-green-600 dark:text-green-400">≥80</span> |
+                            <span className="text-amber-600 dark:text-amber-400"> 70-79</span> |
+                            <span className="text-orange-600 dark:text-orange-400"> 60-69</span> |
+                            <span className="text-red-600 dark:text-red-400"> &lt;60</span>
                         </p>
                     </div>
                 </>
@@ -365,49 +384,49 @@ export default function AnalitikPage() {
                 {selectedSubject && (
                     <div className="space-y-4">
                         {/* Summary */}
-                        <div className="grid grid-cols-4 gap-3">
-                            <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                                <p className="text-xs text-slate-400">Rata-rata</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div className="bg-secondary/10 rounded-lg p-4 text-center">
+                                <p className="text-xs text-text-secondary dark:text-zinc-400">Rata-rata</p>
                                 <p className={`text-xl font-bold ${getScoreColor(selectedSubject.average)}`}>
                                     {formatScore(selectedSubject.average)}
                                 </p>
                             </div>
-                            <div className="bg-slate-700/50 rounded-lg p-3 text-center">
-                                <p className="text-xs text-slate-400">Jumlah Siswa</p>
-                                <p className="text-xl font-bold text-white">{selectedSubject.student_count}</p>
+                            <div className="bg-secondary/10 rounded-lg p-4 text-center">
+                                <p className="text-xs text-text-secondary dark:text-zinc-400">Jumlah Siswa</p>
+                                <p className="text-xl font-bold text-text-main dark:text-white">{selectedSubject.student_count}</p>
                             </div>
-                            <div className="bg-green-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xs text-slate-400">Lulus (≥75)</p>
-                                <p className="text-xl font-bold text-green-400">{selectedSubject.pass_count}</p>
+                            <div className="bg-green-100 dark:bg-green-900/20 rounded-lg p-4 text-center">
+                                <p className="text-xs text-text-secondary dark:text-zinc-400">Lulus (≥75)</p>
+                                <p className="text-xl font-bold text-green-700 dark:text-green-400">{selectedSubject.pass_count}</p>
                             </div>
-                            <div className="bg-red-500/20 rounded-lg p-3 text-center">
-                                <p className="text-xs text-slate-400">Tidak Lulus</p>
-                                <p className="text-xl font-bold text-red-400">{selectedSubject.fail_count}</p>
+                            <div className="bg-red-100 dark:bg-red-900/20 rounded-lg p-4 text-center">
+                                <p className="text-xs text-text-secondary dark:text-zinc-400">Tidak Lulus</p>
+                                <p className="text-xl font-bold text-red-700 dark:text-red-400">{selectedSubject.fail_count}</p>
                             </div>
                         </div>
 
                         {/* Student List */}
-                        <div className="max-h-80 overflow-y-auto">
+                        <div className="max-h-80 overflow-y-auto rounded-lg border border-secondary/20">
                             <table className="w-full">
-                                <thead className="bg-slate-700/50 sticky top-0">
+                                <thead className="bg-secondary/10 sticky top-0">
                                     <tr>
-                                        <th className="px-4 py-2 text-left text-sm font-medium text-slate-300">No</th>
-                                        <th className="px-4 py-2 text-left text-sm font-medium text-slate-300">Nama Siswa</th>
-                                        <th className="px-4 py-2 text-left text-sm font-medium text-slate-300">NIS</th>
-                                        <th className="px-4 py-2 text-center text-sm font-medium text-slate-300">Jumlah Nilai</th>
-                                        <th className="px-4 py-2 text-center text-sm font-medium text-slate-300">Rata-rata</th>
+                                        <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white">No</th>
+                                        <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white">Nama Siswa</th>
+                                        <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white">NIS</th>
+                                        <th className="px-4 py-3 text-center text-sm font-bold text-text-main dark:text-white">Jumlah Nilai</th>
+                                        <th className="px-4 py-3 text-center text-sm font-bold text-text-main dark:text-white">Rata-rata</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-700/50">
+                                <tbody className="divide-y divide-secondary/10">
                                     {selectedSubject.students
                                         .sort((a, b) => (b.average || 0) - (a.average || 0))
                                         .map((student, idx) => (
-                                            <tr key={student.student_id} className="hover:bg-slate-700/30">
-                                                <td className="px-4 py-2 text-slate-400">{idx + 1}</td>
-                                                <td className="px-4 py-2 text-white">{student.student_name}</td>
-                                                <td className="px-4 py-2 text-slate-400">{student.student_nis}</td>
-                                                <td className="px-4 py-2 text-center text-slate-400">{student.grade_count}</td>
-                                                <td className="px-4 py-2 text-center">
+                                            <tr key={student.student_id} className="hover:bg-secondary/5">
+                                                <td className="px-4 py-3 text-text-secondary dark:text-zinc-400">{idx + 1}</td>
+                                                <td className="px-4 py-3 text-text-main dark:text-white font-medium">{student.student_name}</td>
+                                                <td className="px-4 py-3 text-text-secondary dark:text-zinc-400">{student.student_nis}</td>
+                                                <td className="px-4 py-3 text-center text-text-secondary dark:text-zinc-400">{student.grade_count}</td>
+                                                <td className="px-4 py-3 text-center">
                                                     <span className={`font-bold ${getScoreColor(student.average)}`}>
                                                         {formatScore(student.average)}
                                                     </span>

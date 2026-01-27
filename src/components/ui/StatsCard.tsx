@@ -1,29 +1,26 @@
 'use client'
 
 import { ReactNode } from 'react'
+import Card from './Card'
 
 interface StatsCardProps {
     value: string | number
     label: string
     icon?: ReactNode
-    color?: 'cyan' | 'green' | 'amber' | 'purple' | 'red' | 'blue'
+    trend?: string
 }
 
-const colorClasses = {
-    cyan: 'text-cyan-400',
-    green: 'text-green-400',
-    amber: 'text-amber-400',
-    purple: 'text-purple-400',
-    red: 'text-red-400',
-    blue: 'text-blue-400'
-}
-
-export default function StatsCard({ value, label, icon, color = 'purple' }: StatsCardProps) {
+export default function StatsCard({ value, label, icon, trend }: StatsCardProps) {
     return (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-            {icon && <div className="text-2xl mb-1">{icon}</div>}
-            <p className={`text-2xl font-bold ${colorClasses[color]}`}>{value}</p>
-            <p className="text-xs text-slate-400">{label}</p>
-        </div>
+        <Card className="flex flex-col items-center justify-center gap-2 group hover:border-primary/30 transition-colors">
+            {icon && (
+                <div className="w-12 h-12 rounded-full bg-primary/10 text-primary-dark dark:text-primary flex items-center justify-center text-2xl mb-1 group-hover:scale-110 transition-transform">
+                    {icon}
+                </div>
+            )}
+            <p className="text-3xl font-bold text-text-main dark:text-white">{value}</p>
+            <p className="text-sm text-text-secondary dark:text-[#A8BC9F] font-medium">{label}</p>
+            {trend && <span className="text-xs text-primary font-bold bg-primary/10 px-2 py-0.5 rounded-full">{trend}</span>}
+        </Card>
     )
 }

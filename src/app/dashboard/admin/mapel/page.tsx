@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
+import { Modal, Button, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
 import { Subject } from '@/lib/types'
 
 export default function MapelPage() {
@@ -72,24 +73,37 @@ export default function MapelPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Mata Pelajaran"
-                subtitle="Kelola daftar mata pelajaran"
-                backHref="/dashboard/admin"
-                action={
-                    <Button onClick={openAdd} icon={
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                    }>
-                        Tambah
-                    </Button>
-                }
-            />
+            <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-6 rounded-3xl shadow-soft">
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.history.back()}
+                        icon={
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        }
+                    />
+                    <div>
+                        <h1 className="text-2xl font-bold text-text-main dark:text-white leading-tight">Mata Pelajaran</h1>
+                        <p className="text-text-secondary dark:text-[#A8BC9F] text-sm">Kelola daftar mata pelajaran sekolah</p>
+                    </div>
+                </div>
+                <Button onClick={openAdd} icon={
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                }>
+                    Tambah
+                </Button>
+            </div>
 
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
+            <div className="min-h-[50vh]">
                 {loading ? (
-                    <div className="p-8 text-center text-slate-400">Memuat...</div>
+                    <div className="p-12 flex justify-center">
+                        <div className="animate-spin text-3xl text-primary">⏳</div>
+                    </div>
                 ) : subjects.length === 0 ? (
                     <EmptyState
                         icon="📚"
@@ -98,28 +112,41 @@ export default function MapelPage() {
                         action={<Button onClick={openAdd}>Tambah Mapel</Button>}
                     />
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {subjects.map((subject) => (
-                            <div key={subject.id} className="bg-slate-700/30 border border-slate-600/30 rounded-xl p-4 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold">
-                                        {subject.name[0]}
+                            <Card key={subject.id} className="group hover:border-primary/50 transition-all hover:shadow-lg">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-secondary/10 flex items-center justify-center text-xl font-bold text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+                                            {subject.name[0]}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-text-main dark:text-white group-hover:text-primary transition-colors">{subject.name}</h3>
+                                            <p className="text-xs text-text-secondary dark:text-[#A8BC9F]">Aktif</p>
+                                        </div>
                                     </div>
-                                    <span className="text-white font-medium">{subject.name}</span>
+                                    <div className="flex flex-col gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => openEdit(subject)}
+                                            className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 flex items-center justify-center transition-colors"
+                                            title="Edit"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(subject.id)}
+                                            className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 flex items-center justify-center transition-colors"
+                                            title="Hapus"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => openEdit(subject)} className="p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    </button>
-                                    <button onClick={() => handleDelete(subject.id)} className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </div>
+                            </Card>
                         ))}
                     </div>
                 )}
@@ -128,26 +155,26 @@ export default function MapelPage() {
             <Modal
                 open={showModal}
                 onClose={() => setShowModal(false)}
-                title={editingSubject ? 'Edit Mata Pelajaran' : 'Tambah Mata Pelajaran'}
+                title={editingSubject ? '✏️ Edit Mata Pelajaran' : '➕ Tambah Mata Pelajaran'}
             >
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Nama Mata Pelajaran</label>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Nama Mata Pelajaran</label>
                         <input
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50 transition-all"
                             placeholder="Contoh: Matematika"
                             required
                         />
                     </div>
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 pt-2">
                         <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
                             Batal
                         </Button>
                         <Button type="submit" loading={saving} className="flex-1">
-                            Simpan
+                            Simpan Perubahan
                         </Button>
                     </div>
                 </form>

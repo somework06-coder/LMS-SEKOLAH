@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { PageHeader, Card, Button, EmptyState, StatsCard } from '@/components/ui'
 
 interface QuizSubmission {
     id: string
@@ -81,46 +82,45 @@ export default function QuizSubmissionsPage() {
     const submittedStudentIds = submissions.map(s => s.student.id)
     const notSubmittedStudents = classStudents.filter(s => !submittedStudentIds.includes(s.id))
 
-    if (loading) return <div className="text-center text-slate-400 py-8">Memuat data...</div>
+    if (loading) return (
+        <div className="flex justify-center py-12">
+            <div className="animate-spin text-3xl text-primary">⏳</div>
+        </div>
+    )
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center gap-4">
-                <Link href="/dashboard/guru/kuis" className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                </Link>
-                <div className="flex-1">
-                    <h1 className="text-2xl font-bold text-white">Hasil Kuis: {quiz?.title}</h1>
-                    <p className="text-slate-400">
-                        {quiz?.teaching_assignment?.class?.name} • {quiz?.teaching_assignment?.subject?.name} • {submissions.length} Pengumpulan
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title={`Hasil Kuis: ${quiz?.title || ''}`}
+                subtitle={`${quiz?.teaching_assignment?.class?.name} • ${quiz?.teaching_assignment?.subject?.name} • ${submissions.length} Pengumpulan`}
+                backHref="/dashboard/guru/kuis"
+            />
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-bold text-green-400">{submissions.length}</p>
-                    <p className="text-xs text-slate-400">Sudah Mengerjakan</p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-bold text-red-400">{notSubmittedStudents.length}</p>
-                    <p className="text-xs text-slate-400">Belum Mengerjakan</p>
-                </div>
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-center">
-                    <p className="text-2xl font-bold text-cyan-400">{classStudents.length}</p>
-                    <p className="text-xs text-slate-400">Total Siswa</p>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <StatsCard
+                    value={submissions.length}
+                    label="Sudah Mengerjakan"
+                    icon={<>✅</>}
+                />
+                <StatsCard
+                    value={notSubmittedStudents.length}
+                    label="Belum Mengerjakan"
+                    icon={<>⚠️</>}
+                />
+                <StatsCard
+                    value={classStudents.length}
+                    label="Total Siswa"
+                    icon={<>👥</>}
+                />
             </div>
 
             {/* Not Submitted Students Section */}
             {notSubmittedStudents.length > 0 && (
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl overflow-hidden">
+                <Card className="bg-red-500/10 border-red-500/30">
                     <button
                         onClick={() => setShowNotSubmitted(!showNotSubmitted)}
-                        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-red-500/20 transition-colors"
+                        className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-red-500/20 transition-colors rounded-lg"
                     >
                         <div className="flex items-center gap-3">
                             <span className="text-red-400 text-xl">⚠️</span>
@@ -131,80 +131,87 @@ export default function QuizSubmissionsPage() {
                         </svg>
                     </button>
                     {showNotSubmitted && (
-                        <div className="px-4 pb-4 space-y-2">
+                        <div className="px-4 pb-4 space-y-2 mt-2">
                             {notSubmittedStudents.map(student => (
-                                <div key={student.id} className="flex items-center gap-3 px-3 py-2 bg-slate-800/50 rounded-lg">
-                                    <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs font-bold">
+                                <div key={student.id} className="flex items-center gap-3 px-3 py-2 bg-white dark:bg-surface-dark rounded-lg shadow-sm">
+                                    <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-500/20 text-red-500 dark:text-red-400 flex items-center justify-center text-xs font-bold">
                                         {student.user.full_name.charAt(0)}
                                     </div>
                                     <div>
-                                        <p className="text-white text-sm font-medium">{student.user.full_name}</p>
-                                        <p className="text-xs text-slate-500">{student.nis}</p>
+                                        <p className="text-text-main dark:text-white text-sm font-medium">{student.user.full_name}</p>
+                                        <p className="text-xs text-text-secondary dark:text-zinc-500">{student.nis}</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     )}
-                </div>
+                </Card>
             )}
 
             {/* Submissions Table */}
             {submissions.length === 0 ? (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-8 text-center text-slate-400">
-                    Belum ada siswa yang mengumpulkan kuis ini.
-                </div>
+                <EmptyState
+                    icon="📝"
+                    title="Belum ada pengumpulan"
+                    description="Belum ada siswa yang mengerjakan dan mengumpulkan kuis ini."
+                />
             ) : (
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-900/50 text-slate-400 text-xs uppercase">
-                            <tr>
-                                <th className="px-6 py-4">Siswa</th>
-                                <th className="px-6 py-4">Waktu Submit</th>
-                                <th className="px-6 py-4">Nilai</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-700/50">
-                            {submissions.map((sub) => (
-                                <tr key={sub.id} className="hover:bg-slate-700/30 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <p className="font-medium text-white">{sub.student.user.full_name}</p>
-                                        <p className="text-xs text-slate-500">{sub.student.nis}</p>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-300 font-mono text-sm">
-                                        {formatDate(sub.submitted_at)}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-xl font-bold text-white">{sub.total_score}</span>
-                                            <span className="text-xs text-slate-500">/{sub.max_score}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {sub.is_graded ? (
-                                            <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
-                                                Selesai Dinilai
-                                            </span>
-                                        ) : (
-                                            <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full animate-pulse">
-                                                Perlu Koreksi
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <Link
-                                            href={`/dashboard/guru/kuis/${quizId}/hasil/${sub.id}`}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 rounded-lg transition-colors text-sm font-medium"
-                                        >
-                                            {sub.is_graded ? 'Lihat/Edit' : 'Koreksi'}
-                                        </Link>
-                                    </td>
+                <Card className="overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-secondary/10 dark:bg-surface-dark text-text-secondary dark:text-zinc-400 text-xs uppercase">
+                                <tr>
+                                    <th className="px-6 py-4">Siswa</th>
+                                    <th className="px-6 py-4">Waktu Submit</th>
+                                    <th className="px-6 py-4">Nilai</th>
+                                    <th className="px-6 py-4">Status</th>
+                                    <th className="px-6 py-4 text-right">Aksi</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody className="divide-y divide-secondary/20 dark:divide-white/10">
+                                {submissions.map((sub) => (
+                                    <tr key={sub.id} className="hover:bg-secondary/10 dark:hover:bg-white/5 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <p className="font-medium text-text-main dark:text-white">{sub.student.user.full_name}</p>
+                                            <p className="text-xs text-text-secondary dark:text-zinc-500">{sub.student.nis}</p>
+                                        </td>
+                                        <td className="px-6 py-4 text-text-secondary dark:text-zinc-300 font-mono text-sm">
+                                            {formatDate(sub.submitted_at)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="text-xl font-bold text-text-main dark:text-white">{sub.total_score}</span>
+                                                <span className="text-xs text-text-secondary dark:text-zinc-500">/{sub.max_score}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {sub.is_graded ? (
+                                                <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">
+                                                    Selesai Dinilai
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded-full animate-pulse">
+                                                    Perlu Koreksi
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <Link href={`/dashboard/guru/kuis/${quizId}/hasil/${sub.id}`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant={sub.is_graded ? 'ghost' : 'primary'}
+                                                    className={!sub.is_graded ? 'bg-gradient-to-r from-blue-600 to-cyan-600' : ''}
+                                                >
+                                                    {sub.is_graded ? 'Lihat' : 'Koreksi'}
+                                                </Button>
+                                            </Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
             )}
         </div>
     )

@@ -76,7 +76,7 @@ export default function QuestionImageUpload({ imageUrl, onImageChange, disabled 
                 <button
                     onClick={() => !disabled && setShowModal(true)}
                     disabled={disabled}
-                    className="p-2 rounded-lg bg-slate-700/50 text-slate-400 hover:bg-slate-600/50 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-primary/30"
                     title="Tambah gambar"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

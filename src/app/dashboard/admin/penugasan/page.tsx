@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
+import { Modal, Button, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
 import { AcademicYear, Class, Subject } from '@/lib/types'
 
 interface Teacher {
@@ -101,145 +102,181 @@ export default function PenugasanPage() {
 
     return (
         <div className="space-y-6">
-            <PageHeader
-                title="Penugasan Mengajar"
-                subtitle="Assign guru ke kelas & mata pelajaran"
-                backHref="/dashboard/admin"
-                action={
-                    <Button onClick={openAdd} icon={
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                    }>
-                        Tambah Penugasan
-                    </Button>
-                }
-            />
-
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl overflow-hidden">
-                {loading ? (
-                    <div className="p-8 text-center text-slate-400">Memuat...</div>
-                ) : assignments.length === 0 ? (
-                    <EmptyState
-                        icon="📋"
-                        title="Belum Ada Penugasan"
-                        description="Assign guru ke kelas dan mata pelajaran"
-                        action={<Button onClick={openAdd}>Tambah Penugasan</Button>}
+            <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-6 rounded-3xl shadow-soft">
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.history.back()}
+                        icon={
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                        }
                     />
-                ) : (
-                    <table className="w-full">
-                        <thead className="bg-slate-900/50">
-                            <tr>
-                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Guru</th>
-                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Mata Pelajaran</th>
-                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Kelas</th>
-                                <th className="px-6 py-4 text-left text-sm font-medium text-slate-300">Tahun Ajaran</th>
-                                <th className="px-6 py-4 text-right text-sm font-medium text-slate-300">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-700/50">
-                            {assignments.map((assignment) => (
-                                <tr key={assignment.id} className="hover:bg-slate-800/30">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 flex items-center justify-center text-white text-sm font-bold">
-                                                {assignment.teacher?.user?.full_name?.[0] || '?'}
-                                            </div>
-                                            <span className="text-white">{assignment.teacher?.user?.full_name || '-'}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">{assignment.subject?.name}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm">{assignment.class?.name}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-300">{assignment.academic_year?.name}</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button onClick={() => handleDelete(assignment.id)} className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                    <div>
+                        <h1 className="text-2xl font-bold text-text-main dark:text-white leading-tight">Penugasan Mengajar</h1>
+                        <p className="text-text-secondary dark:text-[#A8BC9F] text-sm">Assign guru ke kelas dan mata pelajaran</p>
+                    </div>
+                </div>
+                <Button onClick={openAdd} icon={
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                }>
+                    Tambah Penugasan
+                </Button>
             </div>
+
+            <Card className="overflow-hidden p-0">
+                {loading ? (
+                    <div className="p-12 flex justify-center">
+                        <div className="animate-spin text-3xl text-primary">⏳</div>
+                    </div>
+                ) : assignments.length === 0 ? (
+                    <div className="p-6">
+                        <EmptyState
+                            icon="📋"
+                            title="Belum Ada Penugasan"
+                            description="Assign guru ke kelas dan mata pelajaran"
+                            action={<Button onClick={openAdd}>Tambah Penugasan</Button>}
+                        />
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead className="bg-secondary/10 dark:bg-white/5 border-b border-secondary/20">
+                                <tr>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Guru</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Mapel</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Kelas</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Tahun Ajaran</th>
+                                    <th className="px-6 py-4 text-right text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-secondary/20 dark:divide-white/5">
+                                {assignments.map((assignment) => (
+                                    <tr key={assignment.id} className="hover:bg-secondary/5 transition-colors">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                                    {assignment.teacher?.user?.full_name?.[0] || '?'}
+                                                </div>
+                                                <span className="text-text-main dark:text-white font-bold">{assignment.teacher?.user?.full_name || '-'}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-bold border border-green-500/20">
+                                                {assignment.subject?.name}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
+                                                {assignment.class?.name}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-text-secondary dark:text-zinc-300">{assignment.academic_year?.name}</td>
+                                        <td className="px-6 py-4 text-right">
+                                            <button onClick={() => handleDelete(assignment.id)} className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 flex items-center justify-center transition-colors">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </Card>
 
             <Modal
                 open={showModal}
                 onClose={() => setShowModal(false)}
-                title="Tambah Penugasan"
+                title="➕ Tambah Penugasan"
             >
                 {error && (
-                    <div className="mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm font-medium flex items-center gap-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {error}
+                    </div>
                 )}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Guru</label>
-                        <select
-                            value={formData.teacher_id}
-                            onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            required
-                        >
-                            <option value="">Pilih Guru</option>
-                            {teachers.map((t) => (
-                                <option key={t.id} value={t.id}>{t.user.full_name || t.user.username}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Guru</label>
+                        <div className="relative">
+                            <select
+                                value={formData.teacher_id}
+                                onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                required
+                            >
+                                <option value="">Pilih Guru</option>
+                                {teachers.map((t) => (
+                                    <option key={t.id} value={t.id}>{t.user.full_name || t.user.username}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                        </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Mata Pelajaran</label>
-                        <select
-                            value={formData.subject_id}
-                            onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            required
-                        >
-                            <option value="">Pilih Mata Pelajaran</option>
-                            {subjects.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Mata Pelajaran</label>
+                        <div className="relative">
+                            <select
+                                value={formData.subject_id}
+                                onChange={(e) => setFormData({ ...formData, subject_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                required
+                            >
+                                <option value="">Pilih Mata Pelajaran</option>
+                                {subjects.map((s) => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                        </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Kelas</label>
-                        <select
-                            value={formData.class_id}
-                            onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            required
-                        >
-                            <option value="">Pilih Kelas</option>
-                            {classes.map((c) => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Kelas</label>
+                        <div className="relative">
+                            <select
+                                value={formData.class_id}
+                                onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                required
+                            >
+                                <option value="">Pilih Kelas</option>
+                                {classes.map((c) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                        </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Tahun Ajaran</label>
-                        <select
-                            value={formData.academic_year_id}
-                            onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            required
-                        >
-                            <option value="">Pilih Tahun Ajaran</option>
-                            {academicYears.map((y) => (
-                                <option key={y.id} value={y.id}>{y.name} {y.is_active && '(Aktif)'}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Tahun Ajaran</label>
+                        <div className="relative">
+                            <select
+                                value={formData.academic_year_id}
+                                onChange={(e) => setFormData({ ...formData, academic_year_id: e.target.value })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                required
+                            >
+                                <option value="">Pilih Tahun Ajaran</option>
+                                {academicYears.map((y) => (
+                                    <option key={y.id} value={y.id}>{y.name} {y.is_active && '(Aktif)'}</option>
+                                ))}
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                        </div>
                     </div>
-                    <div className="flex gap-3 pt-4">
+                    <div className="flex gap-3 pt-4 border-t border-secondary/10 mt-4">
                         <Button type="button" variant="secondary" onClick={() => setShowModal(false)} className="flex-1">
                             Batal
                         </Button>
                         <Button type="submit" loading={saving} className="flex-1">
-                            Simpan
+                            Simpan Penugasan
                         </Button>
                     </div>
                 </form>

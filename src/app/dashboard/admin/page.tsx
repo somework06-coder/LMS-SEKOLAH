@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import StatsCard from '@/components/ui/StatsCard'
+import { Calendar, School, BookOpen, UserCheck, Users, UserPlus, BarChart3, TrendingUp } from 'lucide-react'
 
 interface StatsData {
     totalTeachers: number
@@ -62,49 +63,49 @@ export default function AdminDashboard() {
         {
             title: 'Tahun Ajaran',
             description: 'Kelola tahun ajaran aktif',
-            icon: '📅',
+            icon: Calendar,
             href: '/dashboard/admin/tahun-ajaran',
         },
         {
             title: 'Kelas',
             description: 'Kelola daftar kelas',
-            icon: '🏫',
+            icon: School,
             href: '/dashboard/admin/kelas',
         },
         {
             title: 'Mata Pelajaran',
             description: 'Kelola daftar mapel',
-            icon: '📚',
+            icon: BookOpen,
             href: '/dashboard/admin/mapel',
         },
         {
             title: 'Akun Guru',
             description: 'Kelola akun guru',
-            icon: '👨‍🏫',
+            icon: UserCheck,
             href: '/dashboard/admin/guru',
         },
         {
             title: 'Akun Siswa',
             description: 'Kelola akun siswa',
-            icon: '👨‍🎓',
+            icon: Users,
             href: '/dashboard/admin/siswa',
         },
         {
             title: 'Penugasan',
             description: 'Assign guru ke kelas',
-            icon: '🤝',
+            icon: UserPlus,
             href: '/dashboard/admin/penugasan',
         },
         {
             title: 'Rekap Nilai',
             description: 'Rekap nilai per kelas',
-            icon: '📊',
+            icon: BarChart3,
             href: '/dashboard/admin/rekap-nilai',
         },
         {
             title: 'Analitik',
             description: 'Performa per mapel',
-            icon: '📈',
+            icon: TrendingUp,
             href: '/dashboard/admin/analitik',
         }
     ]
@@ -131,22 +132,22 @@ export default function AdminDashboard() {
                 <StatsCard
                     label="Total Guru"
                     value={stats.totalTeachers}
-                    icon="👨‍🏫"
+                    icon={<UserCheck className="w-6 h-6 text-blue-500" />}
                 />
                 <StatsCard
                     label="Total Siswa"
                     value={stats.totalStudents}
-                    icon="👨‍🎓"
+                    icon={<Users className="w-6 h-6 text-green-500" />}
                 />
                 <StatsCard
                     label="Total Kelas"
                     value={stats.totalClasses}
-                    icon="🏫"
+                    icon={<School className="w-6 h-6 text-purple-500" />}
                 />
                 <StatsCard
                     label="Total Mapel"
                     value={stats.totalSubjects}
-                    icon="📚"
+                    icon={<BookOpen className="w-6 h-6 text-amber-500" />}
                 />
             </div>
 
@@ -161,8 +162,25 @@ export default function AdminDashboard() {
                         >
                             <Card className="h-full border-2 border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-95 transition-all group cursor-pointer">
                                 <div className="flex items-start gap-4">
-                                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center text-3xl group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm">
-                                        {item.icon}
+                                    {/* Duotone Icon Container with unique colors per function */}
+                                    <div className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm ${item.href.includes('tahun-ajaran') ? 'bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-600' :
+                                        item.href.includes('/kelas') ? 'bg-cyan-100 dark:bg-cyan-900/30 group-hover:bg-cyan-600' :
+                                            item.href.includes('mapel') ? 'bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-600' :
+                                                item.href.includes('/guru') ? 'bg-emerald-100 dark:bg-emerald-900/30 group-hover:bg-emerald-600' :
+                                                    item.href.includes('siswa') ? 'bg-violet-100 dark:bg-violet-900/30 group-hover:bg-violet-600' :
+                                                        item.href.includes('penugasan') ? 'bg-teal-100 dark:bg-teal-900/30 group-hover:bg-teal-600' :
+                                                            item.href.includes('rekap-nilai') ? 'bg-green-100 dark:bg-green-900/30 group-hover:bg-green-600' :
+                                                                'bg-orange-100 dark:bg-orange-900/30 group-hover:bg-orange-600'
+                                        }`}>
+                                        <item.icon className={`w-7 h-7 transition-colors ${item.href.includes('tahun-ajaran') ? 'text-indigo-600 dark:text-indigo-400 group-hover:text-white' :
+                                            item.href.includes('/kelas') ? 'text-cyan-600 dark:text-cyan-400 group-hover:text-white' :
+                                                item.href.includes('mapel') ? 'text-blue-600 dark:text-blue-400 group-hover:text-white' :
+                                                    item.href.includes('/guru') ? 'text-emerald-600 dark:text-emerald-400 group-hover:text-white' :
+                                                        item.href.includes('siswa') ? 'text-violet-600 dark:text-violet-400 group-hover:text-white' :
+                                                            item.href.includes('penugasan') ? 'text-teal-600 dark:text-teal-400 group-hover:text-white' :
+                                                                item.href.includes('rekap-nilai') ? 'text-green-600 dark:text-green-400 group-hover:text-white' :
+                                                                    'text-orange-600 dark:text-orange-400 group-hover:text-white'
+                                            }`} strokeWidth={2} />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h3 className="text-lg font-bold text-text-main dark:text-white group-hover:text-primary transition-colors mb-1">

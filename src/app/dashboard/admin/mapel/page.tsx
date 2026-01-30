@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Button, EmptyState } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
+import { BookOpen, Plus } from 'lucide-react'
 import { Subject } from '@/lib/types'
 
 export default function MapelPage() {
@@ -73,40 +75,26 @@ export default function MapelPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-6 rounded-3xl shadow-soft">
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.history.back()}
-                        icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        }
-                    />
-                    <div>
-                        <h1 className="text-2xl font-bold text-text-main dark:text-white leading-tight">Mata Pelajaran</h1>
-                        <p className="text-text-secondary dark:text-[#A8BC9F] text-sm">Kelola daftar mata pelajaran sekolah</p>
-                    </div>
-                </div>
-                <Button onClick={openAdd} icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                }>
-                    Tambah
-                </Button>
-            </div>
+            <PageHeader
+                title="Mata Pelajaran"
+                subtitle="Kelola daftar mata pelajaran sekolah"
+                backHref="/dashboard/admin"
+                icon={<BookOpen className="w-6 h-6 text-green-500" />}
+                action={
+                    <Button onClick={openAdd} icon={<Plus className="w-5 h-5" />}>
+                        Tambah Mapel
+                    </Button>
+                }
+            />
 
             <div className="min-h-[50vh]">
                 {loading ? (
                     <div className="p-12 flex justify-center">
-                        <div className="animate-spin text-3xl text-primary">⏳</div>
+                        <div className="animate-spin text-primary"><BookOpen className="w-8 h-8" /></div>
                     </div>
                 ) : subjects.length === 0 ? (
                     <EmptyState
-                        icon="📚"
+                        icon={<BookOpen className="w-12 h-12 text-secondary" />}
                         title="Belum Ada Mata Pelajaran"
                         description="Tambahkan mata pelajaran untuk memulai"
                         action={<Button onClick={openAdd}>Tambah Mapel</Button>}

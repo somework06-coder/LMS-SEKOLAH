@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { PageHeader, EmptyState } from '@/components/ui'
+import { FileText, Clock, AlertTriangle, Play, CheckCircle, ArrowRight, BarChart3, Loader2, Rocket, Calendar } from 'lucide-react'
 
 interface Exam {
     id: string
@@ -13,6 +14,7 @@ interface Exam {
     duration_minutes: number
     is_active: boolean
     max_violations: number
+    created_at: string
     teaching_assignment: {
         subject: { name: string }
         class: { name: string }
@@ -64,21 +66,21 @@ export default function SiswaUlanganPage() {
         const submission = submissions.find(s => s.exam_id === exam.id)
 
         if (submission?.is_submitted) {
-            return { status: 'submitted', label: '✅ Sudah Dikumpulkan', color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' }
+            return { status: 'submitted', label: 'Sudah Dikumpulkan', icon: CheckCircle, color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' }
         }
         if (now < startTime) {
             const diff = startTime.getTime() - now.getTime()
             const hours = Math.floor(diff / 3600000)
             const mins = Math.floor((diff % 3600000) / 60000)
-            return { status: 'scheduled', label: `⏰ Mulai dalam ${hours}j ${mins}m`, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' }
+            return { status: 'scheduled', label: `Mulai dalam ${hours}j ${mins}m`, icon: Clock, color: 'bg-blue-100 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400' }
         }
         if (now >= startTime && now <= endTime) {
             if (submission) {
-                return { status: 'in_progress', label: '📝 Lanjutkan', color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' }
+                return { status: 'in_progress', label: 'Lanjutkan', icon: Play, color: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' }
             }
-            return { status: 'available', label: '🚀 Mulai Sekarang', color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' }
+            return { status: 'available', label: 'Mulai Sekarang', icon: Rocket, color: 'bg-green-100 text-green-600 dark:bg-green-500/20 dark:text-green-400' }
         }
-        return { status: 'ended', label: '⌛ Waktu Habis', color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400' }
+        return { status: 'ended', label: 'Waktu Habis', icon: Clock, color: 'bg-slate-100 text-slate-500 dark:bg-slate-500/20 dark:text-slate-400' }
     }
 
     const formatDateTime = (dateString: string) => {
@@ -91,15 +93,18 @@ export default function SiswaUlanganPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="📄 Ulangan"
+                title="Ulangan"
                 subtitle="Daftar ulangan yang tersedia"
+                icon={<Clock className="w-6 h-6 text-red-500" />}
                 backHref="/dashboard/siswa"
             />
 
             {/* Warning card */}
             <div className="bg-amber-50 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                    <div className="text-2xl">⚠️</div>
+                    <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                        <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                    </div>
                     <div>
                         <h3 className="font-bold text-amber-700 dark:text-amber-400">Perhatian!</h3>
                         <p className="text-sm text-amber-600/80 dark:text-amber-200/80">Saat mengerjakan ulangan, Anda <strong>tidak boleh keluar</strong> dari halaman ulangan. Jika keluar terlalu sering, ulangan akan dikumpulkan otomatis.</p>
@@ -109,18 +114,18 @@ export default function SiswaUlanganPage() {
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
             ) : exams.length === 0 ? (
                 <EmptyState
-                    icon="📄"
+                    icon={<FileText className="w-12 h-12 text-red-200" />}
                     title="Belum Ada Ulangan"
                     description="Ulangan akan muncul di sini saat guru mempublishnya"
                 />
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                     {exams.map((exam) => {
-                        const { status, label, color } = getExamStatus(exam)
+                        const { status, label, color, icon: StatusIcon } = getExamStatus(exam)
                         const submission = submissions.find(s => s.exam_id === exam.id)
                         const canStart = status === 'available' || status === 'in_progress'
 
@@ -136,7 +141,8 @@ export default function SiswaUlanganPage() {
                                     <div className="flex items-start justify-between">
                                         <div className="flex-1">
                                             <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${color}`}>
+                                                <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${color} flex items-center gap-1.5`}>
+                                                    <StatusIcon className="w-3.5 h-3.5" />
                                                     {label}
                                                 </span>
                                             </div>
@@ -147,6 +153,10 @@ export default function SiswaUlanganPage() {
                                     <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2">{exam.description || 'Tidak ada deskripsi'}</p>
 
                                     <div className="space-y-2 pt-3 border-t border-secondary/10">
+                                        <div className="flex items-center text-xs text-text-secondary dark:text-zinc-500 mb-2">
+                                            <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                                            Dibuat: {new Date(exam.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </div>
                                         <div className="flex items-center justify-between text-xs text-text-secondary">
                                             <span>Mata Pelajaran</span>
                                             <span className="font-bold text-text-main dark:text-zinc-300">{exam.teaching_assignment?.subject?.name}</span>
@@ -157,11 +167,15 @@ export default function SiswaUlanganPage() {
                                         </div>
                                         <div className="flex items-center justify-between text-xs text-text-secondary">
                                             <span>Durasi</span>
-                                            <span className="font-medium">⏱️ {exam.duration_minutes} menit</span>
+                                            <span className="font-medium flex items-center gap-1">
+                                                <Clock className="w-3.5 h-3.5" /> {exam.duration_minutes} menit
+                                            </span>
                                         </div>
                                         <div className="flex items-center justify-between text-xs text-text-secondary">
                                             <span>Max Pelanggaran</span>
-                                            <span className="font-medium text-red-500">⚠️ {exam.max_violations}x</span>
+                                            <span className="font-medium text-red-500 flex items-center gap-1">
+                                                <AlertTriangle className="w-3.5 h-3.5" /> {exam.max_violations}x
+                                            </span>
                                         </div>
                                     </div>
 
@@ -179,7 +193,11 @@ export default function SiswaUlanganPage() {
                                                 href={`/dashboard/siswa/ulangan/${exam.id}`}
                                                 className="w-full block text-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 hover:scale-[1.02] transition-all"
                                             >
-                                                {status === 'in_progress' ? '▶️ Lanjutkan Ulangan' : '🚀 Mulai Ulangan'}
+
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {status === 'in_progress' ? <Play className="w-5 h-5" /> : <Rocket className="w-5 h-5" />}
+                                                    {status === 'in_progress' ? 'Lanjutkan Ulangan' : 'Mulai Ulangan'}
+                                                </div>
                                             </Link>
                                         )}
                                         {status === 'submitted' && (
@@ -187,7 +205,9 @@ export default function SiswaUlanganPage() {
                                                 href={`/dashboard/siswa/ulangan/${exam.id}/hasil`}
                                                 className="w-full block text-center px-5 py-3 bg-secondary/10 text-primary-dark dark:text-primary rounded-xl font-bold hover:bg-secondary/20 transition-colors"
                                             >
-                                                📊 Lihat Detail Hasil
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <BarChart3 className="w-5 h-5" /> Lihat Detail Hasil
+                                                </div>
                                             </Link>
                                         )}
                                     </div>

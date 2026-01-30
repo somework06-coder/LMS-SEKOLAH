@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
+import { PenTool, Clock, CheckCircle, AlertCircle, FileText, Link as LinkIcon, Loader2, Calendar, ArrowRight } from 'lucide-react'
 
 interface Assignment {
     id: string
@@ -10,6 +11,7 @@ interface Assignment {
     description: string | null
     type: string
     due_date: string | null
+    created_at: string
     teaching_assignment: {
         subject: { name: string }
         class: { name: string }
@@ -107,18 +109,19 @@ export default function SiswaTugasPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="📋 Tugas"
-                subtitle="Kerjakan tugas dari guru"
+                title="Tugas Saya"
+                subtitle="Daftar tugas yang harus dikerjakan"
+                icon={<PenTool className="w-6 h-6 text-amber-500" />}
                 backHref="/dashboard/siswa"
             />
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
             ) : assignments.length === 0 ? (
                 <EmptyState
-                    icon="📋"
+                    icon={<PenTool className="w-12 h-12 text-pink-200" />}
                     title="Belum Ada Tugas"
                     description="Belum ada tugas tersedia untuk kelasmu"
                 />
@@ -149,105 +152,112 @@ export default function SiswaTugasPage() {
 
                                     <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2">{assignment.description || 'Tidak ada deskripsi'}</p>
 
-                                    <div className="pt-4 mt-auto border-t border-secondary/10 flex items-center justify-between">
-                                        <div className="text-xs font-medium">
-                                            {assignment.due_date && (
-                                                <span className={`flex items-center gap-1 ${overdue && !submission ? 'text-red-500' : 'text-text-secondary dark:text-zinc-500'}`}>
-                                                    📅 {new Date(assignment.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                                    {overdue && !submission && ' (Lewat)'}
-                                                </span>
-                                            )}
+                                    <div className="pt-4 mt-auto border-t border-secondary/10 space-y-2">
+                                        <div className="text-xs font-medium text-text-secondary dark:text-zinc-500 flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            Dibuat: {new Date(assignment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </div>
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-xs font-medium">
+                                                {assignment.due_date && (
+                                                    <span className={`flex items-center gap-1 ${overdue && !submission ? 'text-red-500' : 'text-text-secondary dark:text-zinc-500'}`}>
+                                                        <Clock className="w-3 h-3" />
+                                                        Deadline: {new Date(assignment.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                                        {overdue && !submission && ' (Lewat)'}
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        <div>
-                                            {submission ? (
-                                                <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs font-bold flex items-center gap-1">
-                                                    ✓ Selesai
-                                                </span>
-                                            ) : overdue ? (
-                                                <span className="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs font-bold">
-                                                    Terlambat
-                                                </span>
-                                            ) : (
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => setSubmitting({ assignmentId: assignment.id, answer: '', type: 'text' })}
-                                                    className="shadow-soft"
-                                                >
-                                                    Kerjakan
-                                                </Button>
-                                            )}
+                                            <div>
+                                                {submission ? (
+                                                    <span className="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400 rounded-full text-xs font-bold flex items-center gap-1">
+                                                        <CheckCircle className="w-3 h-3" /> Selesai
+                                                    </span>
+                                                ) : overdue ? (
+                                                    <span className="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400 rounded-full text-xs font-bold">
+                                                        Terlambat
+                                                    </span>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => setSubmitting({ assignmentId: assignment.id, answer: '', type: 'text' })}
+                                                        className="shadow-soft"
+                                                    >
+                                                        Kerjakan
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         )
                     })}
-                </div>
-            )}
 
-            <Modal open={!!submitting} onClose={() => setSubmitting(null)} title="Kumpulkan Tugas">
-                {submitting && (
-                    <div className="space-y-5">
-                        {/* Tab Toggle */}
-                        <div className="flex bg-secondary/10 p-1 rounded-xl">
-                            <button
-                                onClick={() => setSubmitting({ ...submitting, type: 'text' })}
-                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${submitting.type === 'text'
-                                    ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
-                                    : 'text-text-secondary hover:text-text-main'
-                                    }`}
-                            >
-                                📝 Jawaban Teks
-                            </button>
-                            <button
-                                onClick={() => setSubmitting({ ...submitting, type: 'link' })}
-                                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${submitting.type === 'link'
-                                    ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
-                                    : 'text-text-secondary hover:text-text-main'
-                                    }`}
-                            >
-                                🔗 Lampirkan Link
-                            </button>
-                        </div>
+                    <Modal open={!!submitting} onClose={() => setSubmitting(null)} title="Kumpulkan Tugas">
+                        {submitting && (
+                            <div className="space-y-5">
+                                {/* Tab Toggle */}
+                                <div className="flex bg-secondary/10 p-1 rounded-xl">
+                                    <button
+                                        onClick={() => setSubmitting({ ...submitting, type: 'text' })}
+                                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${submitting.type === 'text'
+                                            ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
+                                            : 'text-text-secondary hover:text-text-main'
+                                            }`}
+                                    >
+                                        <FileText className="w-4 h-4" /> Jawaban Teks
+                                    </button>
+                                    <button
+                                        onClick={() => setSubmitting({ ...submitting, type: 'link' })}
+                                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${submitting.type === 'link'
+                                            ? 'bg-white dark:bg-surface-dark text-primary shadow-sm'
+                                            : 'text-text-secondary hover:text-text-main'
+                                            }`}
+                                    >
+                                        <LinkIcon className="w-4 h-4" /> Lampirkan Link
+                                    </button>
+                                </div>
 
-                        {submitting.type === 'text' ? (
-                            <div>
-                                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Jawaban Teks</label>
-                                <textarea
-                                    value={submitting.answer}
-                                    onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
-                                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[150px]"
-                                    placeholder="Tulis jawaban kamu di sini..."
-                                />
-                            </div>
-                        ) : (
-                            <div>
-                                <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Link Dokumen / File</label>
-                                <input
-                                    type="url"
-                                    value={submitting.answer}
-                                    onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
-                                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                                    placeholder="https://docs.google.com/..."
-                                />
-                                <p className="mt-2 text-xs text-text-secondary">
-                                    *Pastikan link Google Drive/Docs dapat diakses (Setting: Anyone with the link)
-                                </p>
+                                {submitting.type === 'text' ? (
+                                    <div>
+                                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Jawaban Teks</label>
+                                        <textarea
+                                            value={submitting.answer}
+                                            onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
+                                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[150px]"
+                                            placeholder="Tulis jawaban kamu di sini..."
+                                        />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Link Dokumen / File</label>
+                                        <input
+                                            type="url"
+                                            value={submitting.answer}
+                                            onChange={(e) => setSubmitting({ ...submitting, answer: e.target.value })}
+                                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                                            placeholder="https://docs.google.com/..."
+                                        />
+                                        <p className="mt-2 text-xs text-text-secondary">
+                                            *Pastikan link Google Drive/Docs dapat diakses (Setting: Anyone with the link)
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-2">
+                                    <Button type="button" variant="ghost" onClick={() => setSubmitting(null)} className="flex-1">
+                                        Batal
+                                    </Button>
+                                    <Button onClick={handleSubmit} loading={saving} disabled={!submitting.answer} className="flex-1">
+                                        Kumpulkan
+                                    </Button>
+                                </div>
                             </div>
                         )}
-
-                        <div className="flex gap-3 pt-2">
-                            <Button type="button" variant="ghost" onClick={() => setSubmitting(null)} className="flex-1">
-                                Batal
-                            </Button>
-                            <Button onClick={handleSubmit} loading={saving} disabled={!submitting.answer} className="flex-1">
-                                Kumpulkan
-                            </Button>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+                    </Modal>
+                </div>
+            )}
         </div>
     )
 }

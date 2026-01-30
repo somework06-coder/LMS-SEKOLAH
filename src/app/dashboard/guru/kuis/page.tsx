@@ -4,11 +4,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import PageHeader from '@/components/ui/PageHeader'
-import Button from '@/components/ui/Button'
+import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
-import Modal from '@/components/ui/Modal'
-import EmptyState from '@/components/ui/EmptyState'
+import { Clock, FileText, BarChart3, Brain, Calendar } from 'lucide-react'
 
 interface Quiz {
     id: string
@@ -165,6 +163,10 @@ export default function GuruKuisPage() {
                                     </div>
                                     <p className="text-sm text-text-secondary dark:text-zinc-400 mb-2">{quiz.description || '-'}</p>
                                     <div className="flex items-center gap-4 text-xs text-text-secondary dark:text-zinc-500">
+                                        <span className="flex items-center gap-1.5">
+                                            <Calendar className="w-3.5 h-3.5" />
+                                            Dibuat: {new Date(quiz.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </span>
                                         <span className="px-2 py-1 bg-secondary/10 rounded">{quiz.teaching_assignment?.subject?.name}</span>
                                         <span className="px-2 py-1 bg-secondary/10 rounded">{quiz.teaching_assignment?.class?.name}</span>
                                         <span>⏱️ {quiz.duration_minutes} menit</span>

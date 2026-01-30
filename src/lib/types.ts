@@ -47,6 +47,7 @@ export interface AcademicYear {
 export interface Class {
     id: string
     name: string
+    grade_level: number | null  // NEW: 1, 2, or 3 for class level grouping
     academic_year_id: string
     created_at: string
     academic_year?: AcademicYear

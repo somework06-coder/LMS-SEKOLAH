@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { PageHeader, EmptyState } from '@/components/ui'
+import { Brain, Calendar } from 'lucide-react'
 
 interface Quiz {
     id: string
@@ -11,6 +12,7 @@ interface Quiz {
     description: string | null
     duration_minutes: number
     is_active: boolean
+    created_at: string
     teaching_assignment: {
         subject: { name: string }
         class: { name: string }
@@ -76,8 +78,9 @@ export default function SiswaKuisPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="🎯 Kuis"
+                title="Kuis"
                 subtitle="Kerjakan kuis dari guru"
+                icon={<Brain className="w-6 h-6 text-purple-500" />}
                 backHref="/dashboard/siswa"
             />
 
@@ -120,6 +123,10 @@ export default function SiswaKuisPage() {
                                     <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2">{quiz.description || 'Tidak ada deskripsi'}</p>
 
                                     <div className="space-y-2 pt-3 border-t border-secondary/10">
+                                        <div className="flex items-center text-xs text-text-secondary dark:text-zinc-500 mb-2">
+                                            <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                                            Dibuat: {new Date(quiz.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </div>
                                         <div className="flex items-center justify-between text-xs text-text-secondary">
                                             <span>Mata Pelajaran</span>
                                             <span className="font-bold text-text-main dark:text-zinc-300">{quiz.teaching_assignment?.subject?.name}</span>

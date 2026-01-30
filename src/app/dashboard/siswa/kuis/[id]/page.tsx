@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { AlertTriangle, AlarmClock } from 'lucide-react'
 
 interface QuizQuestion {
     id: string
@@ -244,7 +245,7 @@ export default function KerjakanKuisPage() {
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-                <div className="text-red-500 text-6xl">⚠️</div>
+                <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
                 <h2 className="text-xl font-bold text-white">Oops!</h2>
                 <p className="text-slate-400 text-center max-w-md">{error}</p>
                 <Link href="/dashboard/siswa" className="px-6 py-2 bg-slate-800 text-white rounded-xl hover:bg-slate-700 transition-colors">
@@ -409,7 +410,9 @@ export default function KerjakanKuisPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 className="text-2xl font-bold text-text-main dark:text-white mb-2">⏰ Waktu Habis!</h3>
+                        <h3 className="text-2xl font-bold text-text-main dark:text-white mb-2 flex items-center justify-center gap-2">
+                            <AlarmClock className="w-8 h-8 text-red-500" /> Waktu Habis!
+                        </h3>
                         <p className="text-text-secondary mb-6">
                             Kuis telah otomatis dikumpulkan. Jawabanmu sudah tersimpan.
                         </p>

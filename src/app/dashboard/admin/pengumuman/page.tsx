@@ -1,7 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PageHeader, Button, Modal, Card, EmptyState } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
+import { Megaphone, Plus, Pencil, Trash2, Calendar, Clock, Loader2 } from 'lucide-react'
 
 interface Class {
     id: string
@@ -201,8 +204,8 @@ export default function AdminPengumumanPage() {
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, is_global: true, class_ids: [] }))}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${form.is_global
-                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                            : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
+                                ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
                             }`}
                     >
                         🌐 Semua Kelas
@@ -211,8 +214,8 @@ export default function AdminPengumumanPage() {
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, is_global: false }))}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${!form.is_global
-                            ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                            : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
+                                ? 'bg-primary text-white shadow-lg shadow-primary/30'
+                                : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
                             }`}
                     >
                         🎯 Pilih Kelas
@@ -229,8 +232,8 @@ export default function AdminPengumumanPage() {
                                     key={cls.id}
                                     onClick={() => toggleClassSelection(cls.id)}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${form.class_ids.includes(cls.id)
-                                        ? 'bg-primary text-white'
-                                        : 'bg-white dark:bg-surface-dark border border-secondary/20 text-text-secondary hover:border-primary hover:text-primary'
+                                            ? 'bg-primary text-white'
+                                            : 'bg-white dark:bg-surface-dark border border-secondary/20 text-text-secondary hover:border-primary hover:text-primary'
                                         }`}
                                 >
                                     {cls.name}
@@ -256,15 +259,12 @@ export default function AdminPengumumanPage() {
     return (
         <div className="space-y-6 pb-24 lg:pb-0">
             <PageHeader
-                title="📢 Pengumuman"
-                subtitle="Kelola pengumuman untuk siswa"
+                title="Pengumuman"
+                subtitle="Kelola pengumuman sekolah"
+                icon={<Megaphone className="w-6 h-6 text-orange-500" />}
                 backHref="/dashboard/admin"
                 action={
-                    <Button onClick={() => setShowCreate(true)} icon={
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                        </svg>
-                    }>
+                    <Button onClick={() => setShowCreate(true)} icon={<Plus className="w-5 h-5" />}>
                         Buat Pengumuman
                     </Button>
                 }
@@ -272,11 +272,11 @@ export default function AdminPengumumanPage() {
 
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
             ) : announcements.length === 0 ? (
                 <EmptyState
-                    icon="📢"
+                    icon={<Megaphone className="w-12 h-12 text-orange-200" />}
                     title="Belum Ada Pengumuman"
                     description="Buat pengumuman pertama untuk siswa Anda."
                     action={<Button onClick={() => setShowCreate(true)}>Buat Pengumuman</Button>}
@@ -308,14 +308,18 @@ export default function AdminPengumumanPage() {
                                         {announcement.content}
                                     </p>
                                     <div className="flex items-center gap-4 text-xs text-text-secondary">
-                                        <span>📅 {formatDate(announcement.published_at)}</span>
+                                        <div className="flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            <span>{formatDate(announcement.published_at)}</span>
+                                        </div>
                                         {!announcement.is_global && (
                                             <span>📍 {getClassNames(announcement.class_ids)}</span>
                                         )}
                                         {announcement.expires_at && (
-                                            <span className="text-amber-600 dark:text-amber-400">
-                                                ⏰ Expired: {formatDate(announcement.expires_at)}
-                                            </span>
+                                            <div className="flex items-center gap-1 text-red-400">
+                                                <Clock className="w-3 h-3" />
+                                                <span>Expired: {formatDate(announcement.expires_at)}</span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -332,7 +336,7 @@ export default function AdminPengumumanPage() {
                                         size="sm"
                                         onClick={() => handleEdit(announcement)}
                                     >
-                                        ✏️
+                                        <Pencil className="w-4 h-4" />
                                     </Button>
                                     <Button
                                         variant="secondary"
@@ -340,7 +344,7 @@ export default function AdminPengumumanPage() {
                                         onClick={() => handleDelete(announcement.id)}
                                         className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
-                                        🗑️
+                                        <Trash2 className="w-4 h-4" />
                                     </Button>
                                 </div>
                             </div>
@@ -353,7 +357,7 @@ export default function AdminPengumumanPage() {
             <Modal
                 open={showCreate}
                 onClose={() => { setShowCreate(false); resetForm() }}
-                title="📢 Buat Pengumuman Baru"
+                title="Buat Pengumuman Baru"
             >
                 {formFields}
                 <div className="flex gap-3 pt-6 border-t border-secondary/10 mt-4">
@@ -375,7 +379,7 @@ export default function AdminPengumumanPage() {
             <Modal
                 open={showEdit}
                 onClose={() => { setShowEdit(false); setEditingAnnouncement(null); resetForm() }}
-                title="✏️ Edit Pengumuman"
+                title="Edit Pengumuman"
             >
                 {formFields}
                 <div className="flex gap-3 pt-6 border-t border-secondary/10 mt-4">
@@ -395,4 +399,3 @@ export default function AdminPengumumanPage() {
         </div>
     )
 }
-

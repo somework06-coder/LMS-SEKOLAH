@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
+import { PenTool, BarChart3, Calendar, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface TeachingAssignment {
@@ -114,8 +115,9 @@ export default function TugasPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="📋 Tugas"
+                title="Tugas"
                 subtitle="Buat dan kelola tugas siswa"
+                icon={<PenTool className="w-6 h-6 text-amber-500" />}
                 backHref="/dashboard/guru"
                 action={
                     <Button onClick={() => setShowModal(true)} icon={
@@ -162,7 +164,11 @@ export default function TugasPage() {
                                     </p>
                                     <div className="flex items-center gap-4 text-xs text-text-secondary dark:text-zinc-500">
                                         <div className="flex items-center gap-1.5">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                            <Calendar className="w-4 h-4" />
+                                            <span>Dibuat: {new Date(assignment.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Clock className="w-4 h-4" />
                                             <span>Deadline: {assignment.due_date ? new Date(assignment.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}</span>
                                         </div>
                                     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Modal, Button, EmptyState, Toast, type ToastType, PageHeader } from '@/components/ui'
 import Card from '@/components/ui/Card'
+import { BookOpen, FileText, Video, Type, Link as LinkIcon, UserCheck, Eye, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface TeachingAssignment {
@@ -243,11 +244,21 @@ export default function MateriPage() {
 
     const getTypeLabel = (type: string) => {
         switch (type) {
-            case 'TEXT': return '📝'
-            case 'VIDEO': return '🎥'
-            case 'PDF': return '📕'
-            case 'LINK': return '🔗'
-            default: return '📄'
+            case 'TEXT': return Type
+            case 'VIDEO': return Video
+            case 'PDF': return FileText
+            case 'LINK': return LinkIcon
+            default: return FileText
+        }
+    }
+
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'TEXT': return { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' }
+            case 'VIDEO': return { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400' }
+            case 'PDF': return { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400' }
+            case 'LINK': return { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-600 dark:text-cyan-400' }
+            default: return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' }
         }
     }
 
@@ -360,7 +371,15 @@ export default function MateriPage() {
                     {selectedSubject.materials.map((material) => (
                         <Card key={material.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-primary/0 hover:border-l-primary">
                             <div className="flex items-start gap-3">
-                                <span className="text-3xl bg-secondary/10 p-2 rounded-xl">{getTypeLabel(material.type)}</span>
+                                {(() => {
+                                    const IconComponent = getTypeLabel(material.type)
+                                    const colors = getTypeColor(material.type)
+                                    return (
+                                        <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+                                            <IconComponent className={`w-6 h-6 ${colors.text}`} strokeWidth={2} />
+                                        </div>
+                                    )
+                                })()}
                                 <div className="flex-1 min-w-0">
                                     <h3 className="font-bold text-text-main dark:text-white mb-1 truncate">{material.title}</h3>
                                     <p className="text-sm text-text-secondary dark:text-[#A8BC9F] mb-3 line-clamp-2">{material.description || 'Tidak ada deskripsi'}</p>

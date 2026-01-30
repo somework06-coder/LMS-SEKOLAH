@@ -1,19 +1,11 @@
 @import "tailwindcss";
 
-/*
- * Tailwind v4 dark mode configuration
- * Override the default dark: variant to only work with .dark class
- */
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   --color-primary: #6B8E6B;
   --color-primary-dark: #4A634A;
   --color-secondary: #A8BC9F;
-  --color-background-light: #C8D4C0;
-  --color-background-dark: #1A1F1A;
+  --color-background-light: #D4E0D2;
   --color-surface-light: #ffffff;
-  --color-surface-dark: #242B24;
   --color-text-main: #2D4A2D;
   --color-text-secondary: #5C6B5C;
 
@@ -47,16 +39,9 @@
   color-scheme: light only;
 }
 
-/* Base body styles - always light mode unless .dark class is applied */
+/* Base body styles - always light mode */
 body {
-  background-color: #C8D4C0 !important;
+  background-color: #D4E0D2 !important;
   color: #1B2E1B !important;
   font-family: var(--font-sans);
-}
-
-/* Only apply dark styles when .dark class is present on html or body */
-html.dark body,
-body.dark {
-  background-color: #1A1F1A !important;
-  color: #E0E7E0 !important;
 }

@@ -19,11 +19,18 @@ export async function PUT(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { name, academic_year_id } = await request.json()
+        const { name, academic_year_id, grade_level } = await request.json()
+
+        // Validate grade_level if provided
+        if (grade_level !== null && grade_level !== undefined) {
+            if (![1, 2, 3].includes(grade_level)) {
+                return NextResponse.json({ error: 'Tingkat kelas harus 1, 2, atau 3' }, { status: 400 })
+            }
+        }
 
         const { data, error } = await supabase
             .from('classes')
-            .update({ name, academic_year_id })
+            .update({ name, academic_year_id, grade_level })
             .eq('id', id)
             .select()
             .single()

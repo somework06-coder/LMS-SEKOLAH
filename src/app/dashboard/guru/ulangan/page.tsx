@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Modal, PageHeader, Button, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
 import { useAuth } from '@/contexts/AuthContext'
+import { FileText, Clock, Calendar } from 'lucide-react'
 
 interface Exam {
     id: string
@@ -146,8 +147,9 @@ export default function GuruUlanganPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="📄 Ulangan"
+                title="Ulangan"
                 subtitle="Buat ulangan dengan fitur pengawasan yang aman"
+                icon={<Clock className="w-6 h-6 text-red-500" />}
                 backHref="/dashboard/guru"
                 action={
                     <Button onClick={() => setShowCreate(true)} icon={
@@ -231,6 +233,10 @@ export default function GuruUlanganPage() {
                                     <p className="text-sm text-text-secondary dark:text-zinc-400 line-clamp-2 flex-grow">{exam.description || 'Tidak ada deskripsi'}</p>
 
                                     <div className="space-y-3 pt-4 border-t border-secondary/10">
+                                        <div className="flex items-center text-xs text-text-secondary dark:text-zinc-500 mb-2">
+                                            <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                                            Dibuat: {new Date(exam.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </div>
                                         <div className="flex items-center justify-between text-xs text-text-secondary">
                                             <span>Kelas & Mapel</span>
                                             <div className="flex gap-1">

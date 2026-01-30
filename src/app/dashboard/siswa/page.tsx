@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
+import { BookOpen, PenTool, Clock, Brain, BarChart3, School, User, Megaphone } from 'lucide-react'
 
 interface StudentData {
     id: string
@@ -59,11 +60,11 @@ export default function SiswaDashboard() {
     }, [user])
 
     const quickLinks = [
-        { href: '/dashboard/siswa/materi', icon: '📚', label: 'Materi', sub: 'Bahan belajar' },
-        { href: '/dashboard/siswa/tugas', icon: '📝', label: 'Tugas', sub: 'Kerjakan PR' },
-        { href: '/dashboard/siswa/ulangan', icon: '⏰', label: 'Ulangan', sub: 'Ujian sekolah' },
-        { href: '/dashboard/siswa/kuis', icon: '🧠', label: 'Kuis', sub: 'Latihan soal' },
-        { href: '/dashboard/siswa/nilai', icon: '📊', label: 'Nilai', sub: 'Lihat rapor' },
+        { href: '/dashboard/siswa/materi', icon: BookOpen, label: 'Materi', sub: 'Bahan belajar', variant: 'blue' as const },
+        { href: '/dashboard/siswa/tugas', icon: PenTool, label: 'Tugas', sub: 'Kerjakan PR', variant: 'amber' as const },
+        { href: '/dashboard/siswa/ulangan', icon: Clock, label: 'Ulangan', sub: 'Ujian sekolah', variant: 'red' as const },
+        { href: '/dashboard/siswa/kuis', icon: Brain, label: 'Kuis', sub: 'Latihan soal', variant: 'purple' as const },
+        { href: '/dashboard/siswa/nilai', icon: BarChart3, label: 'Nilai', sub: 'Lihat rapor', variant: 'green' as const },
     ]
 
     const formatDate = (dateString: string) => {
@@ -91,7 +92,7 @@ export default function SiswaDashboard() {
 
                     {!loading && student?.class && (
                         <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-white font-medium text-sm">
-                            <span className="text-lg">🏫</span>
+                            <School className="w-5 h-5" strokeWidth={2} />
                             <span>Kelas: {student.class.name}</span>
                         </div>
                     )}
@@ -101,17 +102,28 @@ export default function SiswaDashboard() {
             {/* Quick Actions */}
             <div>
                 <h2 className="text-xl font-bold text-text-main dark:text-white mb-6">Menu Belajar</h2>
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
                     {quickLinks.map((link) => (
                         <Link key={link.href} href={link.href}>
-                            <Card className="h-full border-2 border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-95 transition-all group bg-white dark:bg-surface-dark cursor-pointer">
-                                <div className="flex flex-col items-center text-center gap-3">
-                                    <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center text-3xl group-hover:bg-primary group-hover:text-white transition-all duration-300">
-                                        {link.icon}
+                            <Card className="h-full border-2 border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-95 transition-all group bg-white dark:bg-surface-dark cursor-pointer p-3 sm:p-4">
+                                <div className="flex flex-col items-center text-center gap-2 sm:gap-3">
+                                    {/* Duotone Icon Container */}
+                                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 ${link.href.includes('materi') ? 'bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-600' :
+                                        link.href.includes('tugas') ? 'bg-amber-100 dark:bg-amber-900/30 group-hover:bg-amber-600' :
+                                            link.href.includes('ulangan') ? 'bg-red-100 dark:bg-red-900/30 group-hover:bg-red-600' :
+                                                link.href.includes('kuis') ? 'bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-600' :
+                                                    'bg-green-100 dark:bg-green-900/30 group-hover:bg-green-600'
+                                        }`}>
+                                        <link.icon className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors ${link.href.includes('materi') ? 'text-blue-600 dark:text-blue-400 group-hover:text-white' :
+                                            link.href.includes('tugas') ? 'text-amber-600 dark:text-amber-400 group-hover:text-white' :
+                                                link.href.includes('ulangan') ? 'text-red-600 dark:text-red-400 group-hover:text-white' :
+                                                    link.href.includes('kuis') ? 'text-purple-600 dark:text-purple-400 group-hover:text-white' :
+                                                        'text-green-600 dark:text-green-400 group-hover:text-white'
+                                            }`} strokeWidth={2} />
                                     </div>
                                     <div>
-                                        <h3 className="text-lg font-bold text-text-main dark:text-white group-hover:text-primary transition-colors">{link.label}</h3>
-                                        <p className="text-xs text-text-secondary dark:text-[#A8BC9F] mt-1">{link.sub}</p>
+                                        <h3 className="font-bold text-text-main dark:text-white group-hover:text-primary transition-colors text-sm sm:text-lg">{link.label}</h3>
+                                        <p className="text-[10px] sm:text-xs text-text-secondary dark:text-[#A8BC9F] mt-0.5 sm:mt-1 line-clamp-1">{link.sub}</p>
                                     </div>
                                 </div>
                             </Card>
@@ -125,8 +137,8 @@ export default function SiswaDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card>
                         <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-2xl text-primary">
-                                👤
+                            <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-primary">
+                                <User className="w-6 h-6" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-text-main dark:text-white">Informasi Akun</h3>
@@ -152,8 +164,8 @@ export default function SiswaDashboard() {
 
                     <Card className="bg-gradient-to-br from-secondary/10 to-primary/5 border-none">
                         <div className="flex items-center gap-4 mb-6">
-                            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-2xl shadow-sm">
-                                📢
+                            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+                                <Megaphone className="w-6 h-6 text-orange-500" />
                             </div>
                             <div>
                                 <h3 className="text-lg font-bold text-text-main dark:text-white">Pengumuman</h3>

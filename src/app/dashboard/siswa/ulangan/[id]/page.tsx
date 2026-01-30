@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { FileText, AlertTriangle, Maximize, Clock, CheckCircle } from 'lucide-react'
 
 interface ExamQuestion {
     id: string
@@ -320,7 +321,7 @@ export default function TakeExamPage() {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
                 <div className="text-center">
-                    <div className="text-4xl mb-4 animate-pulse">📄</div>
+                    <FileText className="w-12 h-12 text-primary mb-4 animate-pulse mx-auto" />
                     <p className="text-text-secondary">Mempersiapkan ulangan...</p>
                 </div>
             </div>
@@ -345,7 +346,7 @@ export default function TakeExamPage() {
             {showViolationWarning && (
                 <div className="fixed inset-0 bg-red-600/80 flex items-center justify-center z-50">
                     <div className="text-center text-white p-8">
-                        <div className="text-6xl mb-4">⚠️</div>
+                        <AlertTriangle className="w-16 h-16 text-white mb-4 mx-auto" />
                         <h2 className="text-2xl font-bold mb-2">PERINGATAN!</h2>
                         <p>Anda terdeteksi keluar dari halaman ulangan</p>
                         <p className="text-xl mt-4">Pelanggaran: {violationCount} / {maxViolations}</p>
@@ -359,8 +360,8 @@ export default function TakeExamPage() {
             {/* Fullscreen Prompt */}
             {!isFullscreen && (
                 <div className="bg-amber-500/20 border-b border-amber-500/30 p-3 text-center">
-                    <button onClick={requestFullscreen} className="text-amber-400 hover:text-amber-300 underline">
-                        🔲 Klik untuk mode layar penuh (direkomendasikan)
+                    <button onClick={requestFullscreen} className="text-amber-400 hover:text-amber-300 underline flex items-center justify-center gap-2 mx-auto">
+                        <Maximize className="w-4 h-4" /> Klik untuk mode layar penuh (direkomendasikan)
                     </button>
                 </div>
             )}
@@ -374,12 +375,12 @@ export default function TakeExamPage() {
                     </div>
                     <div className="flex items-center gap-6">
                         {/* Violation counter */}
-                        <div className={`px-3 py-1 rounded-lg ${violationCount > 0 ? 'bg-red-500/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-text-secondary'}`}>
-                            ⚠️ {violationCount}/{maxViolations}
+                        <div className={`px-3 py-1 rounded-lg flex items-center gap-1.5 ${violationCount > 0 ? 'bg-red-500/20 text-red-500 dark:text-red-400' : 'bg-gray-100 dark:bg-gray-800 text-text-secondary'}`}>
+                            <AlertTriangle className="w-4 h-4" /> {violationCount}/{maxViolations}
                         </div>
                         {/* Timer */}
-                        <div className={`px-4 py-2 rounded-lg font-mono text-lg font-bold ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse' : timeLeft <= 600 ? 'bg-amber-500 text-white' : 'bg-primary/20 text-primary dark:text-primary-light'}`}>
-                            ⏱️ {formatTime(timeLeft)}
+                        <div className={`px-4 py-2 rounded-lg font-mono text-lg font-bold flex items-center gap-2 ${timeLeft <= 300 ? 'bg-red-500 text-white animate-pulse' : timeLeft <= 600 ? 'bg-amber-500 text-white' : 'bg-primary/20 text-primary dark:text-primary-light'}`}>
+                            <Clock className="w-5 h-5" /> {formatTime(timeLeft)}
                         </div>
                     </div>
                 </div>
@@ -473,7 +474,9 @@ export default function TakeExamPage() {
                                 onClick={() => setShowConfirmSubmit(true)}
                                 className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-medium hover:opacity-90 transition-opacity"
                             >
-                                ✅ Kumpulkan Ulangan
+                                <span className="flex items-center gap-2">
+                                    <CheckCircle className="w-5 h-5" /> Kumpulkan Ulangan
+                                </span>
                             </button>
                         ) : (
                             <button
@@ -501,7 +504,9 @@ export default function TakeExamPage() {
                             Anda telah menjawab <strong className="text-text-main dark:text-white">{answeredCount}</strong> dari <strong className="text-text-main dark:text-white">{questions.length}</strong> soal.
                         </p>
                         {answeredCount < questions.length && (
-                            <p className="text-amber-500 dark:text-amber-400 text-sm mb-4">⚠️ Masih ada {questions.length - answeredCount} soal yang belum dijawab!</p>
+                            <p className="text-amber-500 dark:text-amber-400 text-sm mb-4 flex items-center justify-center gap-1">
+                                <AlertTriangle className="w-4 h-4" /> Masih ada {questions.length - answeredCount} soal yang belum dijawab!
+                            </p>
                         )}
                         <div className="flex gap-3 mt-6">
                             <button

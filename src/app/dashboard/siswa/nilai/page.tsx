@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { Card, PageHeader, EmptyState } from '@/components/ui'
+import { BarChart3, Brain, ClipboardList, FileText, TrendingUp, Award, BookOpen } from 'lucide-react'
 
 // Interfaces
 interface AssignmentSubmission {
@@ -172,7 +174,10 @@ export default function SiswaNilaiPage() {
                         </svg>
                     </Link>
                     <div>
-                        <h1 className="text-2xl font-bold text-text-main dark:text-white">Nilai Saya</h1>
+                        <div className="flex items-center gap-2">
+                            <BarChart3 className="w-8 h-8 text-primary" />
+                            <h1 className="text-2xl font-bold text-text-main dark:text-white">Nilai Saya</h1>
+                        </div>
                         <p className="text-text-secondary dark:text-zinc-400">Pilih mata pelajaran untuk lihat detail nilai</p>
                     </div>
                 </div>
@@ -218,10 +223,10 @@ export default function SiswaNilaiPage() {
     }
 
     // ==================== VIEW 2: Subject Detail with Tabs ====================
-    const tabs: { key: TabType; label: string; icon: string; color: string }[] = [
-        { key: 'kuis', label: 'Kuis', icon: '📝', color: 'cyan' },
-        { key: 'tugas', label: 'Tugas', icon: '📋', color: 'amber' },
-        { key: 'ulangan', label: 'Ulangan', icon: '📄', color: 'red' },
+    const tabs: { key: TabType; label: string; icon: any; color: string }[] = [
+        { key: 'kuis', label: 'Kuis', icon: Brain, color: 'purple' },
+        { key: 'tugas', label: 'Tugas', icon: ClipboardList, color: 'amber' },
+        { key: 'ulangan', label: 'Ulangan', icon: FileText, color: 'red' },
     ]
 
     const renderQuizList = () => (
@@ -360,23 +365,26 @@ export default function SiswaNilaiPage() {
 
             {/* Tabs */}
             <div className="flex gap-2 border-b border-secondary/20 pb-2 overflow-x-auto">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key)}
-                        className={`px-4 py-2 rounded-t-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.key
-                            ? `bg-${tab.color}-50 border-b-2 border-${tab.color}-500 text-${tab.color}-700 dark:bg-${tab.color}-900/20 dark:text-${tab.color}-400`
-                            : 'text-text-secondary dark:text-zinc-400 hover:text-text-main hover:bg-secondary/5'
-                            }`}
-                    >
-                        <span>{tab.icon}</span>
-                        {tab.label}
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full ml-1 ${activeTab === tab.key ? `bg-${tab.color}-100 dark:bg-${tab.color}-900/40` : 'bg-secondary/10'
-                            }`}>
-                            {tab.key === 'kuis' ? (selectedSubject.kuis?.length ?? 0) : tab.key === 'tugas' ? (selectedSubject.tugas?.length ?? 0) : (selectedSubject.ulangan?.length ?? 0)}
-                        </span>
-                    </button>
-                ))}
+                {tabs.map((tab) => {
+                    const IconComponent = tab.icon
+                    return (
+                        <button
+                            key={tab.key}
+                            onClick={() => setActiveTab(tab.key)}
+                            className={`px-4 py-2 rounded-t-xl font-bold transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === tab.key
+                                ? `bg-${tab.color}-50 border-b-2 border-${tab.color}-500 text-${tab.color}-700 dark:bg-${tab.color}-900/20 dark:text-${tab.color}-400`
+                                : 'text-text-secondary dark:text-zinc-400 hover:text-text-main hover:bg-secondary/5'
+                                }`}
+                        >
+                            <IconComponent className="w-4 h-4" strokeWidth={2} />
+                            {tab.label}
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ml-1 ${activeTab === tab.key ? `bg-${tab.color}-100 dark:bg-${tab.color}-900/40` : 'bg-secondary/10'
+                                }`}>
+                                {tab.key === 'kuis' ? (selectedSubject.kuis?.length ?? 0) : tab.key === 'tugas' ? (selectedSubject.tugas?.length ?? 0) : (selectedSubject.ulangan?.length ?? 0)}
+                            </span>
+                        </button>
+                    )
+                })}
             </div>
 
             {/* Tab Content */}

@@ -15,13 +15,26 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { data, error } = await supabase
+        // Get optional filter parameter
+        const url = new URL(request.url)
+        const grade_level = url.searchParams.get('grade_level')
+
+        let query = supabase
             .from('classes')
             .select(`
         *,
         academic_year:academic_years(*)
       `)
-            .order('name')
+
+        // Apply filter if specified
+        if (grade_level) {
+            query = query.eq('grade_level', parseInt(grade_level))
+        }
+
+        // Order by grade_level first (nulls last), then name
+        const { data, error } = await query
+            .order('grade_level', { ascending: true, nullsFirst: false })
+            .order('name', { ascending: true })
 
         if (error) throw error
 
@@ -45,15 +58,22 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { name, academic_year_id } = await request.json()
+        const { name, academic_year_id, grade_level } = await request.json()
 
         if (!name || !academic_year_id) {
             return NextResponse.json({ error: 'Nama kelas dan tahun ajaran harus diisi' }, { status: 400 })
         }
 
+        // Validate grade_level if provided
+        if (grade_level !== null && grade_level !== undefined) {
+            if (![1, 2, 3].includes(grade_level)) {
+                return NextResponse.json({ error: 'Tingkat kelas harus 1, 2, atau 3' }, { status: 400 })
+            }
+        }
+
         const { data, error } = await supabase
             .from('classes')
-            .insert({ name, academic_year_id })
+            .insert({ name, academic_year_id, grade_level })
             .select()
             .single()
 

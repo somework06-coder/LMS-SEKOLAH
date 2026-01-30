@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import { PageHeader, Button, EmptyState } from '@/components/ui'
+import { BarChart3 } from 'lucide-react'
 
 interface AcademicYear {
     id: string
@@ -221,9 +222,10 @@ export default function RekapNilaiPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="📊 Rekap Nilai"
+                title="Rekap Nilai"
                 subtitle="Rekap nilai siswa per kelas"
                 backHref="/dashboard/admin"
+                icon={<BarChart3 className="w-8 h-8 text-primary" />}
             />
 
             {/* Filters */}
@@ -278,21 +280,21 @@ export default function RekapNilaiPage() {
             {/* Results */}
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <div className="animate-spin text-primary"><BarChart3 className="w-8 h-8" /></div>
                 </div>
             ) : !selectedYear || !selectedClass ? (
                 <EmptyState
-                    icon="📋"
+                    icon={<BarChart3 className="w-12 h-12 text-secondary" />}
                     title="Pilih Filter"
                     description="Pilih tahun ajaran dan kelas untuk melihat rekap nilai"
                 />
             ) : loadingData ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <div className="animate-spin text-primary"><BarChart3 className="w-8 h-8" /></div>
                 </div>
             ) : studentGrades.length === 0 ? (
                 <EmptyState
-                    icon="📊"
+                    icon={<BarChart3 className="w-12 h-12 text-secondary" />}
                     title="Belum Ada Data"
                     description="Belum ada data nilai untuk kelas ini"
                 />

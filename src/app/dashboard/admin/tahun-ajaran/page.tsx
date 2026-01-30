@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Button, EmptyState } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
+import { Calendar, Plus } from 'lucide-react'
 import { AcademicYear } from '@/lib/types'
 
 export default function TahunAjaranPage() {
@@ -73,41 +75,27 @@ export default function TahunAjaranPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-6 rounded-3xl shadow-soft">
-                <div className="flex items-center gap-4">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.history.back()}
-                        icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        }
-                    />
-                    <div>
-                        <h1 className="text-2xl font-bold text-text-main dark:text-white leading-tight">Tahun Ajaran</h1>
-                        <p className="text-text-secondary dark:text-[#A8BC9F] text-sm">Kelola daftar tahun ajaran sekolah</p>
-                    </div>
-                </div>
-                <Button onClick={openAdd} icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                }>
-                    Tambah
-                </Button>
-            </div>
+            <PageHeader
+                title="Tahun Ajaran"
+                subtitle="Kelola daftar tahun ajaran sekolah"
+                backHref="/dashboard/admin"
+                icon={<Calendar className="w-6 h-6 text-amber-500" />}
+                action={
+                    <Button onClick={openAdd} icon={<Plus className="w-5 h-5" />}>
+                        Tambah Tahun Ajaran
+                    </Button>
+                }
+            />
 
             <Card className="overflow-hidden p-0">
                 {loading ? (
                     <div className="p-12 flex justify-center">
-                        <div className="animate-spin text-3xl text-primary">⏳</div>
+                        <div className="animate-spin text-primary"><Calendar className="w-8 h-8" /></div>
                     </div>
                 ) : years.length === 0 ? (
                     <div className="p-6">
                         <EmptyState
-                            icon="📅"
+                            icon={<Calendar className="w-12 h-12 text-secondary" />}
                             title="Belum Ada Tahun Ajaran"
                             description="Tambahkan tahun ajaran untuk memulai"
                             action={<Button onClick={openAdd}>Tambah Tahun Ajaran</Button>}

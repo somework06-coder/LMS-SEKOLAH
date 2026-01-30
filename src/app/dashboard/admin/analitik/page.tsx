@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PageHeader, EmptyState, Modal } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { PageHeader, Modal, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { TrendingUp, Calendar, BarChart3, School, BookOpen } from 'lucide-react'
 
 interface AcademicYear {
     id: string
@@ -41,6 +44,9 @@ export default function AnalitikPage() {
     const [loading, setLoading] = useState(true)
     const [loadingData, setLoadingData] = useState(false)
     const [classData, setClassData] = useState<ClassAnalytics[]>([])
+
+    // Grade filter state
+    const [gradeFilter, setGradeFilter] = useState<number | null>(null)
 
     // Modal state for student grades
     const [showModal, setShowModal] = useState(false)
@@ -142,6 +148,35 @@ export default function AnalitikPage() {
         })()
     }
 
+    // Calculate grade-level statistics
+    const gradeStats = [1, 2, 3].map(grade => {
+        const gradeClasses = classData.filter(cls => (cls as any).grade_level === grade)
+        const allGradeAverages = gradeClasses.flatMap(cls =>
+            cls.subjects.filter(s => s.average !== null).map(s => s.average as number)
+        )
+        return {
+            grade,
+            classCount: gradeClasses.length,
+            average: allGradeAverages.length > 0
+                ? allGradeAverages.reduce((a, b) => a + b, 0) / allGradeAverages.length
+                : null
+        }
+    })
+
+    // Grade comparison chart data
+    const gradeChartData = gradeStats
+        .filter(g => g.average !== null && g.classCount > 0)
+        .map(g => ({
+            name: `Kelas ${g.grade}`,
+            average: Math.round((g.average || 0) * 10) / 10,
+            classCount: g.classCount
+        }))
+
+    // Filter classData by grade if filter is active
+    const filteredClassData = gradeFilter
+        ? classData.filter(cls => (cls as any).grade_level === gradeFilter)
+        : classData
+
     // Prepare chart data - Class comparison
     const classChartData = classData.map(cls => {
         const subjectsWithGrades = cls.subjects.filter(s => s.average !== null)
@@ -177,9 +212,10 @@ export default function AnalitikPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="📈 Analitik"
+                title="Analitik"
                 subtitle="Performa per kelas dan mata pelajaran"
                 backHref="/dashboard/admin"
+                icon={<TrendingUp className="w-8 h-8 text-primary" />}
             />
 
             {/* Filter Tahun Ajaran */}
@@ -202,24 +238,58 @@ export default function AnalitikPage() {
                 </div>
             </div>
 
+            {/* Filter Tingkat Kelas */}
+            {selectedYear && classData.length > 0 && (
+                <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <label className="text-sm font-bold text-text-main dark:text-white whitespace-nowrap">
+                            Filter Tingkat:
+                        </label>
+                        <div className="relative flex-1 max-w-xs">
+                            <select
+                                value={gradeFilter || ''}
+                                onChange={(e) => setGradeFilter(e.target.value ? parseInt(e.target.value) : null)}
+                                className="w-full px-4 py-2.5 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                            >
+                                <option value="">Semua Tingkat</option>
+                                <option value="1">Kelas 1</option>
+                                <option value="2">Kelas 2</option>
+                                <option value="3">Kelas 3</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+                                ▼
+                            </div>
+                        </div>
+                        {gradeFilter && (
+                            <button
+                                onClick={() => setGradeFilter(null)}
+                                className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-main dark:hover:text-white transition-colors"
+                            >
+                                Reset
+                            </button>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Content */}
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <div className="animate-spin text-primary"><TrendingUp className="w-8 h-8" /></div>
                 </div>
             ) : !selectedYear ? (
                 <EmptyState
-                    icon="📅"
+                    icon={<Calendar className="w-12 h-12 text-secondary" />}
                     title="Pilih Tahun Ajaran"
                     description="Pilih tahun ajaran untuk melihat analitik"
                 />
             ) : loadingData ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-3xl text-primary">⏳</div>
+                    <div className="animate-spin text-primary"><TrendingUp className="w-8 h-8" /></div>
                 </div>
             ) : classData.length === 0 ? (
                 <EmptyState
-                    icon="📊"
+                    icon={<BarChart3 className="w-12 h-12 text-secondary" />}
                     title="Belum Ada Data"
                     description="Belum ada data kelas untuk tahun ajaran ini"
                 />
@@ -229,7 +299,9 @@ export default function AnalitikPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-xl">🏫</div>
+                                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                                    <School className="w-5 h-5" />
+                                </div>
                                 <div>
                                     <p className="text-xs text-text-secondary dark:text-zinc-400">Total Kelas</p>
                                     <p className="text-2xl font-bold text-text-main dark:text-white">{overallStats.totalClasses}</p>
@@ -238,7 +310,9 @@ export default function AnalitikPage() {
                         </div>
                         <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl">📚</div>
+                                <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                                    <BookOpen className="w-5 h-5" />
+                                </div>
                                 <div>
                                     <p className="text-xs text-text-secondary dark:text-zinc-400">Mapel dengan Nilai</p>
                                     <p className="text-2xl font-bold text-text-main dark:text-white">{overallStats.totalSubjectsWithGrades}</p>
@@ -247,7 +321,9 @@ export default function AnalitikPage() {
                         </div>
                         <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center text-xl">📊</div>
+                                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center">
+                                    <BarChart3 className="w-5 h-5" />
+                                </div>
                                 <div>
                                     <p className="text-xs text-text-secondary dark:text-zinc-400">Rata-rata</p>
                                     <p className={`text-2xl font-bold ${getScoreColor(overallStats.overallAverage)}`}>
@@ -258,12 +334,101 @@ export default function AnalitikPage() {
                         </div>
                     </div>
 
+                    {/* Grade Level Stats - Only show if there's grade data */}
+                    {gradeChartData.length > 0 && !gradeFilter && (
+                        <div>
+                            <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">Rata-rata per Tingkat Kelas</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {gradeStats.map((stat) => (
+                                    <div
+                                        key={stat.grade}
+                                        className={`bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm ${stat.classCount === 0 ? 'opacity-50' : ''
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div
+                                                className={`w-10 h-10 rounded-lg flex items-center justify-center ${stat.grade === 1
+                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                                    : stat.grade === 2
+                                                        ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400'
+                                                        : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                                    }`}
+                                            >
+                                                <BarChart3 className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs font-bold text-text-secondary dark:text-zinc-400">
+                                                        Kelas {stat.grade}
+                                                    </p>
+                                                    <span className="text-[10px] text-text-secondary dark:text-zinc-500">
+                                                        ({stat.classCount} kelas)
+                                                    </span>
+                                                </div>
+                                                <p
+                                                    className={`text-2xl font-bold ${stat.average !== null
+                                                        ? getScoreColor(stat.average)
+                                                        : 'text-text-secondary dark:text-zinc-500'
+                                                        }`}
+                                                >
+                                                    {formatScore(stat.average)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Charts Section */}
                     <div className="grid grid-cols-1 gap-6">
+                        {/* Bar Chart - Grade Comparison */}
+                        {gradeChartData.length > 0 && !gradeFilter && (
+                            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
+                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5" />
+                                    Perbandingan Rata-rata per Tingkat Kelas
+                                </h3>
+                                <div className="h-48" style={{ minWidth: 0, minHeight: 150, position: 'relative' }}>
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={150}>
+                                        <BarChart data={gradeChartData} layout="vertical" margin={{ left: 20, right: 30 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                                            <XAxis type="number" domain={[0, 100]} stroke="#64748b" fontSize={12} />
+                                            <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={12} width={80} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}
+                                                labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
+                                                formatter={(value, name, props: any) => {
+                                                    const count = props?.payload?.classCount || 0
+                                                    return [`${value} (${count} kelas)`, 'Rata-rata']
+                                                }}
+                                            />
+                                            <Bar dataKey="average" radius={[0, 4, 4, 0]}>
+                                                {gradeChartData.map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={
+                                                            entry.name.includes('1') ? '#3b82f6' :
+                                                                entry.name.includes('2') ? '#a855f7' :
+                                                                    '#22c55e'
+                                                        }
+                                                    />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Bar Chart - Class Comparison */}
                         {classChartData.length > 0 && (
                             <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
-                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">📊 Perbandingan Rata-rata Kelas</h3>
+                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5" />
+                                    Perbandingan Rata-rata Kelas
+                                </h3>
                                 <div className="h-64" style={{ minWidth: 0, minHeight: 200, position: 'relative' }}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                         <BarChart data={classChartData} layout="vertical" margin={{ left: 20, right: 30 }}>
@@ -289,7 +454,10 @@ export default function AnalitikPage() {
                         {/* Bar Chart - Subject Averages */}
                         {subjectChartData.length > 0 && (
                             <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-5 shadow-sm">
-                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">📚 Rata-rata per Mata Pelajaran</h3>
+                                <h3 className="text-lg font-bold text-text-main dark:text-white mb-4 flex items-center gap-2">
+                                    <BookOpen className="w-5 h-5" />
+                                    Rata-rata per Mata Pelajaran
+                                </h3>
                                 <div className="h-64" style={{ minWidth: 0, minHeight: 200, position: 'relative' }}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
                                         <BarChart data={subjectChartData} layout="vertical" margin={{ left: 20, right: 30 }}>
@@ -320,8 +488,8 @@ export default function AnalitikPage() {
                                 {/* Class Header */}
                                 <div className="p-4 border-b border-secondary/10 bg-gradient-to-r from-primary/5 to-secondary/5">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xl">
-                                            🏫
+                                        <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                            <School className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-text-main dark:text-white">{cls.class_name}</h3>
@@ -378,7 +546,7 @@ export default function AnalitikPage() {
             <Modal
                 open={showModal}
                 onClose={() => setShowModal(false)}
-                title={`📚 ${selectedSubject?.subject_name || ''} - ${selectedClass?.class_name || ''}`}
+                title={`${selectedSubject?.subject_name || ''} - ${selectedClass?.class_name || ''}`}
                 maxWidth="lg"
             >
                 {selectedSubject && (

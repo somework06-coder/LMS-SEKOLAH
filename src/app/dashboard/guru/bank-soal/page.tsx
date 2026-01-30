@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { Modal, Button, EmptyState, PageHeader } from '@/components/ui'
+import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
+import Card from '@/components/ui/Card'
+import { Archive } from 'lucide-react'
+import Link from 'next/link' // Keep this import as it's used later
 
 interface QuestionBankItem {
     id: string

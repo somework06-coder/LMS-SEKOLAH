@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Button, EmptyState } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
+import { School, Plus } from 'lucide-react'
 import { Class, AcademicYear } from '@/lib/types'
 
 interface Student {
@@ -20,8 +22,11 @@ export default function KelasPage() {
     const [loading, setLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
     const [editingClass, setEditingClass] = useState<Class | null>(null)
-    const [formData, setFormData] = useState({ name: '', academic_year_id: '' })
+    const [formData, setFormData] = useState({ name: '', academic_year_id: '', grade_level: null as number | null })
     const [saving, setSaving] = useState(false)
+
+    // Filter state
+    const [gradeFilter, setGradeFilter] = useState<number | null>(null)
 
     // Students modal state
     const [showStudentsModal, setShowStudentsModal] = useState(false)
@@ -31,8 +36,12 @@ export default function KelasPage() {
 
     const fetchData = async () => {
         try {
+            const classesUrl = gradeFilter
+                ? `/api/classes?grade_level=${gradeFilter}`
+                : '/api/classes'
+
             const [classesRes, yearsRes] = await Promise.all([
-                fetch('/api/classes'),
+                fetch(classesUrl),
                 fetch('/api/academic-years')
             ])
             const [classesData, yearsData] = await Promise.all([
@@ -52,6 +61,11 @@ export default function KelasPage() {
         fetchData()
     }, [])
 
+    useEffect(() => {
+        setLoading(true)
+        fetchData()
+    }, [gradeFilter])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSaving(true)
@@ -68,7 +82,7 @@ export default function KelasPage() {
             if (res.ok) {
                 setShowModal(false)
                 setEditingClass(null)
-                setFormData({ name: '', academic_year_id: '' })
+                setFormData({ name: '', academic_year_id: '', grade_level: null })
                 fetchData()
             }
         } finally {
@@ -84,14 +98,14 @@ export default function KelasPage() {
 
     const openEdit = (cls: Class) => {
         setEditingClass(cls)
-        setFormData({ name: cls.name, academic_year_id: cls.academic_year_id })
+        setFormData({ name: cls.name, academic_year_id: cls.academic_year_id, grade_level: cls.grade_level })
         setShowModal(true)
     }
 
     const openAdd = () => {
         setEditingClass(null)
         const activeYear = academicYears.find(y => y.is_active)
-        setFormData({ name: '', academic_year_id: activeYear?.id || '' })
+        setFormData({ name: '', academic_year_id: activeYear?.id || '', grade_level: null })
         setShowModal(true)
     }
 
@@ -113,41 +127,64 @@ export default function KelasPage() {
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-6 rounded-3xl shadow-soft">
+            <PageHeader
+                title="Kelas"
+                subtitle="Kelola daftar kelas dan siswa"
+                backHref="/dashboard/admin"
+                icon={<School className="w-6 h-6 text-purple-500" />}
+                action={
+                    <Button onClick={openAdd} icon={<Plus className="w-5 h-5" />}>
+                        Tambah Kelas
+                    </Button>
+                }
+            />
+
+            {/* Filter Section */}
+            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-4 shadow-sm">
                 <div className="flex items-center gap-4">
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.history.back()}
-                        icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        }
-                    />
-                    <div>
-                        <h1 className="text-2xl font-bold text-text-main dark:text-white leading-tight">Kelas</h1>
-                        <p className="text-text-secondary dark:text-[#A8BC9F] text-sm">Kelola daftar kelas dan siswa</p>
+                    <label className="text-sm font-bold text-text-main dark:text-white whitespace-nowrap">
+                        Filter Tingkat:
+                    </label>
+                    <div className="relative flex-1 max-w-xs">
+                        <select
+                            value={gradeFilter || ''}
+                            onChange={(e) => setGradeFilter(e.target.value ? parseInt(e.target.value) : null)}
+                            className="w-full px-4 py-2.5 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                        >
+                            <option value="">Semua Tingkat</option>
+                            <option value="1">Kelas 1</option>
+                            <option value="2">Kelas 2</option>
+                            <option value="3">Kelas 3</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+                            ▼
+                        </div>
                     </div>
+                    {gradeFilter && (
+                        <button
+                            onClick={() => setGradeFilter(null)}
+                            className="px-4 py-2.5 text-sm font-medium text-text-secondary hover:text-text-main dark:hover:text-white transition-colors"
+                        >
+                            Reset Filter
+                        </button>
+                    )}
+                    {gradeFilter && (
+                        <div className="text-sm text-text-secondary dark:text-zinc-400">
+                            Menampilkan: <span className="font-bold text-primary">Kelas {gradeFilter}</span> ({classes.length} kelas)
+                        </div>
+                    )}
                 </div>
-                <Button onClick={openAdd} icon={
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                }>
-                    Tambah
-                </Button>
             </div>
 
             <Card className="overflow-hidden p-0">
                 {loading ? (
                     <div className="p-12 flex justify-center">
-                        <div className="animate-spin text-3xl text-primary">⏳</div>
+                        <div className="animate-spin text-primary"><School className="w-8 h-8" /></div>
                     </div>
                 ) : classes.length === 0 ? (
                     <div className="p-6">
                         <EmptyState
-                            icon="🏫"
+                            icon={<School className="w-12 h-12 text-secondary" />}
                             title="Belum Ada Kelas"
                             description="Tambahkan kelas untuk memulai"
                             action={<Button onClick={openAdd}>Tambah Kelas</Button>}
@@ -159,6 +196,7 @@ export default function KelasPage() {
                             <thead className="bg-secondary/10 dark:bg-white/5 border-b border-secondary/20">
                                 <tr>
                                     <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Nama Kelas</th>
+                                    <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Tingkat</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Tahun Ajaran</th>
                                     <th className="px-6 py-4 text-right text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -167,6 +205,18 @@ export default function KelasPage() {
                                 {classes.map((cls) => (
                                     <tr key={cls.id} className="hover:bg-secondary/5 transition-colors">
                                         <td className="px-6 py-4 text-text-main dark:text-white font-medium">{cls.name}</td>
+                                        <td className="px-6 py-4">
+                                            {cls.grade_level ? (
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${cls.grade_level === 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
+                                                    cls.grade_level === 2 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                        'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    }`}>
+                                                    Kelas {cls.grade_level}
+                                                </span>
+                                            ) : (
+                                                <span className="text-text-secondary dark:text-zinc-500 text-sm">-</span>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 text-text-secondary dark:text-zinc-400">{cls.academic_year?.name || '-'}</td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -225,6 +275,26 @@ export default function KelasPage() {
                             required
                         />
                     </div>
+                    {/* Grade Level Dropdown */}
+                    <div>
+                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Tingkat Kelas</label>
+                        <div className="relative">
+                            <select
+                                value={formData.grade_level || ''}
+                                onChange={(e) => setFormData({ ...formData, grade_level: e.target.value ? parseInt(e.target.value) : null })}
+                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                            >
+                                <option value="">Pilih Tingkat (optional)</option>
+                                <option value="1">Kelas 1</option>
+                                <option value="2">Kelas 2</option>
+                                <option value="3">Kelas 3</option>
+                            </select>
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
+                                ▼
+                            </div>
+                        </div>
+                        <p className="text-xs text-text-secondary dark:text-zinc-400 mt-2">Contoh: Kelas 1 untuk tingkat 7/10, Kelas 2 untuk 8/11, Kelas 3 untuk 9/12</p>
+                    </div>
                     <div>
                         <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Tahun Ajaran</label>
                         <div className="relative">
@@ -265,11 +335,11 @@ export default function KelasPage() {
                 <div className="max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                     {loadingStudents ? (
                         <div className="py-12 flex justify-center">
-                            <div className="animate-spin text-2xl text-primary">⏳</div>
+                            <div className="animate-spin text-primary"><School className="w-6 h-6" /></div>
                         </div>
                     ) : students.length === 0 ? (
                         <EmptyState
-                            icon="👨‍🎓"
+                            icon={<School className="w-12 h-12 text-secondary" />}
                             title="Belum ada siswa"
                             description="Kelas ini belum memiliki siswa terdaftar."
                         />

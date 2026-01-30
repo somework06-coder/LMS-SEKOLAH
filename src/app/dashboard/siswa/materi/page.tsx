@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Modal, Button, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
+import { BookOpen, FileText, Video, Type, Link as LinkIcon, Loader2, ArrowLeft } from 'lucide-react'
 
 
 interface Material {
@@ -80,11 +81,21 @@ export default function SiswaMateriPage() {
 
     const getTypeIcon = (type: string) => {
         switch (type) {
-            case 'PDF': return '📄'
-            case 'VIDEO': return '🎥'
-            case 'TEXT': return '📝'
-            case 'LINK': return '🔗'
-            default: return '📚'
+            case 'PDF': return FileText
+            case 'VIDEO': return Video
+            case 'TEXT': return Type
+            case 'LINK': return LinkIcon
+            default: return BookOpen
+        }
+    }
+
+    const getTypeColor = (type: string) => {
+        switch (type) {
+            case 'PDF': return { bg: 'bg-red-100 dark:bg-red-900/30', text: 'text-red-600 dark:text-red-400' }
+            case 'VIDEO': return { bg: 'bg-purple-100 dark:bg-purple-900/30', text: 'text-purple-600 dark:text-purple-400' }
+            case 'TEXT': return { bg: 'bg-amber-100 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400' }
+            case 'LINK': return { bg: 'bg-cyan-100 dark:bg-cyan-900/30', text: 'text-cyan-600 dark:text-cyan-400' }
+            default: return { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-600 dark:text-blue-400' }
         }
     }
 
@@ -96,7 +107,7 @@ export default function SiswaMateriPage() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[50vh]">
-                <div className="animate-spin text-4xl text-primary">⏳</div>
+                <Loader2 className="w-8 h-8 text-primary animate-spin" strokeWidth={2} />
             </div>
         )
     }
@@ -107,13 +118,16 @@ export default function SiswaMateriPage() {
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
                     <a href="/dashboard/siswa" className="p-3 rounded-xl bg-white dark:bg-surface-dark border border-secondary/20 hover:border-primary text-text-secondary hover:text-primary transition-all shadow-sm">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
+                        <ArrowLeft className="w-5 h-5" strokeWidth={2} />
                     </a>
                     <div>
-                        <h1 className="text-2xl font-bold text-text-main dark:text-white">📚 Materi Pembelajaran</h1>
-                        <p className="text-text-secondary dark:text-[#A8BC9F]">Pilih mata pelajaran untuk melihat materi</p>
+                        <div className="flex items-center gap-2">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                <BookOpen className="w-5 h-5 text-blue-600 dark:text-blue-400" strokeWidth={2} />
+                            </div>
+                            <h1 className="text-2xl font-bold text-text-main dark:text-white">Materi Pembelajaran</h1>
+                        </div>
+                        <p className="text-text-secondary dark:text-[#A8BC9F] ml-12">Pilih mata pelajaran untuk melihat materi</p>
                     </div>
                 </div>
 
@@ -149,7 +163,7 @@ export default function SiswaMateriPage() {
                             >
                                 <div onClick={() => { setSelectedSubject(group); setSearchQuery('') }}>
                                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-white mb-4 shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                                        <span className="text-3xl">📚</span>
+                                        <BookOpen className="w-7 h-7" strokeWidth={2} />
                                     </div>
                                     <h3 className="text-xl font-bold text-text-main dark:text-white mb-2 group-hover:text-primary transition-colors">
                                         {group.subjectName}
@@ -192,7 +206,15 @@ export default function SiswaMateriPage() {
                 {selectedSubject.materials.map((material) => (
                     <Card key={material.id} className="hover:shadow-lg transition-all border-l-4 border-l-transparent hover:border-l-primary">
                         <div className="flex items-start gap-4">
-                            <span className="text-3xl bg-secondary/5 p-3 rounded-2xl">{getTypeIcon(material.type)}</span>
+                            {(() => {
+                                const IconComponent = getTypeIcon(material.type)
+                                const colors = getTypeColor(material.type)
+                                return (
+                                    <div className={`w-12 h-12 rounded-2xl ${colors.bg} flex items-center justify-center flex-shrink-0`}>
+                                        <IconComponent className={`w-6 h-6 ${colors.text}`} strokeWidth={2} />
+                                    </div>
+                                )
+                            })()}
                             <div className="flex-1 min-w-0">
                                 <h3 className="text-lg font-bold text-text-main dark:text-white mb-1">{material.title}</h3>
                                 <p className="text-sm text-text-secondary dark:text-[#A8BC9F] mb-4 line-clamp-2">{material.description || 'Tidak ada deskripsi'}</p>

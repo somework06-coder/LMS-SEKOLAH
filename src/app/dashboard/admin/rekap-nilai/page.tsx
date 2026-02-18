@@ -97,8 +97,8 @@ export default function RekapNilaiPage() {
             const studentsData = await studentsRes.json()
             const students: Student[] = Array.isArray(studentsData) ? studentsData : []
 
-            // Fetch all grades
-            const gradesRes = await fetch('/api/grades')
+            // Fetch all grades for the selected academic year
+            const gradesRes = await fetch(`/api/grades?academic_year_id=${selectedYear}`)
             const gradesData = await gradesRes.json()
             const allGrades: Grade[] = Array.isArray(gradesData) ? gradesData : []
 

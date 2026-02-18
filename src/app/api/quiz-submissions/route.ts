@@ -3,7 +3,6 @@ import { supabase } from '@/lib/supabase'
 import { validateSession } from '@/lib/auth'
 
 // GET submissions (for teacher or student)
-// GET submissions (for teacher or student)
 export async function GET(request: NextRequest) {
     try {
         const token = request.cookies.get('session_token')?.value
@@ -18,6 +17,7 @@ export async function GET(request: NextRequest) {
 
         const quizId = request.nextUrl.searchParams.get('quiz_id')
         const studentId = request.nextUrl.searchParams.get('student_id')
+        const allYears = request.nextUrl.searchParams.get('all_years')
 
         // Lazy Sweep: Auto-close expired submissions if quizId is provided (Teacher View)
         if (quizId && user.role === 'GURU') {
@@ -61,16 +61,11 @@ export async function GET(request: NextRequest) {
                                 await Promise.all(expired.map(async (sub) => {
                                     // Grade answers
                                     let totalScore = 0
-                                    let maxScore = 0
                                     const subAnswers = Array.isArray(sub.answers) ? sub.answers : []
 
                                     const gradedAnswers = subAnswers.map((ans: any) => {
                                         const q = questions.find(q => q.id === ans.question_id)
                                         if (!q) return ans
-
-                                        // Calculate max score (accumulated elsewhere usually, but here checking correctness)
-                                        // Note: Max score calculation for update might need sum of all question points, 
-                                        // but usually we just store what they got.
 
                                         if (q.question_type === 'MULTIPLE_CHOICE') {
                                             const isCorrect = ans.answer?.toUpperCase() === q.correct_answer?.toUpperCase()
@@ -81,8 +76,6 @@ export async function GET(request: NextRequest) {
                                         return ans
                                     })
 
-                                    // Recalculate max score for the whole quiz ? 
-                                    // The table stores max_score. We should fetch it or calc it.
                                     const examMaxScore = questions.reduce((acc, q) => acc + q.points, 0)
 
                                     await supabase
@@ -92,7 +85,7 @@ export async function GET(request: NextRequest) {
                                             submitted_at: new Date().toISOString(),
                                             total_score: totalScore,
                                             max_score: examMaxScore,
-                                            is_graded: true // Assuming MC only for auto-close, or partially graded
+                                            is_graded: true
                                         })
                                         .eq('id', sub.id)
                                 }))
@@ -113,6 +106,7 @@ export async function GET(request: NextRequest) {
                     id,
                     title,
                     teaching_assignment:teaching_assignments(
+                        academic_year_id,
                         subject:subjects(name)
                     )
                 ),
@@ -129,6 +123,37 @@ export async function GET(request: NextRequest) {
         }
         if (studentId) {
             query = query.eq('student_id', studentId)
+        }
+
+        // Filter by active year when no specific quiz is requested
+        if (!quizId && allYears !== 'true') {
+            const { data: activeYear } = await supabase
+                .from('academic_years')
+                .select('id')
+                .eq('is_active', true)
+                .single()
+
+            if (activeYear) {
+                const { data: taIds } = await supabase
+                    .from('teaching_assignments')
+                    .select('id')
+                    .eq('academic_year_id', activeYear.id)
+
+                if (taIds && taIds.length > 0) {
+                    const { data: quizIds } = await supabase
+                        .from('quizzes')
+                        .select('id')
+                        .in('teaching_assignment_id', taIds.map(t => t.id))
+
+                    if (quizIds && quizIds.length > 0) {
+                        query = query.in('quiz_id', quizIds.map(q => q.id))
+                    } else {
+                        return NextResponse.json([])
+                    }
+                } else {
+                    return NextResponse.json([])
+                }
+            }
         }
 
         const { data, error } = await query

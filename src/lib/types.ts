@@ -79,8 +79,10 @@ export interface Class {
     grade_level: number | null  // 1, 2, or 3 for class level grouping
     school_level: SchoolLevel | null  // SMP or SMA
     academic_year_id: string
+    homeroom_teacher_id: string | null  // Wali kelas
     created_at: string
     academic_year?: AcademicYear
+    homeroom_teacher?: Teacher  // Wali kelas relation
 }
 
 export interface StudentEnrollment {

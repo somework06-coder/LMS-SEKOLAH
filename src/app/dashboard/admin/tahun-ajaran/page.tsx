@@ -334,43 +334,14 @@ export default function TahunAjaranPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Nama Tahun Ajaran</label>
-                        <div className="relative">
-                            <select
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all appearance-none"
-                                required
-                            >
-                                <option value="">Pilih Tahun Ajaran...</option>
-                                {(() => {
-                                    const currentYear = new Date().getFullYear()
-                                    const startYear = 2020
-                                    const endYear = currentYear + 5
-                                    const options: { value: string; label: string }[] = []
-                                    const existingNames = years
-                                        .filter(y => !editingYear || y.id !== editingYear.id)
-                                        .map(y => y.name)
-
-                                    for (let y = endYear; y >= startYear; y--) {
-                                        const name = `${y}/${y + 1}`
-                                        if (!existingNames.includes(name)) options.push({ value: name, label: `📅 ${name}` })
-                                    }
-
-                                    // If editing and current value isn't in options, add it
-                                    if (editingYear && formData.name && !options.some(o => o.value === formData.name)) {
-                                        options.unshift({ value: formData.name, label: `📅 ${formData.name}` })
-                                    }
-
-                                    return options.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))
-                                })()}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
-                        </div>
-                        <p className="text-xs text-text-secondary mt-2">
-                            Format: Tahun/Tahun + Semester. Tahun ajaran yang sudah ada tidak ditampilkan.
-                        </p>
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50 transition-all"
+                            placeholder="Contoh: 2024/2025"
+                            required
+                        />
                     </div>
 
                     <div>

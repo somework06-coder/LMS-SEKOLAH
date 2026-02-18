@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import StatsCard from '@/components/ui/StatsCard'
-import { Calendar, School, BookOpen, UserCheck, Users, UserPlus, BarChart3, TrendingUp, GraduationCap, Megaphone, ShieldCheck, RefreshCw } from 'lucide-react'
+import { Calendar, School, BookOpen, UserCheck, Users, UserPlus, BarChart3, TrendingUp, GraduationCap, Megaphone, ShieldCheck } from 'lucide-react'
 
 interface StatsData {
     totalTeachers: number
@@ -77,12 +77,6 @@ export default function AdminDashboard() {
             description: 'Proses kenaikan kelas massal',
             icon: GraduationCap,
             href: '/dashboard/admin/kenaikan-kelas',
-        },
-        {
-            title: 'Pergantian Tahun',
-            description: 'Wizard pergantian tahun ajaran',
-            icon: RefreshCw,
-            href: '/dashboard/admin/pergantian-tahun',
         },
         {
             title: 'Mata Pelajaran',

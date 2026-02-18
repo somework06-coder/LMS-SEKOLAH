@@ -58,9 +58,25 @@ export default function MateriPage() {
 
     const fetchData = async () => {
         try {
-            // Use my-teaching-assignments (already filtered by teacher + active year)
+            const teachersRes = await fetch('/api/teachers')
+            const teachers = await teachersRes.json()
+
+            if (!Array.isArray(teachers)) {
+                console.error('API Error (Teachers):', teachers)
+                setToast({ message: 'Gagal memuat data guru. Silakan refresh.', type: 'error' })
+                setLoading(false)
+                return
+            }
+
+            const myTeacher = teachers.find((t: { user: { id: string } }) => t.user.id === user?.id)
+
+            if (!myTeacher) {
+                setLoading(false)
+                return
+            }
+
             const [assignmentsRes, materialsRes] = await Promise.all([
-                fetch('/api/my-teaching-assignments'),
+                fetch('/api/teaching-assignments'),
                 fetch('/api/materials')
             ])
             const [assignmentsData, materialsData] = await Promise.all([
@@ -68,9 +84,10 @@ export default function MateriPage() {
                 materialsRes.json()
             ])
 
-            const myAssignments = Array.isArray(assignmentsData) ? assignmentsData : []
+            const validAssignments = Array.isArray(assignmentsData) ? assignmentsData : []
             const validMaterials = Array.isArray(materialsData) ? materialsData : []
 
+            const myAssignments = validAssignments.filter((a: { teacher: { id: string } }) => a.teacher.id === myTeacher.id)
             const myMaterials = validMaterials.filter((m: Material) =>
                 myAssignments.some((a: TeachingAssignment) => a.id === m.teaching_assignment?.id)
             )

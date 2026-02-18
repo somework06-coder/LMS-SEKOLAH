@@ -39,37 +39,17 @@ export async function GET(request: NextRequest) {
 
         console.log('[My TA] Teacher ID:', teacher.id)
 
-        const allYears = request.nextUrl.searchParams.get('all_years')
-        const academicYearId = request.nextUrl.searchParams.get('academic_year_id')
-
-        // Auto-filter by active year if no specific year requested
-        let filterYearId = academicYearId
-        if (!filterYearId && allYears !== 'true') {
-            const { data: activeYear } = await supabase
-                .from('academic_years')
-                .select('id')
-                .eq('is_active', true)
-                .single()
-            if (activeYear) filterYearId = activeYear.id
-        }
-
         // Get teaching assignments for this teacher
-        let assignmentsQuery = supabase
+        const { data: assignments, error: assignmentsError } = await supabase
             .from('teaching_assignments')
             .select(`
                 id,
                 teacher_id,
                 subject:subjects(id, name),
                 class:classes(id, name),
-                academic_year:academic_years(id, name, is_active)
+                academic_year:academic_years(id, name)
             `)
             .eq('teacher_id', teacher.id)
-
-        if (filterYearId) {
-            assignmentsQuery = assignmentsQuery.eq('academic_year_id', filterYearId)
-        }
-
-        const { data: assignments, error: assignmentsError } = await assignmentsQuery
 
         if (assignmentsError) {
             console.error('[My TA] Assignments query error:', assignmentsError)

@@ -16,6 +16,18 @@ export async function GET(request: NextRequest) {
         }
 
         const academicYearId = request.nextUrl.searchParams.get('academic_year_id')
+        const allYears = request.nextUrl.searchParams.get('all_years')
+
+        // Auto-filter by active year if no specific year requested
+        let filterYearId = academicYearId
+        if (!filterYearId && allYears !== 'true') {
+            const { data: activeYear } = await supabase
+                .from('academic_years')
+                .select('id')
+                .eq('is_active', true)
+                .single()
+            if (activeYear) filterYearId = activeYear.id
+        }
 
         let query = supabase
             .from('teaching_assignments')
@@ -32,8 +44,8 @@ export async function GET(request: NextRequest) {
       `)
             .order('created_at', { ascending: false })
 
-        if (academicYearId) {
-            query = query.eq('academic_year_id', academicYearId)
+        if (filterYearId) {
+            query = query.eq('academic_year_id', filterYearId)
         }
 
         const { data, error } = await query

@@ -1,11 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { PageHeader, Modal, Button, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
 import { AcademicYear, Class, SchoolLevel } from '@/lib/types'
-import { ArrowRight, Users, CheckCircle, XCircle, AlertTriangle, Loader2, GraduationCap, ArrowUpRight } from 'lucide-react'
+import {
+    ArrowRight, Users, CheckCircle, XCircle, AlertTriangle, Loader2,
+    GraduationCap, ArrowUpRight, ChevronDown, ChevronRight, Search,
+    Download, ShieldAlert, UserCheck, UserX
+} from 'lucide-react'
 
 interface Student {
     id: string
@@ -28,6 +32,11 @@ interface ClassGroup {
     targetClassId: string
     targetClassName: string
     action: 'PROMOTE' | 'GRADUATE' | 'TRANSITION'
+    // Per-student exclusions
+    excludedStudents: Set<string>
+    // Status tracking
+    isCompleted: boolean
+    completedCount: number
 }
 
 export default function KenaikanKelasPage() {
@@ -42,9 +51,21 @@ export default function KenaikanKelasPage() {
     const [activeYear, setActiveYear] = useState<AcademicYear | null>(null)
     const [targetYear, setTargetYear] = useState<AcademicYear | null>(null)
 
+    // Expanded accordion state
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
+
+    // Search
+    const [searchQuery, setSearchQuery] = useState('')
+
+    // Confirmation modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+
     // Results
     const [showResultModal, setShowResultModal] = useState(false)
     const [results, setResults] = useState<{ success: number; failed: number; errors: string[] }>({ success: 0, failed: 0, errors: [] })
+
+    // Processing progress
+    const [processProgress, setProcessProgress] = useState({ current: 0, total: 0 })
 
     const fetchData = async () => {
         try {
@@ -144,7 +165,10 @@ export default function KenaikanKelasPage() {
                 students: classStudents,
                 targetClassId,
                 targetClassName,
-                action
+                action,
+                excludedStudents: new Set(),
+                isCompleted: false,
+                completedCount: 0
             })
         }
 
@@ -163,7 +187,19 @@ export default function KenaikanKelasPage() {
         fetchData()
     }, [])
 
+    // Get possible target classes for a group (for dropdown)
+    const getTargetOptions = (group: ClassGroup): Class[] => {
+        if (group.action !== 'PROMOTE') return []
+        const nextGrade = (group.sourceClass.grade_level || 0) + 1
+        return classes.filter(c =>
+            c.school_level === group.sourceClass.school_level &&
+            c.grade_level === nextGrade
+        )
+    }
+
     const toggleGroup = (classId: string) => {
+        const group = classGroups.find(g => g.sourceClass.id === classId)
+        if (group?.isCompleted) return // Can't select completed groups
         const newSelected = new Set(selectedGroups)
         if (newSelected.has(classId)) {
             newSelected.delete(classId)
@@ -173,65 +209,134 @@ export default function KenaikanKelasPage() {
         setSelectedGroups(newSelected)
     }
 
+    const toggleExpand = (classId: string) => {
+        const newExpanded = new Set(expandedGroups)
+        if (newExpanded.has(classId)) {
+            newExpanded.delete(classId)
+        } else {
+            newExpanded.add(classId)
+        }
+        setExpandedGroups(newExpanded)
+    }
+
+    const toggleStudentExclusion = (classId: string, studentId: string) => {
+        setClassGroups(prev => prev.map(g => {
+            if (g.sourceClass.id !== classId) return g
+            const newExcluded = new Set(g.excludedStudents)
+            if (newExcluded.has(studentId)) {
+                newExcluded.delete(studentId)
+            } else {
+                newExcluded.add(studentId)
+            }
+            return { ...g, excludedStudents: newExcluded }
+        }))
+    }
+
+    const updateTargetClass = (classId: string, targetId: string) => {
+        const targetClass = classes.find(c => c.id === targetId)
+        setClassGroups(prev => prev.map(g => {
+            if (g.sourceClass.id !== classId) return g
+            return {
+                ...g,
+                targetClassId: targetId,
+                targetClassName: targetClass?.name || g.targetClassName
+            }
+        }))
+    }
+
     const selectAll = () => {
-        if (selectedGroups.size === classGroups.length) {
+        const selectableGroups = classGroups.filter(g => !g.isCompleted)
+        if (selectedGroups.size === selectableGroups.length) {
             setSelectedGroups(new Set())
         } else {
-            setSelectedGroups(new Set(classGroups.map(g => g.sourceClass.id)))
+            setSelectedGroups(new Set(selectableGroups.map(g => g.sourceClass.id)))
         }
     }
 
-    const handleProcess = async () => {
+    // Show confirmation modal instead of processing directly
+    const handleProcessClick = () => {
         if (selectedGroups.size === 0) return
+        setShowConfirmModal(true)
+    }
 
+    const handleConfirmProcess = async () => {
+        setShowConfirmModal(false)
         setProcessing(true)
         const successIds: string[] = []
         const errors: string[] = []
 
+        // Calculate total students to process
+        const toProcess = classGroups
+            .filter(g => selectedGroups.has(g.sourceClass.id))
+            .flatMap(g => g.students.filter(s => !g.excludedStudents.has(s.id)))
+
+        setProcessProgress({ current: 0, total: toProcess.length })
+
         try {
+            let processedCount = 0
+
             for (const group of classGroups) {
                 if (!selectedGroups.has(group.sourceClass.id)) continue
 
-                for (const student of group.students) {
+                const studentsToProcess = group.students.filter(s => !group.excludedStudents.has(s.id))
+
+                for (const student of studentsToProcess) {
                     try {
                         if (group.action === 'GRADUATE') {
-                            // Graduate student
-                            const res = await fetch(`/api/students/${student.id}`, {
-                                method: 'PUT',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ status: 'GRADUATED' })
-                            })
-                            if (res.ok) {
-                                successIds.push(student.id)
-                            } else {
-                                errors.push(`Gagal memproses ${student.user.full_name}: ${(await res.json()).error}`)
-                            }
-                        } else if (group.action === 'TRANSITION') {
-                            // Transition SMP to SMA
-                            const res = await fetch(`/api/students/${student.id}`, {
+                            // Use proper graduate endpoint
+                            const res = await fetch(`/api/students/${student.id}/graduate`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    school_level: 'SMA',
-                                    class_id: null
+                                    notes: `Lulus dari ${group.sourceClass.name} - ${activeYear?.name}`
                                 })
                             })
                             if (res.ok) {
                                 successIds.push(student.id)
                             } else {
-                                errors.push(`Gagal memproses ${student.user.full_name}: ${(await res.json()).error}`)
+                                const errData = await res.json()
+                                errors.push(`Gagal memproses ${student.user.full_name}: ${errData.error}`)
                             }
-                        } else if (group.targetClassId) {
-                            // Promote to next class
-                            const res = await fetch(`/api/students/${student.id}`, {
+                        } else if (group.action === 'TRANSITION') {
+                            // Transition SMP → SMA: graduate from SMP first, then they'll be reassigned
+                            const res = await fetch(`/api/students/${student.id}/graduate`, {
                                 method: 'PUT',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ class_id: group.targetClassId })
+                                body: JSON.stringify({
+                                    notes: `Transisi SMP → SMA dari ${group.sourceClass.name} - ${activeYear?.name}`
+                                })
+                            })
+                            if (res.ok) {
+                                // After graduating from SMP, update school_level to SMA
+                                await fetch(`/api/students/${student.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        school_level: 'SMA',
+                                        status: 'ACTIVE'
+                                    })
+                                })
+                                successIds.push(student.id)
+                            } else {
+                                const errData = await res.json()
+                                errors.push(`Gagal memproses ${student.user.full_name}: ${errData.error}`)
+                            }
+                        } else if (group.targetClassId) {
+                            // Use proper promote endpoint
+                            const res = await fetch(`/api/students/${student.id}/promote`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    to_class_id: group.targetClassId,
+                                    to_academic_year_id: targetYear?.id || activeYear?.id,
+                                    notes: `Naik kelas dari ${group.sourceClass.name} ke ${group.targetClassName} - ${activeYear?.name}`
+                                })
                             })
                             if (res.ok) {
                                 successIds.push(student.id)
                             } else {
-                                errors.push(`Gagal memproses ${student.user.full_name}: ${(await res.json()).error}`)
+                                const errData = await res.json()
+                                errors.push(`Gagal memproses ${student.user.full_name}: ${errData.error}`)
                             }
                         } else {
                             errors.push(`${student.user.full_name}: Target kelas belum tersedia`)
@@ -239,6 +344,18 @@ export default function KenaikanKelasPage() {
                     } catch (err) {
                         errors.push(`${student.user.full_name}: Error tidak terduga`)
                     }
+
+                    processedCount++
+                    setProcessProgress({ current: processedCount, total: toProcess.length })
+                }
+
+                // Mark group as completed if all students were processed
+                if (studentsToProcess.every(s => successIds.includes(s.id))) {
+                    setClassGroups(prev => prev.map(g =>
+                        g.sourceClass.id === group.sourceClass.id
+                            ? { ...g, isCompleted: true, completedCount: studentsToProcess.length }
+                            : g
+                    ))
                 }
             }
 
@@ -254,28 +371,63 @@ export default function KenaikanKelasPage() {
             setSelectedGroups(new Set())
         } finally {
             setProcessing(false)
+            setProcessProgress({ current: 0, total: 0 })
         }
+    }
+
+    // Export CSV
+    const handleExportCSV = () => {
+        const rows: string[][] = [['No', 'Nama Siswa', 'NIS', 'Kelas Asal', 'Kelas Tujuan', 'Aksi', 'Status']]
+
+        let no = 1
+        classGroups.forEach(group => {
+            group.students.forEach(student => {
+                const isExcluded = group.excludedStudents.has(student.id)
+                const actionLabel = group.action === 'PROMOTE' ? 'Naik Kelas'
+                    : group.action === 'GRADUATE' ? 'Lulus'
+                        : 'Transisi SMA'
+
+                rows.push([
+                    String(no++),
+                    student.user.full_name || student.user.username,
+                    student.nis || '-',
+                    group.sourceClass.name,
+                    group.targetClassName,
+                    actionLabel,
+                    isExcluded ? 'Tinggal Kelas' : (group.isCompleted ? 'Selesai' : 'Menunggu')
+                ])
+            })
+        })
+
+        const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `kenaikan-kelas-${activeYear?.name || 'report'}.csv`
+        a.click()
+        URL.revokeObjectURL(url)
     }
 
     const getActionBadge = (action: 'PROMOTE' | 'GRADUATE' | 'TRANSITION') => {
         switch (action) {
             case 'PROMOTE':
                 return (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold">
                         <ArrowUpRight className="w-3 h-3" />
                         Naik Kelas
                     </span>
                 )
             case 'GRADUATE':
                 return (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-bold">
                         <GraduationCap className="w-3 h-3" />
                         Lulus
                     </span>
                 )
             case 'TRANSITION':
                 return (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-xs font-medium">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-full text-xs font-bold">
                         <ArrowRight className="w-3 h-3" />
                         Transisi SMA
                     </span>
@@ -283,14 +435,195 @@ export default function KenaikanKelasPage() {
         }
     }
 
+    // Filtered groups based on search
+    const filteredGroups = useMemo(() => {
+        if (!searchQuery.trim()) return classGroups
+        const q = searchQuery.toLowerCase()
+        return classGroups.filter(g =>
+            g.sourceClass.name.toLowerCase().includes(q) ||
+            g.targetClassName.toLowerCase().includes(q)
+        )
+    }, [classGroups, searchQuery])
+
+    const smpGroups = filteredGroups.filter(g => g.sourceClass.school_level === 'SMP')
+    const smaGroups = filteredGroups.filter(g => g.sourceClass.school_level === 'SMA')
+
     const totalSelectedStudents = classGroups
         .filter(g => selectedGroups.has(g.sourceClass.id))
-        .reduce((acc, g) => acc + g.students.length, 0)
+        .reduce((acc, g) => acc + g.students.length - g.excludedStudents.size, 0)
+
+    // Confirmation modal stats
+    const confirmStats = useMemo(() => {
+        const groups = classGroups.filter(g => selectedGroups.has(g.sourceClass.id))
+        return {
+            promote: groups.filter(g => g.action === 'PROMOTE').reduce((a, g) => a + g.students.length - g.excludedStudents.size, 0),
+            graduate: groups.filter(g => g.action === 'GRADUATE').reduce((a, g) => a + g.students.length - g.excludedStudents.size, 0),
+            transition: groups.filter(g => g.action === 'TRANSITION').reduce((a, g) => a + g.students.length - g.excludedStudents.size, 0),
+            excluded: groups.reduce((a, g) => a + g.excludedStudents.size, 0),
+            total: groups.reduce((a, g) => a + g.students.length - g.excludedStudents.size, 0),
+            classes: groups.length
+        }
+    }, [classGroups, selectedGroups])
 
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        )
+    }
+
+    const renderGroupRow = (group: ClassGroup) => {
+        const isSelected = selectedGroups.has(group.sourceClass.id)
+        const isExpanded = expandedGroups.has(group.sourceClass.id)
+        const activeStudents = group.students.length - group.excludedStudents.size
+        const targetOptions = getTargetOptions(group)
+
+        return (
+            <div key={group.sourceClass.id} className={`transition-colors ${group.isCompleted ? 'opacity-60' : ''}`}>
+                {/* Main row */}
+                <div
+                    className={`p-4 flex items-center gap-3 hover:bg-secondary/5 transition-colors ${isSelected ? 'bg-primary/5' : ''} ${group.isCompleted ? 'bg-green-50 dark:bg-green-900/10' : ''}`}
+                >
+                    {/* Checkbox */}
+                    <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleGroup(group.sourceClass.id)}
+                        disabled={group.isCompleted}
+                        className="w-5 h-5 rounded border-secondary text-primary focus:ring-primary/50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                    />
+
+                    {/* Expand toggle */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); toggleExpand(group.sourceClass.id) }}
+                        className="p-1 rounded-lg hover:bg-secondary/10 transition-colors"
+                    >
+                        {isExpanded
+                            ? <ChevronDown className="w-4 h-4 text-text-secondary" />
+                            : <ChevronRight className="w-4 h-4 text-text-secondary" />
+                        }
+                    </button>
+
+                    {/* Source class info */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center">
+                        <div className="md:col-span-3">
+                            <p className="font-bold text-text-main dark:text-white">{group.sourceClass.name}</p>
+                            <p className="text-xs text-text-secondary">
+                                {activeStudents}/{group.students.length} siswa
+                                {group.excludedStudents.size > 0 && (
+                                    <span className="text-amber-500 ml-1">({group.excludedStudents.size} dikecualikan)</span>
+                                )}
+                            </p>
+                        </div>
+
+                        {/* Arrow */}
+                        <div className="hidden md:flex md:col-span-1 items-center justify-center">
+                            <ArrowRight className="w-4 h-4 text-text-secondary" />
+                        </div>
+
+                        {/* Target class (dropdown for PROMOTE, static for others) */}
+                        <div className="md:col-span-4">
+                            {group.action === 'PROMOTE' && targetOptions.length > 0 ? (
+                                <div className="relative">
+                                    <select
+                                        value={group.targetClassId}
+                                        onChange={(e) => updateTargetClass(group.sourceClass.id, e.target.value)}
+                                        disabled={group.isCompleted}
+                                        className="w-full px-3 py-1.5 bg-secondary/5 border border-secondary/20 rounded-lg text-sm text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none disabled:opacity-50"
+                                    >
+                                        {targetOptions.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary text-xs">▼</div>
+                                </div>
+                            ) : (
+                                <p className="font-medium text-text-main dark:text-white">{group.targetClassName}</p>
+                            )}
+                        </div>
+
+                        {/* Badge */}
+                        <div className="md:col-span-2 flex justify-start md:justify-center">
+                            {getActionBadge(group.action)}
+                        </div>
+
+                        {/* Status */}
+                        <div className="md:col-span-2 flex justify-end">
+                            {group.isCompleted ? (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-bold">
+                                    <CheckCircle className="w-3.5 h-3.5" />
+                                    Selesai ({group.completedCount})
+                                </span>
+                            ) : (
+                                <span className="text-xs text-text-secondary">Menunggu</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Expanded student list */}
+                {isExpanded && (
+                    <div className="bg-secondary/3 dark:bg-white/2 border-t border-secondary/10">
+                        <div className="px-4 py-2 flex items-center justify-between border-b border-secondary/10">
+                            <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Daftar Siswa</span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setClassGroups(prev => prev.map(g =>
+                                        g.sourceClass.id === group.sourceClass.id
+                                            ? { ...g, excludedStudents: new Set() }
+                                            : g
+                                    ))}
+                                    className="text-xs text-primary hover:underline"
+                                >
+                                    Pilih Semua
+                                </button>
+                                <span className="text-xs text-text-secondary">|</span>
+                                <button
+                                    onClick={() => setClassGroups(prev => prev.map(g =>
+                                        g.sourceClass.id === group.sourceClass.id
+                                            ? { ...g, excludedStudents: new Set(g.students.map(s => s.id)) }
+                                            : g
+                                    ))}
+                                    className="text-xs text-red-500 hover:underline"
+                                >
+                                    Batalkan Semua
+                                </button>
+                            </div>
+                        </div>
+                        {group.students.map((student, idx) => {
+                            const isExcluded = group.excludedStudents.has(student.id)
+                            return (
+                                <div
+                                    key={student.id}
+                                    className={`flex items-center gap-3 px-6 py-2.5 hover:bg-secondary/5 transition-colors cursor-pointer ${isExcluded ? 'opacity-50' : ''}`}
+                                    onClick={() => !group.isCompleted && toggleStudentExclusion(group.sourceClass.id, student.id)}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={!isExcluded}
+                                        onChange={() => { }}
+                                        disabled={group.isCompleted}
+                                        className="w-4 h-4 rounded border-secondary text-primary focus:ring-primary/50 cursor-pointer"
+                                    />
+                                    <span className="text-xs text-text-secondary w-6 text-right">{idx + 1}.</span>
+                                    <div className="flex-1">
+                                        <span className={`text-sm ${isExcluded ? 'line-through text-text-secondary' : 'text-text-main dark:text-white'}`}>
+                                            {student.user.full_name || student.user.username}
+                                        </span>
+                                    </div>
+                                    <span className="text-xs text-text-secondary">{student.nis || '-'}</span>
+                                    {isExcluded && (
+                                        <span className="text-xs text-amber-500 font-medium flex items-center gap-1">
+                                            <UserX className="w-3 h-3" />
+                                            Tinggal
+                                        </span>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
             </div>
         )
     }
@@ -352,116 +685,175 @@ export default function KenaikanKelasPage() {
                 </Card>
             ) : (
                 <>
-                    {/* Selection Controls */}
-                    <div className="flex items-center justify-between">
-                        <Button variant="secondary" onClick={selectAll}>
-                            {selectedGroups.size === classGroups.length ? 'Batalkan Semua' : 'Pilih Semua'}
-                        </Button>
-                        <div className="text-sm text-text-secondary">
-                            {selectedGroups.size} kelas dipilih ({totalSelectedStudents} siswa)
+                    {/* Search + Controls */}
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <Button variant="secondary" onClick={selectAll}>
+                                {selectedGroups.size === classGroups.filter(g => !g.isCompleted).length && selectedGroups.size > 0
+                                    ? 'Batalkan Semua'
+                                    : 'Pilih Semua'}
+                            </Button>
+                            <div className="relative flex-1 sm:w-64">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari kelas..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 bg-secondary/5 border border-secondary/20 rounded-xl text-sm text-text-main dark:text-white placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleExportCSV}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 text-sm text-text-secondary hover:text-text-main dark:hover:text-white hover:bg-secondary/10 rounded-lg transition-colors"
+                            >
+                                <Download className="w-4 h-4" />
+                                Export CSV
+                            </button>
+                            <span className="text-sm text-text-secondary">
+                                {selectedGroups.size} kelas • {totalSelectedStudents} siswa
+                            </span>
                         </div>
                     </div>
 
                     {/* SMP Section */}
-                    {classGroups.some(g => g.sourceClass.school_level === 'SMP') && (
+                    {smpGroups.length > 0 && (
                         <Card className="p-0 overflow-hidden">
                             <div className="bg-blue-500/10 px-6 py-3 border-b border-blue-500/20">
                                 <h3 className="font-bold text-blue-600 dark:text-blue-400">🏫 SMP</h3>
                             </div>
                             <div className="divide-y divide-secondary/10">
-                                {classGroups
-                                    .filter(g => g.sourceClass.school_level === 'SMP')
-                                    .map(group => (
-                                        <div
-                                            key={group.sourceClass.id}
-                                            className={`p-4 flex items-center gap-4 cursor-pointer hover:bg-secondary/5 transition-colors ${selectedGroups.has(group.sourceClass.id) ? 'bg-primary/5' : ''
-                                                }`}
-                                            onClick={() => toggleGroup(group.sourceClass.id)}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedGroups.has(group.sourceClass.id)}
-                                                onChange={() => { }}
-                                                className="w-5 h-5 rounded border-secondary text-primary focus:ring-primary/50 cursor-pointer"
-                                            />
-                                            <div className="flex-1 grid grid-cols-4 gap-4 items-center">
-                                                <div>
-                                                    <p className="font-bold text-text-main dark:text-white">{group.sourceClass.name}</p>
-                                                    <p className="text-xs text-text-secondary">{group.students.length} siswa</p>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-text-secondary">
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-text-main dark:text-white">{group.targetClassName}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    {getActionBadge(group.action)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                {smpGroups.map(renderGroupRow)}
                             </div>
                         </Card>
                     )}
 
                     {/* SMA Section */}
-                    {classGroups.some(g => g.sourceClass.school_level === 'SMA') && (
+                    {smaGroups.length > 0 && (
                         <Card className="p-0 overflow-hidden">
                             <div className="bg-purple-500/10 px-6 py-3 border-b border-purple-500/20">
                                 <h3 className="font-bold text-purple-600 dark:text-purple-400">🎓 SMA</h3>
                             </div>
                             <div className="divide-y divide-secondary/10">
-                                {classGroups
-                                    .filter(g => g.sourceClass.school_level === 'SMA')
-                                    .map(group => (
-                                        <div
-                                            key={group.sourceClass.id}
-                                            className={`p-4 flex items-center gap-4 cursor-pointer hover:bg-secondary/5 transition-colors ${selectedGroups.has(group.sourceClass.id) ? 'bg-primary/5' : ''
-                                                }`}
-                                            onClick={() => toggleGroup(group.sourceClass.id)}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedGroups.has(group.sourceClass.id)}
-                                                onChange={() => { }}
-                                                className="w-5 h-5 rounded border-secondary text-primary focus:ring-primary/50 cursor-pointer"
-                                            />
-                                            <div className="flex-1 grid grid-cols-4 gap-4 items-center">
-                                                <div>
-                                                    <p className="font-bold text-text-main dark:text-white">{group.sourceClass.name}</p>
-                                                    <p className="text-xs text-text-secondary">{group.students.length} siswa</p>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-text-secondary">
-                                                    <ArrowRight className="w-4 h-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="font-medium text-text-main dark:text-white">{group.targetClassName}</p>
-                                                </div>
-                                                <div className="text-right">
-                                                    {getActionBadge(group.action)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                {smaGroups.map(renderGroupRow)}
                             </div>
+                        </Card>
+                    )}
+
+                    {filteredGroups.length === 0 && searchQuery && (
+                        <Card className="p-6">
+                            <EmptyState
+                                icon={<Search className="w-12 h-12 text-secondary" />}
+                                title="Tidak Ditemukan"
+                                description={`Tidak ada kelas yang cocok dengan "${searchQuery}"`}
+                            />
                         </Card>
                     )}
 
                     {/* Process Button */}
                     <div className="flex justify-end">
                         <Button
-                            onClick={handleProcess}
+                            onClick={handleProcessClick}
                             loading={processing}
-                            disabled={selectedGroups.size === 0}
+                            disabled={selectedGroups.size === 0 || processing}
                             icon={<CheckCircle className="w-5 h-5" />}
                             className="px-8"
                         >
-                            Proses Kenaikan Kelas ({totalSelectedStudents} siswa)
+                            {processing
+                                ? `Memproses ${processProgress.current}/${processProgress.total}...`
+                                : `Proses Kenaikan Kelas (${totalSelectedStudents} siswa)`
+                            }
                         </Button>
                     </div>
                 </>
             )}
+
+            {/* Confirmation Modal */}
+            <Modal
+                open={showConfirmModal}
+                onClose={() => setShowConfirmModal(false)}
+                title="⚠️ Konfirmasi Kenaikan Kelas"
+            >
+                <div className="space-y-4">
+                    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 rounded-xl">
+                        <div className="flex items-start gap-3">
+                            <ShieldAlert className="w-5 h-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="font-bold text-amber-700 dark:text-amber-300 text-sm">Perhatian!</p>
+                                <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                    Proses ini akan memindahkan siswa ke kelas/status baru.
+                                    Pastikan data sudah benar sebelum melanjutkan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-secondary/5 border border-secondary/10 p-3 rounded-xl text-center">
+                            <p className="text-2xl font-bold text-text-main dark:text-white">{confirmStats.classes}</p>
+                            <p className="text-xs text-text-secondary">Kelas</p>
+                        </div>
+                        <div className="bg-secondary/5 border border-secondary/10 p-3 rounded-xl text-center">
+                            <p className="text-2xl font-bold text-text-main dark:text-white">{confirmStats.total}</p>
+                            <p className="text-xs text-text-secondary">Total Siswa</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        {confirmStats.promote > 0 && (
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                                    <ArrowUpRight className="w-4 h-4" /> Naik Kelas
+                                </span>
+                                <span className="font-bold text-text-main dark:text-white">{confirmStats.promote} siswa</span>
+                            </div>
+                        )}
+                        {confirmStats.graduate > 0 && (
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                    <GraduationCap className="w-4 h-4" /> Lulus
+                                </span>
+                                <span className="font-bold text-text-main dark:text-white">{confirmStats.graduate} siswa</span>
+                            </div>
+                        )}
+                        {confirmStats.transition > 0 && (
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                                    <ArrowRight className="w-4 h-4" /> Transisi SMA
+                                </span>
+                                <span className="font-bold text-text-main dark:text-white">{confirmStats.transition} siswa</span>
+                            </div>
+                        )}
+                        {confirmStats.excluded > 0 && (
+                            <div className="flex items-center justify-between text-sm border-t border-secondary/10 pt-2">
+                                <span className="flex items-center gap-2 text-amber-500">
+                                    <UserX className="w-4 h-4" /> Dikecualikan (tinggal kelas)
+                                </span>
+                                <span className="font-bold text-amber-500">{confirmStats.excluded} siswa</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <Button
+                            variant="secondary"
+                            onClick={() => setShowConfirmModal(false)}
+                            className="flex-1"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={handleConfirmProcess}
+                            className="flex-1"
+                            icon={<CheckCircle className="w-4 h-4" />}
+                        >
+                            Ya, Proses Sekarang
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
 
             {/* Results Modal */}
             <Modal

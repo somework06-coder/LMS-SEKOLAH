@@ -48,6 +48,7 @@ export async function GET(request: NextRequest) {
 
         const examId = request.nextUrl.searchParams.get('exam_id')
         const studentId = request.nextUrl.searchParams.get('student_id')
+        const allYears = request.nextUrl.searchParams.get('all_years')
 
         // Lazy Sweep: Auto-close expired submissions if examId is provided (Teacher View)
         if (examId && user.role === 'GURU') {
@@ -120,6 +121,7 @@ export async function GET(request: NextRequest) {
                     title, 
                     duration_minutes,
                     teaching_assignment:teaching_assignments(
+                        academic_year_id,
                         subject:subjects(id, name),
                         class:classes(id, name)
                     )
@@ -132,6 +134,37 @@ export async function GET(request: NextRequest) {
         }
         if (studentId) {
             query = query.eq('student_id', studentId)
+        }
+
+        // Filter by active year when no specific exam is requested
+        if (!examId && allYears !== 'true') {
+            const { data: activeYear } = await supabase
+                .from('academic_years')
+                .select('id')
+                .eq('is_active', true)
+                .single()
+
+            if (activeYear) {
+                const { data: taIds } = await supabase
+                    .from('teaching_assignments')
+                    .select('id')
+                    .eq('academic_year_id', activeYear.id)
+
+                if (taIds && taIds.length > 0) {
+                    const { data: examIds } = await supabase
+                        .from('exams')
+                        .select('id')
+                        .in('teaching_assignment_id', taIds.map(t => t.id))
+
+                    if (examIds && examIds.length > 0) {
+                        query = query.in('exam_id', examIds.map(e => e.id))
+                    } else {
+                        return NextResponse.json([])
+                    }
+                } else {
+                    return NextResponse.json([])
+                }
+            }
         }
 
         const { data, error } = await query

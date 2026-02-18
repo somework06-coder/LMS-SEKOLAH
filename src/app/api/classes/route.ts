@@ -23,7 +23,12 @@ export async function GET(request: NextRequest) {
             .from('classes')
             .select(`
         *,
-        academic_year:academic_years(*)
+        academic_year:academic_years(*),
+        homeroom_teacher:teachers!homeroom_teacher_id(
+          id,
+          nip,
+          user:users(id, full_name, username)
+        )
       `)
 
         // Apply filter if specified

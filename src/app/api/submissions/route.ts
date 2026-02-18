@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
 
         const assignmentId = request.nextUrl.searchParams.get('assignment_id')
         const studentId = request.nextUrl.searchParams.get('student_id')
+        const allYears = request.nextUrl.searchParams.get('all_years')
 
         let query = supabase
             .from('student_submissions')
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
           title,
           type,
           teaching_assignment:teaching_assignments(
+            academic_year_id,
             subject:subjects(name)
           )
         ),
@@ -44,6 +46,38 @@ export async function GET(request: NextRequest) {
         }
         if (studentId) {
             query = query.eq('student_id', studentId)
+        }
+
+        // Filter by active year when no specific assignment is requested
+        if (!assignmentId && allYears !== 'true') {
+            const { data: activeYear } = await supabase
+                .from('academic_years')
+                .select('id')
+                .eq('is_active', true)
+                .single()
+
+            if (activeYear) {
+                const { data: taIds } = await supabase
+                    .from('teaching_assignments')
+                    .select('id')
+                    .eq('academic_year_id', activeYear.id)
+
+                if (taIds && taIds.length > 0) {
+                    // Get assignment IDs for active year's TAs
+                    const { data: assignmentIds } = await supabase
+                        .from('assignments')
+                        .select('id')
+                        .in('teaching_assignment_id', taIds.map(t => t.id))
+
+                    if (assignmentIds && assignmentIds.length > 0) {
+                        query = query.in('assignment_id', assignmentIds.map(a => a.id))
+                    } else {
+                        return NextResponse.json([])
+                    }
+                } else {
+                    return NextResponse.json([])
+                }
+            }
         }
 
         const { data, error } = await query

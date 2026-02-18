@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         }
 
         const teachingAssignmentId = request.nextUrl.searchParams.get('teaching_assignment_id')
+        const allYears = request.nextUrl.searchParams.get('all_years')
 
         let query = supabase
             .from('exams')
@@ -23,9 +24,11 @@ export async function GET(request: NextRequest) {
                 *,
                 teaching_assignment:teaching_assignments(
                     id,
+                    academic_year_id,
                     teacher:teachers(id, user:users(full_name)),
                     subject:subjects(name),
-                    class:classes(id, name, school_level, grade_level)
+                    class:classes(id, name, school_level, grade_level),
+                    academic_year:academic_years(id, name, is_active)
                 ),
                 exam_questions(id)
             `)
@@ -33,6 +36,26 @@ export async function GET(request: NextRequest) {
 
         if (teachingAssignmentId) {
             query = query.eq('teaching_assignment_id', teachingAssignmentId)
+        } else if (allYears !== 'true') {
+            // Filter by active year
+            const { data: activeYear } = await supabase
+                .from('academic_years')
+                .select('id')
+                .eq('is_active', true)
+                .single()
+
+            if (activeYear) {
+                const { data: taIds } = await supabase
+                    .from('teaching_assignments')
+                    .select('id')
+                    .eq('academic_year_id', activeYear.id)
+
+                if (taIds && taIds.length > 0) {
+                    query = query.in('teaching_assignment_id', taIds.map(t => t.id))
+                } else {
+                    return NextResponse.json([])
+                }
+            }
         }
 
         const { data, error } = await query

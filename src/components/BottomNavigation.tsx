@@ -4,44 +4,43 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-    Home, BookOpen, PenTool, Brain, BarChart3, Clock, Users, UserCheck,
-    School, Megaphone, LucideIcon, TrendingUp, BookMarked, Calendar,
-    ClipboardList, GraduationCap
-} from 'lucide-react'
+    Home, Document as DocumentIcon, Edit, Game, Graph, TimeCircle, User, Work,
+    Category, Bookmark, Chart, Ticket, Notification, Calendar
+} from 'react-iconly'
 
 interface NavItem {
-    icon: LucideIcon
+    icon: React.ElementType
     label: string
     path: string
 }
 
 const siswaNav: NavItem[] = [
     { icon: Home, label: 'Home', path: '/dashboard/siswa' },
-    { icon: BookOpen, label: 'Materi', path: '/dashboard/siswa/materi' },
-    { icon: PenTool, label: 'Tugas', path: '/dashboard/siswa/tugas' },
-    { icon: Brain, label: 'Kuis', path: '/dashboard/siswa/kuis' },
-    { icon: BarChart3, label: 'Nilai', path: '/dashboard/siswa/nilai' },
+    { icon: DocumentIcon, label: 'Materi', path: '/dashboard/siswa/materi' },
+    { icon: Edit, label: 'Tugas', path: '/dashboard/siswa/tugas' },
+    { icon: Game, label: 'Kuis', path: '/dashboard/siswa/kuis' },
+    { icon: Graph, label: 'Nilai', path: '/dashboard/siswa/nilai' },
 ]
 
 const guruNav: NavItem[] = [
     { icon: Home, label: 'Home', path: '/dashboard/guru' },
-    { icon: BookOpen, label: 'Materi', path: '/dashboard/guru/materi' },
-    { icon: PenTool, label: 'Tugas', path: '/dashboard/guru/tugas' },
-    { icon: Brain, label: 'Kuis', path: '/dashboard/guru/kuis' },
-    { icon: Clock, label: 'Ulangan', path: '/dashboard/guru/ulangan' },
+    { icon: DocumentIcon, label: 'Materi', path: '/dashboard/guru/materi' },
+    { icon: Edit, label: 'Tugas', path: '/dashboard/guru/tugas' },
+    { icon: Game, label: 'Kuis', path: '/dashboard/guru/kuis' },
+    { icon: TimeCircle, label: 'Ulangan', path: '/dashboard/guru/ulangan' },
 ]
 
 const adminNav: NavItem[] = [
     { icon: Home, label: 'Home', path: '/dashboard/admin' },
-    { icon: Users, label: 'Siswa', path: '/dashboard/admin/siswa' },
-    { icon: UserCheck, label: 'Guru', path: '/dashboard/admin/guru' },
-    { icon: School, label: 'Kelas', path: '/dashboard/admin/kelas' },
-    { icon: GraduationCap, label: 'Kenaikan', path: '/dashboard/admin/kenaikan-kelas' },
-    { icon: BookMarked, label: 'Mapel', path: '/dashboard/admin/mapel' },
+    { icon: User, label: 'Siswa', path: '/dashboard/admin/siswa' },
+    { icon: Work, label: 'Guru', path: '/dashboard/admin/guru' },
+    { icon: Category, label: 'Kelas', path: '/dashboard/admin/kelas' },
+    { icon: Graph, label: 'Kenaikan', path: '/dashboard/admin/kenaikan-kelas' },
+    { icon: Bookmark, label: 'Mapel', path: '/dashboard/admin/mapel' },
     { icon: Calendar, label: 'Tahun', path: '/dashboard/admin/tahun-ajaran' },
-    { icon: BarChart3, label: 'Analitik', path: '/dashboard/admin/analitik' },
-    { icon: ClipboardList, label: 'Penugasan', path: '/dashboard/admin/penugasan' },
-    { icon: Megaphone, label: 'Info', path: '/dashboard/admin/pengumuman' },
+    { icon: Chart, label: 'Analitik', path: '/dashboard/admin/analitik' },
+    { icon: Ticket, label: 'Penugasan', path: '/dashboard/admin/penugasan' },
+    { icon: Notification, label: 'Info', path: '/dashboard/admin/pengumuman' },
 ]
 
 export default function BottomNavigation() {
@@ -104,8 +103,10 @@ export default function BottomNavigation() {
                                     : 'text-text-secondary group-hover:text-text-main dark:group-hover:text-white group-hover:scale-105 group-hover:-translate-y-0.5'
                                     }`}>
                                     <IconComponent
-                                        className={`transition-all duration-300 ${active ? 'w-5 h-5' : 'w-5 h-5 group-hover:w-5.5 group-hover:h-5.5'}`}
-                                        strokeWidth={active ? 2.5 : 2}
+                                        set={active ? 'bold' : 'light'}
+                                        primaryColor={active ? 'white' : 'currentColor'}
+                                        size={active ? 'medium' : 'small'}
+                                        style={{ transition: 'all 0.3s ease' }}
                                     />
                                 </div>
 

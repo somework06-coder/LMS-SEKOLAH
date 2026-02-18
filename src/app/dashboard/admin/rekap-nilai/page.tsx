@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import { PageHeader, Button, EmptyState } from '@/components/ui'
-import { BarChart3 } from 'lucide-react'
+import { Graph as BarChart3, Download } from 'react-iconly'
+import { Loader2 } from 'lucide-react'
 
 interface AcademicYear {
     id: string
@@ -97,7 +98,7 @@ export default function RekapNilaiPage() {
             const studentsData = await studentsRes.json()
             const students: Student[] = Array.isArray(studentsData) ? studentsData : []
 
-            // Fetch all grades for the selected academic year
+            // Fetch all grades
             const gradesRes = await fetch(`/api/grades?academic_year_id=${selectedYear}`)
             const gradesData = await gradesRes.json()
             const allGrades: Grade[] = Array.isArray(gradesData) ? gradesData : []
@@ -225,18 +226,18 @@ export default function RekapNilaiPage() {
                 title="Rekap Nilai"
                 subtitle="Rekap nilai siswa per kelas"
                 backHref="/dashboard/admin"
-                icon={<BarChart3 className="w-8 h-8 text-primary" />}
+                icon={<BarChart3 set="bold" primaryColor="currentColor" size={32} />}
             />
 
             {/* Filters */}
-            <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl p-6 shadow-sm">
+            <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl p-6 shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Tahun Ajaran</label>
                         <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         >
                             <option value="">Pilih Tahun Ajaran</option>
                             {academicYears.map(y => (
@@ -251,7 +252,7 @@ export default function RekapNilaiPage() {
                         <select
                             value={selectedClass}
                             onChange={(e) => setSelectedClass(e.target.value)}
-                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             disabled={!selectedYear}
                         >
                             <option value="">Pilih Kelas</option>
@@ -266,9 +267,7 @@ export default function RekapNilaiPage() {
                             disabled={studentGrades.length === 0}
                             className="w-full"
                             icon={
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                </svg>
+                                <div className="text-white"><Download set="bold" primaryColor="currentColor" size={20} /></div>
                             }
                         >
                             Download Excel
@@ -280,27 +279,27 @@ export default function RekapNilaiPage() {
             {/* Results */}
             {loading ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-primary"><BarChart3 className="w-8 h-8" /></div>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
             ) : !selectedYear || !selectedClass ? (
                 <EmptyState
-                    icon={<BarChart3 className="w-12 h-12 text-secondary" />}
+                    icon={<BarChart3 set="bold" primaryColor="currentColor" size={48} />}
                     title="Pilih Filter"
                     description="Pilih tahun ajaran dan kelas untuk melihat rekap nilai"
                 />
             ) : loadingData ? (
                 <div className="flex justify-center py-12">
-                    <div className="animate-spin text-primary"><BarChart3 className="w-8 h-8" /></div>
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
             ) : studentGrades.length === 0 ? (
                 <EmptyState
-                    icon={<BarChart3 className="w-12 h-12 text-secondary" />}
+                    icon={<BarChart3 set="bold" primaryColor="currentColor" size={48} />}
                     title="Belum Ada Data"
                     description="Belum ada data nilai untuk kelas ini"
                 />
             ) : (
-                <div className="bg-white dark:bg-surface-dark border border-secondary/20 rounded-xl overflow-hidden shadow-sm">
-                    <div className="p-4 border-b border-secondary/10 flex items-center justify-between">
+                <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <div>
                             <h3 className="font-bold text-text-main dark:text-white">
                                 Rekap Nilai: {classes.find(c => c.id === selectedClass)?.name}
@@ -310,21 +309,21 @@ export default function RekapNilaiPage() {
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[800px]">
-                            <thead className="bg-secondary/10 dark:bg-surface-dark">
+                            <thead className="bg-slate-50 dark:bg-slate-800">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white sticky left-0 bg-secondary/10 dark:bg-surface-dark">No</th>
-                                    <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white sticky left-12 bg-secondary/10 dark:bg-surface-dark">Nama Siswa</th>
+                                    <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white sticky left-0 bg-slate-50 dark:bg-slate-800 z-10">No</th>
+                                    <th className="px-4 py-3 text-left text-sm font-bold text-text-main dark:text-white sticky left-12 bg-slate-50 dark:bg-slate-800 z-10">Nama Siswa</th>
                                     {subjects.map(s => (
                                         <th key={s.id} className="px-4 py-3 text-center text-sm font-bold text-text-main dark:text-white whitespace-nowrap">
                                             {s.name}
                                         </th>
                                     ))}
-                                    <th className="px-4 py-3 text-center text-sm font-bold text-primary-dark dark:text-primary">Rata-rata</th>
+                                    <th className="px-4 py-3 text-center text-sm font-bold text-emerald-600 dark:text-emerald-400">Rata-rata</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-secondary/10">
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                                 {studentGrades.map((sg, idx) => (
-                                    <tr key={sg.student.id} className="hover:bg-secondary/5">
+                                    <tr key={sg.student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                         <td className="px-4 py-3 text-text-secondary dark:text-zinc-400 sticky left-0 bg-white dark:bg-surface-dark">{idx + 1}</td>
                                         <td className="px-4 py-3 text-text-main dark:text-white sticky left-12 bg-white dark:bg-surface-dark">
                                             <div>
@@ -349,11 +348,11 @@ export default function RekapNilaiPage() {
                                         <td className="px-4 py-3 text-center">
                                             <span className={`font-bold ${sg.average !== null
                                                 ? sg.average >= 75
-                                                    ? 'text-green-700 dark:text-green-400'
+                                                    ? 'text-emerald-600 dark:text-emerald-400'
                                                     : sg.average >= 60
-                                                        ? 'text-amber-700 dark:text-amber-400'
-                                                        : 'text-red-700 dark:text-red-400'
-                                                : 'text-text-secondary dark:text-zinc-500'
+                                                        ? 'text-amber-600 dark:text-amber-400'
+                                                        : 'text-rose-600 dark:text-rose-400'
+                                                : 'text-slate-400 dark:text-slate-500'
                                                 }`}>
                                                 {formatScore(sg.average)}
                                             </span>

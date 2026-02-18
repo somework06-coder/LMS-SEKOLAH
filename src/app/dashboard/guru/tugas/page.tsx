@@ -40,7 +40,6 @@ export default function TugasPage() {
 
     const fetchData = async () => {
         try {
-            // Use my-teaching-assignments (already filtered by teacher + active year)
             const [taRes, assignmentsRes] = await Promise.all([
                 fetch('/api/my-teaching-assignments'),
                 fetch('/api/assignments')
@@ -50,14 +49,12 @@ export default function TugasPage() {
                 assignmentsRes.json()
             ])
 
-            const myTA = Array.isArray(taData) ? taData : []
+            const taArray = Array.isArray(taData) ? taData : []
             const assignmentsArray = Array.isArray(assignmentsData) ? assignmentsData : []
 
-            const myAssignments = assignmentsArray.filter((a: Assignment) =>
-                myTA.some((ta: TeachingAssignment) => ta.id === a.teaching_assignment?.id)
-            ).sort((a: Assignment, b: Assignment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            const myAssignments = assignmentsArray.sort((a: Assignment, b: Assignment) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-            setTeachingAssignments(myTA)
+            setTeachingAssignments(taArray)
             setAssignments(myAssignments)
         } catch (error) {
             console.error('Error:', error)

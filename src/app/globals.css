@@ -10,13 +10,13 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --color-primary: #6B8E6B;
-  --color-primary-dark: #4A634A;
-  --color-secondary: #A8BC9F;
-  --color-background-light: #D4E0D2;
+  --color-primary: #10B981;
+  --color-primary-dark: #059669;
+  --color-secondary: #64748B;
+  --color-background-light: #F1F5F9;
   --color-surface-light: #ffffff;
-  --color-text-main: #2D4A2D;
-  --color-text-secondary: #5C6B5C;
+  --color-text-main: #1E293B;
+  --color-text-secondary: #64748B;
 
   --font-display: "Lexend", sans-serif;
   --font-sans: "Lexend", sans-serif;
@@ -26,8 +26,8 @@
   --radius-2xl: 2.5rem;
   --radius-full: 9999px;
 
-  --shadow-soft: 0 8px 24px -6px rgba(107, 142, 107, 0.12);
-  --shadow-card: 0 4px 12px rgba(27, 46, 27, 0.05);
+  --shadow-soft: 0 8px 24px -6px rgba(100, 116, 139, 0.12);
+  --shadow-card: 0 4px 12px rgba(100, 116, 139, 0.05);
 }
 
 /* Utilities for hiding scrollbar */
@@ -50,8 +50,8 @@
 
 /* Base body styles - always light mode */
 body {
-  background-color: #D4E0D2 !important;
-  color: #1B2E1B !important;
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
   font-family: var(--font-sans);
 }
 

@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
-import { Megaphone, Plus, Pencil, Trash2, Calendar, Clock, Loader2 } from 'lucide-react'
+import { Voice as Megaphone, Plus, Edit as Pencil, Delete as Trash2, Calendar, TimeCircle as Clock } from 'react-iconly'
+import { Loader2 } from 'lucide-react'
 
 interface Class {
     id: string
@@ -184,7 +185,7 @@ export default function AdminPengumumanPage() {
                     type="text"
                     value={form.title}
                     onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     placeholder="Judul pengumuman..."
                 />
             </div>
@@ -193,7 +194,7 @@ export default function AdminPengumumanPage() {
                 <textarea
                     value={form.content}
                     onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
-                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary min-h-[120px]"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 min-h-[120px]"
                     placeholder="Tulis isi pengumuman..."
                 />
             </div>
@@ -204,8 +205,8 @@ export default function AdminPengumumanPage() {
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, is_global: true, class_ids: [] }))}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${form.is_global
-                                ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
+                            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
                             }`}
                     >
                         🌐 Semua Kelas
@@ -214,8 +215,8 @@ export default function AdminPengumumanPage() {
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, is_global: false }))}
                         className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${!form.is_global
-                                ? 'bg-primary text-white shadow-lg shadow-primary/30'
-                                : 'bg-secondary/10 text-text-secondary hover:bg-secondary/20'
+                            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/30'
+                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400'
                             }`}
                     >
                         🎯 Pilih Kelas
@@ -232,8 +233,8 @@ export default function AdminPengumumanPage() {
                                     key={cls.id}
                                     onClick={() => toggleClassSelection(cls.id)}
                                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${form.class_ids.includes(cls.id)
-                                            ? 'bg-primary text-white'
-                                            : 'bg-white dark:bg-surface-dark border border-secondary/20 text-text-secondary hover:border-primary hover:text-primary'
+                                        ? 'bg-emerald-600 text-white'
+                                        : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-emerald-500 hover:text-emerald-500'
                                         }`}
                                 >
                                     {cls.name}
@@ -249,7 +250,7 @@ export default function AdminPengumumanPage() {
                     type="datetime-local"
                     value={form.expires_at}
                     onChange={(e) => setForm(prev => ({ ...prev, expires_at: e.target.value }))}
-                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <p className="text-xs text-text-secondary mt-1">Kosongkan jika tidak ada batas waktu</p>
             </div>
@@ -261,10 +262,10 @@ export default function AdminPengumumanPage() {
             <PageHeader
                 title="Pengumuman"
                 subtitle="Kelola pengumuman sekolah"
-                icon={<Megaphone className="w-6 h-6 text-orange-500" />}
+                icon={<div className="text-amber-500"><Megaphone set="bold" primaryColor="currentColor" size={24} /></div>}
                 backHref="/dashboard/admin"
                 action={
-                    <Button onClick={() => setShowCreate(true)} icon={<Plus className="w-5 h-5" />}>
+                    <Button onClick={() => setShowCreate(true)} icon={<Plus set="bold" primaryColor="currentColor" size={20} />}>
                         Buat Pengumuman
                     </Button>
                 }
@@ -276,7 +277,7 @@ export default function AdminPengumumanPage() {
                 </div>
             ) : announcements.length === 0 ? (
                 <EmptyState
-                    icon={<Megaphone className="w-12 h-12 text-orange-200" />}
+                    icon={<div className="text-orange-200"><Megaphone set="bold" primaryColor="currentColor" size={48} /></div>}
                     title="Belum Ada Pengumuman"
                     description="Buat pengumuman pertama untuk siswa Anda."
                     action={<Button onClick={() => setShowCreate(true)}>Buat Pengumuman</Button>}
@@ -290,16 +291,16 @@ export default function AdminPengumumanPage() {
                                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                                         <h3 className="font-bold text-text-main dark:text-white text-lg">{announcement.title}</h3>
                                         {announcement.is_global ? (
-                                            <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 text-xs rounded-full font-medium">
+                                            <span className="px-2 py-0.5 bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-400 text-xs rounded-full font-medium">
                                                 🌐 Semua Kelas
                                             </span>
                                         ) : (
-                                            <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs rounded-full font-medium">
+                                            <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 text-xs rounded-full font-medium">
                                                 🎯 {announcement.class_ids?.length || 0} Kelas
                                             </span>
                                         )}
                                         {!announcement.is_active && (
-                                            <span className="px-2 py-0.5 bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-xs rounded-full font-medium">
+                                            <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 text-xs rounded-full font-medium">
                                                 Nonaktif
                                             </span>
                                         )}
@@ -309,7 +310,7 @@ export default function AdminPengumumanPage() {
                                     </p>
                                     <div className="flex items-center gap-4 text-xs text-text-secondary">
                                         <div className="flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
+                                            <Calendar set="bold" primaryColor="currentColor" size={12} />
                                             <span>{formatDate(announcement.published_at)}</span>
                                         </div>
                                         {!announcement.is_global && (
@@ -317,7 +318,7 @@ export default function AdminPengumumanPage() {
                                         )}
                                         {announcement.expires_at && (
                                             <div className="flex items-center gap-1 text-red-400">
-                                                <Clock className="w-3 h-3" />
+                                                <Clock set="bold" primaryColor="currentColor" size={12} />
                                                 <span>Expired: {formatDate(announcement.expires_at)}</span>
                                             </div>
                                         )}
@@ -336,7 +337,7 @@ export default function AdminPengumumanPage() {
                                         size="sm"
                                         onClick={() => handleEdit(announcement)}
                                     >
-                                        <Pencil className="w-4 h-4" />
+                                        <Pencil set="bold" primaryColor="currentColor" size={16} />
                                     </Button>
                                     <Button
                                         variant="secondary"
@@ -344,7 +345,7 @@ export default function AdminPengumumanPage() {
                                         onClick={() => handleDelete(announcement.id)}
                                         className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 set="bold" primaryColor="currentColor" size={16} />
                                     </Button>
                                 </div>
                             </div>

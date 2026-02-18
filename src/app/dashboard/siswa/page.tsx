@@ -36,11 +36,8 @@ export default function SiswaDashboard() {
     } | null>(null)
     const [showResumeModal, setShowResumeModal] = useState(false)
 
-    // Promotion congratulations popup
-    const [promotionInfo, setPromotionInfo] = useState<{
-        fromClass: string
-        toClass: string
-    } | null>(null)
+    // Promotion Popup State
+    const [promotionInfo, setPromotionInfo] = useState<{ fromClass: string; toClass: string } | null>(null)
     const [showPromotionPopup, setShowPromotionPopup] = useState(false)
 
     useEffect(() => {
@@ -58,25 +55,22 @@ export default function SiswaDashboard() {
                 const myStudent = students.find((s: { user: { id: string } }) => s.user.id === user?.id)
                 setStudent(myStudent || null)
 
-                // Check for promotion (naik kelas)
+                // Check for promotion status
                 if (myStudent) {
                     try {
                         const enrollRes = await fetch(`/api/student-enrollments?student_id=${myStudent.id}`)
                         if (enrollRes.ok) {
                             const enrollments = await enrollRes.json()
-                            if (Array.isArray(enrollments)) {
-                                const promotedEnrollment = enrollments.find(
-                                    (e: any) => e.status === 'PROMOTED'
-                                )
-                                if (promotedEnrollment) {
-                                    const localKey = `promotion_seen_${myStudent.id}_${promotedEnrollment.id}`
-                                    if (!localStorage.getItem(localKey)) {
-                                        const fromClassName = promotedEnrollment.class?.name || 'kelas sebelumnya'
-                                        const toClassName = myStudent.class?.name || 'kelas baru'
-                                        setPromotionInfo({ fromClass: fromClassName, toClass: toClassName })
-                                        setShowPromotionPopup(true)
-                                        localStorage.setItem(localKey, 'true')
-                                    }
+                            const promotedEnrollment = enrollments.find((e: { status: string }) => e.status === 'PROMOTED')
+                            if (promotedEnrollment) {
+                                const storageKey = `promotion_seen_${myStudent.id}_${promotedEnrollment.id}`
+                                if (!localStorage.getItem(storageKey)) {
+                                    setPromotionInfo({
+                                        fromClass: promotedEnrollment.class?.name || 'Kelas Sebelumnya',
+                                        toClass: myStudent.class?.name || 'Kelas Baru'
+                                    })
+                                    setShowPromotionPopup(true)
+                                    localStorage.setItem(storageKey, 'true')
                                 }
                             }
                         }
@@ -385,91 +379,52 @@ export default function SiswaDashboard() {
                 </div>
             )}
 
-            {/* Promotion Congratulations Popup */}
+            {/* Promotion Celebration Popup */}
             {showPromotionPopup && promotionInfo && (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4 animate-in fade-in duration-300">
-                    {/* Confetti particles */}
-                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                        {Array.from({ length: 30 }).map((_, i) => (
-                            <div
-                                key={i}
-                                className="absolute w-3 h-3 rounded-full"
-                                style={{
-                                    left: `${Math.random() * 100}%`,
-                                    top: `-5%`,
-                                    backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96E6A1', '#DDA0DD', '#F0E68C', '#FF69B4'][i % 8],
-                                    animation: `confetti-fall ${2 + Math.random() * 3}s linear ${Math.random() * 2}s infinite`,
-                                    transform: `rotate(${Math.random() * 360}deg)`,
-                                    width: `${6 + Math.random() * 10}px`,
-                                    height: `${6 + Math.random() * 10}px`,
-                                    borderRadius: i % 3 === 0 ? '50%' : i % 3 === 1 ? '2px' : '0',
-                                }}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="bg-surface-light dark:bg-surface-dark border-2 border-yellow-400/50 rounded-3xl p-8 w-full max-w-md text-center shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-500">
-                        {/* Glow effect */}
-                        <div className="absolute -top-32 -right-32 w-64 h-64 bg-yellow-400/20 rounded-full blur-3xl" />
-                        <div className="absolute -bottom-32 -left-32 w-64 h-64 bg-green-400/20 rounded-full blur-3xl" />
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-surface-dark rounded-3xl shadow-2xl max-w-sm w-full p-8 text-center relative overflow-hidden">
+                        {/* Confetti decoration */}
+                        <div className="absolute inset-0 pointer-events-none">
+                            {[...Array(20)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="absolute w-2 h-2 rounded-full animate-bounce"
+                                    style={{
+                                        left: `${Math.random() * 100}%`,
+                                        top: `${Math.random() * 100}%`,
+                                        backgroundColor: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'][i % 6],
+                                        animationDelay: `${Math.random() * 2}s`,
+                                        animationDuration: `${1 + Math.random()}s`
+                                    }}
+                                />
+                            ))}
+                        </div>
 
                         <div className="relative">
-                            {/* Trophy / Cap icon */}
-                            <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-amber-500/30 ring-4 ring-yellow-200 dark:ring-yellow-900/50">
-                                <GraduationCap className="w-12 h-12 text-white" />
+                            <div className="flex justify-center gap-3 mb-4">
+                                <PartyPopper className="w-10 h-10 text-yellow-500 animate-bounce" />
+                                <GraduationCap className="w-12 h-12 text-primary" />
+                                <PartyPopper className="w-10 h-10 text-yellow-500 animate-bounce" style={{ animationDelay: '0.5s' }} />
                             </div>
 
-                            {/* Big heading */}
-                            <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500 mb-2">
-                                🎉 SELAMAT! 🎉
+                            <h2 className="text-2xl font-bold text-text-main dark:text-white mb-2">
+                                🎉 Selamat Naik Kelas!
                             </h2>
-                            <h3 className="text-xl font-bold text-text-main dark:text-white mb-4">
-                                Kamu Naik Kelas!
-                            </h3>
-
-                            {/* Class transition */}
-                            <div className="bg-gradient-to-r from-amber-50 to-green-50 dark:from-amber-900/20 dark:to-green-900/20 rounded-2xl p-5 my-6 border border-amber-200/50 dark:border-amber-500/20">
-                                <div className="flex items-center justify-center gap-4">
-                                    <div className="text-center">
-                                        <p className="text-xs text-text-secondary dark:text-zinc-400 mb-1">Dari</p>
-                                        <p className="text-lg font-bold text-amber-600 dark:text-amber-400">{promotionInfo.fromClass}</p>
-                                    </div>
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-green-500/10">
-                                        <span className="text-2xl">→</span>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="text-xs text-text-secondary dark:text-zinc-400 mb-1">Ke</p>
-                                        <p className="text-lg font-bold text-green-600 dark:text-green-400">{promotionInfo.toClass}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <p className="text-sm text-text-secondary dark:text-zinc-400 mb-6">
-                                Terus semangat belajar di kelas baru ya! 💪📚
+                            <p className="text-text-secondary dark:text-zinc-400 mb-4">
+                                Kamu berhasil naik dari <strong>{promotionInfo.fromClass}</strong> ke <strong>{promotionInfo.toClass}</strong>!
+                            </p>
+                            <p className="text-sm text-text-secondary dark:text-zinc-500 mb-6">
+                                Terus semangat belajar ya! 💪
                             </p>
 
                             <button
                                 onClick={() => setShowPromotionPopup(false)}
-                                className="w-full py-3.5 bg-gradient-to-r from-yellow-500 to-amber-500 text-white rounded-xl font-bold shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] transition-all text-lg"
+                                className="w-full py-3.5 bg-gradient-to-r from-primary to-emerald-500 text-white rounded-xl font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all"
                             >
-                                🚀 Ayo Mulai Belajar!
+                                Terima Kasih! 🚀
                             </button>
                         </div>
                     </div>
-
-                    {/* Confetti CSS animation */}
-                    <style jsx>{`
-                        @keyframes confetti-fall {
-                            0% {
-                                transform: translateY(-10vh) rotate(0deg);
-                                opacity: 1;
-                            }
-                            100% {
-                                transform: translateY(110vh) rotate(720deg);
-                                opacity: 0;
-                            }
-                        }
-                    `}</style>
                 </div>
             )}
         </div>

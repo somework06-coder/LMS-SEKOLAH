@@ -10,15 +10,15 @@ const config: Config = {
     theme: {
         extend: {
             colors: {
-                "primary": "#6B8E6B", // Muted Sage Green
-                "primary-dark": "#4A634A", // Earthy Deep Green
-                "secondary": "#A8BC9F", // Softer Sage
-                "background-light": "#E5EBE0", // Soft sage background with good card contrast
-                "background-dark": "#1A1F1A", // Dark forest background
+                "primary": "#10B981", // Mint Green
+                "primary-dark": "#059669", // Dark Mint
+                "secondary": "#64748B", // Slate
+                "background-light": "#F1F5F9", // Light Slate Background
+                "background-dark": "#0F172A", // Dark Slate
                 "surface-light": "#ffffff",
-                "surface-dark": "#242B24",
-                "text-main": "#1B2E1B", // Dark Forest Green
-                "text-secondary": "#5C6B5C", // Deep Warm Grey-Green
+                "surface-dark": "#1E293B", // Dark Slate Surface
+                "text-main": "#0F172A", // Dark Slate Text
+                "text-secondary": "#64748B", // Slate Grey Text
             },
             fontFamily: {
                 "display": ["Lexend", "sans-serif"],
@@ -32,8 +32,8 @@ const config: Config = {
                 "full": "9999px"
             },
             boxShadow: {
-                "soft": "0 8px 24px -6px rgba(107, 142, 107, 0.12)",
-                "card": "0 4px 12px rgba(27, 46, 27, 0.05)",
+                "soft": "0 8px 24px -6px rgba(100, 116, 139, 0.12)",
+                "card": "0 4px 12px rgba(100, 116, 139, 0.05)",
             },
             backgroundImage: {
                 "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

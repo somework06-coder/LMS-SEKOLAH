@@ -5,10 +5,11 @@ import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
 import { AssignmentWizard } from '@/components/AssignmentWizard'
 import {
-    BookOpen, UserPlus, Loader2, User, Trash2, Edit,
-    AlertCircle, ChevronDown, ChevronUp, School, ChevronRight, X,
-    HeartHandshake, Save, Check
-} from 'lucide-react'
+    Document as BookOpen, AddUser as UserPlus, User, Delete as Trash2, Edit,
+    InfoCircle as AlertCircle, ArrowDown as ChevronDown, ArrowUp as ChevronUp,
+    Category as School, ArrowRight as ChevronRight, CloseSquare as X
+} from 'react-iconly'
+import { Loader2 } from 'lucide-react'
 import { AcademicYear, Class, Subject } from '@/lib/types'
 
 interface Teacher {
@@ -55,12 +56,6 @@ export default function PenugasanPage() {
     const [expandedTeachers, setExpandedTeachers] = useState<Set<string>>(new Set())
     const [deleting, setDeleting] = useState<string | null>(null)
     const [showUnassignedModal, setShowUnassignedModal] = useState(false)
-    const [activeTab, setActiveTab] = useState<'mengajar' | 'wali'>('mengajar')
-    const [waliKelasMap, setWaliKelasMap] = useState<Record<string, string>>({})
-    const [savingWali, setSavingWali] = useState<string | null>(null)
-    const [editingWali, setEditingWali] = useState<Set<string>>(new Set())
-    // Track the "saved" state per class (what the DB actually has)
-    const [savedWaliMap, setSavedWaliMap] = useState<Record<string, string>>({})
 
     const fetchData = async () => {
         try {
@@ -109,87 +104,6 @@ export default function PenugasanPage() {
     useEffect(() => {
         if (selectedYearId) fetchAssignments()
     }, [selectedYearId])
-
-    // Initialize wali kelas map when classes load
-    useEffect(() => {
-        const map: Record<string, string> = {}
-        const saved: Record<string, string> = {}
-        classes.forEach((cls: any) => {
-            if (cls.homeroom_teacher?.id) {
-                map[cls.id] = cls.homeroom_teacher.id
-                saved[cls.id] = cls.homeroom_teacher.id
-            }
-        })
-        setWaliKelasMap(map)
-        setSavedWaliMap(saved)
-        // Classes that already have a wali assigned start in "locked" (non-editing) mode
-        setEditingWali(new Set())
-    }, [classes])
-
-    const handleSaveWali = async (classId: string) => {
-        setSavingWali(classId)
-        try {
-            const teacherId = waliKelasMap[classId] || null
-            const cls = classes.find(c => c.id === classId)
-            if (!cls) return
-
-            await fetch(`/api/classes/${classId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: cls.name,
-                    academic_year_id: cls.academic_year_id,
-                    grade_level: cls.grade_level,
-                    school_level: cls.school_level,
-                    homeroom_teacher_id: teacherId
-                })
-            })
-            // Update saved state to reflect the new DB truth
-            setSavedWaliMap(prev => {
-                const next = { ...prev }
-                if (teacherId) {
-                    next[classId] = teacherId
-                } else {
-                    delete next[classId]
-                }
-                return next
-            })
-            // Exit editing mode for this class
-            setEditingWali(prev => {
-                const next = new Set(prev)
-                next.delete(classId)
-                return next
-            })
-        } catch (error) {
-            console.error('Error saving wali kelas:', error)
-        } finally {
-            setSavingWali(null)
-        }
-    }
-
-    const handleCancelEditWali = (classId: string) => {
-        // Revert to saved value
-        setWaliKelasMap(prev => ({
-            ...prev,
-            [classId]: savedWaliMap[classId] || ''
-        }))
-        setEditingWali(prev => {
-            const next = new Set(prev)
-            next.delete(classId)
-            return next
-        })
-    }
-
-    // Get teachers already assigned as wali in OTHER classes
-    const getAssignedTeacherIds = (currentClassId: string): Set<string> => {
-        const assigned = new Set<string>()
-        Object.entries(waliKelasMap).forEach(([classId, teacherId]) => {
-            if (classId !== currentClassId && teacherId) {
-                assigned.add(teacherId)
-            }
-        })
-        return assigned
-    }
 
     // Calculate stats
     const totalSlots = classes.length * subjects.length
@@ -296,517 +210,301 @@ export default function PenugasanPage() {
         setShowWizard(true)
     }
 
-    // Filter classes for active year
-    const filteredClasses = classes.filter((c: any) =>
-        !selectedYearId || c.academic_year_id === selectedYearId
-    )
-
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Penugasan"
-                subtitle="Assign guru ke kelas, mata pelajaran, dan wali kelas"
+                title="Penugasan Mengajar"
+                subtitle="Assign guru ke kelas dan mata pelajaran"
                 backHref="/dashboard/admin"
-                icon={<BookOpen className="w-6 h-6 text-teal-500" />}
+                icon={<div className="text-primary"><BookOpen set="bold" primaryColor="currentColor" size={24} /></div>}
                 action={
-                    activeTab === 'mengajar' ? (
-                        <Button onClick={() => openAddNew()} icon={<UserPlus className="w-4 h-4" />}>
-                            Tambah Penugasan
-                        </Button>
-                    ) : undefined
+                    <Button onClick={() => openAddNew()} icon={<div className="text-white"><UserPlus set="bold" primaryColor="currentColor" size={16} /></div>}>
+                        Tambah Penugasan
+                    </Button>
                 }
             />
 
-            {/* Tab Navigation */}
-            <div className="flex gap-2 bg-secondary/5 dark:bg-white/5 rounded-2xl p-1.5">
+            {/* Year Filter & Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Year Selector */}
+                <Card className="p-4">
+                    <label className="block text-sm font-bold text-text-main dark:text-white mb-2">
+                        Tahun Ajaran
+                    </label>
+                    <div className="relative">
+                        <select
+                            value={selectedYearId}
+                            onChange={(e) => setSelectedYearId(e.target.value)}
+                            className="w-full px-4 py-2.5 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                        >
+                            <option value="">Pilih Tahun</option>
+                            {academicYears.map((y) => (
+                                <option key={y.id} value={y.id}>
+                                    {y.name} {y.is_active && '(Aktif)'}
+                                </option>
+                            ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                    </div>
+                </Card>
+
+                {/* Stats */}
+                <Card className="p-4 bg-white dark:bg-surface-dark border border-indigo-200 dark:border-indigo-900/50">
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Total Guru</div>
+                    <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{teacherGroups.length}</div>
+                </Card>
+
+                <Card className="p-4 bg-white dark:bg-surface-dark border border-emerald-200 dark:border-emerald-900/50">
+                    <div className="text-sm text-slate-500 dark:text-slate-400">Penugasan</div>
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{assignedCount}</div>
+                </Card>
+
+                {/* Clickable Card - Unassigned Slots */}
                 <button
-                    onClick={() => setActiveTab('mengajar')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'mengajar'
-                        ? 'bg-white dark:bg-surface-dark text-primary shadow-md'
-                        : 'text-text-secondary hover:text-text-main dark:hover:text-white'
-                        }`}
+                    onClick={() => setShowUnassignedModal(true)}
+                    disabled={unassignedSlots.length === 0}
+                    className="text-left p-4 bg-white dark:bg-surface-dark rounded-2xl border border-rose-200 dark:border-rose-900/50 hover:shadow-lg transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <BookOpen className="w-4 h-4" />
-                    Penugasan Mengajar
-                </button>
-                <button
-                    onClick={() => setActiveTab('wali')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'wali'
-                        ? 'bg-white dark:bg-surface-dark text-primary shadow-md'
-                        : 'text-text-secondary hover:text-text-main dark:hover:text-white'
-                        }`}
-                >
-                    <HeartHandshake className="w-4 h-4" />
-                    Wali Kelas
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <div className="text-sm text-slate-500 dark:text-slate-400">Kelas Belum Ada Guru</div>
+                            <div className="text-2xl font-bold text-rose-600 dark:text-rose-400">{unassignedSlots.length}</div>
+                        </div>
+                        <div className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-900/20 flex items-center justify-center group-hover:bg-rose-100 dark:group-hover:bg-rose-900/40 transition-colors text-rose-500">
+                            <ChevronRight set="bold" primaryColor="currentColor" size={20} />
+                        </div>
+                    </div>
+                    {unassignedSlots.length > 0 && (
+                        <div className="text-xs text-rose-500/70 mt-1">Klik untuk lihat detail →</div>
+                    )}
                 </button>
             </div>
 
-            {activeTab === 'mengajar' && (<>
-                {/* Year Filter & Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {/* Year Selector */}
-                    <Card className="p-4">
-                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">
-                            Tahun Ajaran
-                        </label>
-                        <div className="relative">
-                            <select
-                                value={selectedYearId}
-                                onChange={(e) => setSelectedYearId(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
-                            >
-                                <option value="">Pilih Tahun</option>
-                                {academicYears.map((y) => (
-                                    <option key={y.id} value={y.id}>
-                                        {y.name} {y.is_active && '(Aktif)'}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
-                        </div>
-                    </Card>
-
-                    {/* Stats */}
-                    <Card className="p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5">
-                        <div className="text-sm text-text-secondary dark:text-zinc-400">Total Guru</div>
-                        <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{teacherGroups.length}</div>
-                    </Card>
-
-                    <Card className="p-4 bg-gradient-to-br from-green-500/10 to-green-600/5">
-                        <div className="text-sm text-text-secondary dark:text-zinc-400">Penugasan</div>
-                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">{assignedCount}</div>
-                    </Card>
-
-                    {/* Clickable Card - Unassigned Slots */}
-                    <button
-                        onClick={() => setShowUnassignedModal(true)}
-                        disabled={unassignedSlots.length === 0}
-                        className="text-left p-4 bg-gradient-to-br from-red-500/10 to-red-600/5 rounded-2xl border border-red-500/20 hover:border-red-500/40 hover:shadow-lg hover:shadow-red-500/10 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <div className="flex items-center justify-between">
+            {/* Unassigned Slots Modal */}
+            {showUnassignedModal && (
+                <div className="fixed inset-0 bg-background-dark/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white dark:bg-surface-dark border border-secondary/20 dark:border-white/5 rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
+                        <div className="flex items-center justify-between mb-4">
                             <div>
-                                <div className="text-sm text-text-secondary dark:text-zinc-400">Kelas Belum Ada Guru</div>
-                                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{unassignedSlots.length}</div>
+                                <h2 className="text-xl font-bold text-text-main dark:text-white">🚨 Kelas Belum Ada Guru</h2>
+                                <p className="text-sm text-text-secondary dark:text-zinc-400">{unassignedSlots.length} slot kelas-mapel belum diassign</p>
                             </div>
-                            <div className="w-8 h-8 rounded-full bg-red-500/10 flex items-center justify-center group-hover:bg-red-500/20 transition-colors">
-                                <ChevronRight className="w-5 h-5 text-red-500 group-hover:translate-x-0.5 transition-transform" />
-                            </div>
+                            <button
+                                onClick={() => setShowUnassignedModal(false)}
+                                className="p-2 rounded-full hover:bg-secondary/10 text-text-secondary hover:text-primary-dark transition-colors"
+                            >
+                                <div className="text-text-secondary"><X set="bold" primaryColor="currentColor" size={24} /></div>
+                            </button>
                         </div>
-                        {unassignedSlots.length > 0 && (
-                            <div className="text-xs text-red-500/70 mt-1">Klik untuk lihat detail →</div>
-                        )}
-                    </button>
-                </div>
 
-                {/* Unassigned Slots Modal */}
-                {showUnassignedModal && (
-                    <div className="fixed inset-0 bg-background-dark/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-                        <div className="bg-white dark:bg-surface-dark border border-secondary/20 dark:border-white/5 rounded-3xl p-6 w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col shadow-2xl">
-                            <div className="flex items-center justify-between mb-4">
-                                <div>
-                                    <h2 className="text-xl font-bold text-text-main dark:text-white">🚨 Kelas Belum Ada Guru</h2>
-                                    <p className="text-sm text-text-secondary dark:text-zinc-400">{unassignedSlots.length} slot kelas-mapel belum diassign</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowUnassignedModal(false)}
-                                    className="p-2 rounded-full hover:bg-secondary/10 text-text-secondary hover:text-primary-dark transition-colors"
-                                >
-                                    <X className="w-6 h-6" />
-                                </button>
-                            </div>
-
-                            <div className="overflow-y-auto flex-1 space-y-2">
-                                {subjects.map(subject => {
-                                    const unassignedForSubject = unassignedSlots.filter(s => s.subjectId === subject.id)
-                                    if (unassignedForSubject.length === 0) return null
-
-                                    return (
-                                        <div key={subject.id} className="bg-secondary/5 dark:bg-white/5 rounded-xl p-3">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="font-bold text-text-main dark:text-white flex items-center gap-2">
-                                                    <BookOpen className="w-4 h-4 text-primary" />
-                                                    {subject.name}
-                                                </span>
-                                                <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">
-                                                    {unassignedForSubject.length} kelas kosong
-                                                </span>
-                                            </div>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {unassignedForSubject.map(slot => (
-                                                    <span
-                                                        key={`${slot.classId}-${slot.subjectId}`}
-                                                        className={`px-2 py-1 rounded-lg text-xs font-medium ${slot.schoolLevel === 'SMP'
-                                                            ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
-                                                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                                            }`}
-                                                    >
-                                                        {slot.className}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-
-                            <div className="pt-4 border-t border-secondary/10 mt-4">
-                                <Button onClick={() => { setShowUnassignedModal(false); openAddNew() }} className="w-full">
-                                    <UserPlus className="w-4 h-4 mr-2" />
-                                    Mulai Assign Guru
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Teacher Cards */}
-                <Card className="overflow-hidden p-0">
-                    {loading ? (
-                        <div className="p-12 flex justify-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                        </div>
-                    ) : !selectedYearId ? (
-                        <div className="p-6">
-                            <EmptyState
-                                icon={<BookOpen className="w-12 h-12 text-teal-200" />}
-                                title="Pilih Tahun Ajaran"
-                                description="Pilih tahun ajaran untuk melihat penugasan"
-                            />
-                        </div>
-                    ) : teacherGroups.length === 0 ? (
-                        <div className="p-6">
-                            <EmptyState
-                                icon={<School className="w-12 h-12 text-teal-200" />}
-                                title="Belum Ada Guru"
-                                description="Tambahkan guru terlebih dahulu"
-                            />
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-secondary/10">
-                            {teacherGroups.map((group) => {
-                                const isExpanded = expandedTeachers.has(group.teacher.id)
-                                const hasAssignments = group.total_classes > 0
+                        <div className="overflow-y-auto flex-1 space-y-2">
+                            {subjects.map(subject => {
+                                const unassignedForSubject = unassignedSlots.filter(s => s.subjectId === subject.id)
+                                if (unassignedForSubject.length === 0) return null
 
                                 return (
-                                    <div key={group.teacher.id} className="hover:bg-secondary/5 transition-colors">
-                                        {/* Teacher Header */}
-                                        <div className="flex items-center gap-4 p-4">
-                                            <div
-                                                onClick={() => hasAssignments && toggleExpanded(group.teacher.id)}
-                                                className={`flex-1 flex items-center gap-4 ${hasAssignments ? 'cursor-pointer' : ''}`}
-                                            >
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white ${hasAssignments
-                                                    ? 'bg-gradient-to-r from-indigo-500 to-violet-500'
-                                                    : 'bg-amber-500'
-                                                    }`}>
-                                                    {group.teacher.name[0]?.toUpperCase() || <User className="w-5 h-5" />}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="font-bold text-text-main dark:text-white">
-                                                        {group.teacher.name}
-                                                    </div>
-                                                    <div className="text-sm text-text-secondary dark:text-zinc-400">
-                                                        {hasAssignments ? (
-                                                            <span>
-                                                                {group.subjects.length} mapel • {group.total_classes} kelas
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-amber-600 dark:text-amber-400">
-                                                                ⚠️ Belum ada penugasan
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            {hasAssignments ? (
-                                                <button
-                                                    onClick={() => toggleExpanded(group.teacher.id)}
-                                                    className="p-2.5 bg-primary/10 hover:bg-primary/20 rounded-xl transition-all"
-                                                >
-                                                    {isExpanded
-                                                        ? <ChevronUp className="w-5 h-5 text-primary" />
-                                                        : <ChevronDown className="w-5 h-5 text-primary" />
-                                                    }
-                                                </button>
-                                            ) : (
-                                                <Button size="sm" onClick={() => openAddNew(group.teacher.id)}>
-                                                    Assign
-                                                </Button>
-                                            )}
+                                    <div key={subject.id} className="bg-secondary/5 dark:bg-white/5 rounded-xl p-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="font-bold text-text-main dark:text-white flex items-center gap-2">
+                                                <BookOpen set="bold" primaryColor="currentColor" size={16} />
+                                                {subject.name}
+                                            </span>
+                                            <span className="text-xs text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full">
+                                                {unassignedForSubject.length} kelas kosong
+                                            </span>
                                         </div>
-
-                                        {/* Expanded Details */}
-                                        {isExpanded && hasAssignments && (
-                                            <div className="px-4 pb-4 space-y-3">
-                                                {group.subjects.map((subj) => (
-                                                    <div
-                                                        key={subj.subject.id}
-                                                        className="bg-secondary/5 dark:bg-white/5 rounded-xl p-3"
-                                                    >
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <span className="px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-bold border border-green-500/20">
-                                                                📖 {subj.subject.name}
-                                                            </span>
-                                                            <div className="flex gap-2">
-                                                                <button
-                                                                    onClick={() => handleEdit(group.teacher.id, subj.subject.id)}
-                                                                    className="p-2 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors"
-                                                                    title="Edit"
-                                                                >
-                                                                    <Edit className="w-4 h-4" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteSubject(group.teacher.id, subj.subject.id)}
-                                                                    disabled={deleting === `${group.teacher.id}-${subj.subject.id}`}
-                                                                    className="p-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors disabled:opacity-50"
-                                                                    title="Hapus"
-                                                                >
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {subj.classes.map((cls) => (
-                                                                <span
-                                                                    key={cls.id}
-                                                                    className={`px-2 py-1 rounded-lg text-xs font-medium ${cls.school_level === 'SMP'
-                                                                        ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
-                                                                        : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                                                                        }`}
-                                                                >
-                                                                    {cls.name}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ))}
-
-                                                {/* Action Buttons */}
-                                                <div className="flex justify-between items-center pt-3">
-                                                    <button
-                                                        onClick={() => openAddNew(group.teacher.id)}
-                                                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary to-teal-500 text-white rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all font-bold text-sm"
-                                                    >
-                                                        <BookOpen className="w-4 h-4" />
-                                                        + Tambah Mapel Lain
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteAll(group.teacher.id)}
-                                                        disabled={deleting === group.teacher.id}
-                                                        className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                        Hapus Semua
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {unassignedForSubject.map(slot => (
+                                                <span
+                                                    key={`${slot.classId}-${slot.subjectId}`}
+                                                    className={`px-2 py-1 rounded-lg text-xs font-medium ${slot.schoolLevel === 'SMP'
+                                                        ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-200 dark:border-sky-800'
+                                                        : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+                                                        }`}
+                                                >
+                                                    {slot.className}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
                                 )
                             })}
                         </div>
-                    )}
-                </Card>
 
-                {/* Assignment Wizard */}
-                <AssignmentWizard
-                    open={showWizard}
-                    onClose={() => {
-                        setShowWizard(false)
-                        setEditMode(undefined)
-                    }}
-                    onSuccess={fetchAssignments}
-                    teachers={teachers}
-                    subjects={subjects}
-                    classes={classes}
-                    existingAssignments={existingAssignments}
-                    academicYearId={selectedYearId}
-                    editMode={editMode}
-                />
-            </>)}
-
-            {/* ===== WALI KELAS TAB ===== */}
-            {activeTab === 'wali' && (
-                <>
-                    {/* Year Selector for Wali Kelas */}
-                    <Card className="p-4">
-                        <label className="block text-sm font-bold text-text-main dark:text-white mb-2">
-                            Tahun Ajaran
-                        </label>
-                        <div className="relative">
-                            <select
-                                value={selectedYearId}
-                                onChange={(e) => setSelectedYearId(e.target.value)}
-                                className="w-full px-4 py-2.5 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
-                            >
-                                <option value="">Pilih Tahun</option>
-                                {academicYears.map((y) => (
-                                    <option key={y.id} value={y.id}>
-                                        {y.name} {y.is_active && '(Aktif)'}
-                                    </option>
-                                ))}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
+                        <div className="pt-4 border-t border-secondary/10 mt-4">
+                            <Button onClick={() => { setShowUnassignedModal(false); openAddNew() }} className="w-full">
+                                <span className="mr-2 flex items-center text-white"><UserPlus set="bold" primaryColor="currentColor" size={16} /></span>
+                                Mulai Assign Guru
+                            </Button>
                         </div>
-                    </Card>
+                    </div>
+                </div>
+            )}
 
-                    <Card className="overflow-hidden p-0">
-                        {loading ? (
-                            <div className="p-12 flex justify-center">
-                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                            </div>
-                        ) : !selectedYearId ? (
-                            <div className="p-6">
-                                <EmptyState
-                                    icon={<HeartHandshake className="w-12 h-12 text-teal-200" />}
-                                    title="Pilih Tahun Ajaran"
-                                    description="Pilih tahun ajaran untuk mengatur wali kelas"
-                                />
-                            </div>
-                        ) : filteredClasses.length === 0 ? (
-                            <div className="p-6">
-                                <EmptyState
-                                    icon={<School className="w-12 h-12 text-teal-200" />}
-                                    title="Belum Ada Kelas"
-                                    description="Buat kelas terlebih dahulu di menu Kelas"
-                                />
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-secondary/10">
-                                {/* Header */}
-                                <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 bg-secondary/5 dark:bg-white/5">
-                                    <div className="col-span-4 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Kelas</div>
-                                    <div className="col-span-5 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Wali Kelas</div>
-                                    <div className="col-span-3 text-sm font-bold text-text-main dark:text-white uppercase tracking-wider text-right">Aksi</div>
-                                </div>
+            {/* Teacher Cards */}
+            <Card className="overflow-hidden p-0">
+                {loading ? (
+                    <div className="p-12 flex justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    </div>
+                ) : !selectedYearId ? (
+                    <div className="p-6">
+                        <EmptyState
+                            icon={<div className="text-secondary"><BookOpen set="bold" primaryColor="currentColor" size={48} /></div>}
+                            title="Pilih Tahun Ajaran"
+                            description="Pilih tahun ajaran untuk melihat penugasan"
+                        />
+                    </div>
+                ) : teacherGroups.length === 0 ? (
+                    <div className="p-6">
+                        <EmptyState
+                            icon={<div className="text-secondary"><School set="bold" primaryColor="currentColor" size={48} /></div>}
+                            title="Belum Ada Guru"
+                            description="Tambahkan guru terlebih dahulu"
+                        />
+                    </div>
+                ) : (
+                    <div className="divide-y divide-secondary/10">
+                        {teacherGroups.map((group) => {
+                            const isExpanded = expandedTeachers.has(group.teacher.id)
+                            const hasAssignments = group.total_classes > 0
 
-                                {filteredClasses.map((cls: any) => {
-                                    const currentWali = waliKelasMap[cls.id] || ''
-                                    const savedVal = savedWaliMap[cls.id] || ''
-                                    const hasSavedWali = !!savedVal
-                                    const isEditing = editingWali.has(cls.id)
-                                    const hasChanged = currentWali !== savedVal
-                                    const isSaving = savingWali === cls.id
-                                    const assignedElsewhere = getAssignedTeacherIds(cls.id)
-
-                                    // Find the teacher object for display
-                                    const assignedTeacher = currentWali
-                                        ? teachers.find(t => t.id === currentWali)
-                                        : null
-
-                                    // Determine if row is in "locked" (view) mode
-                                    const isLocked = hasSavedWali && !isEditing
-
-                                    return (
-                                        <div key={cls.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 md:gap-4 px-4 md:px-6 py-4 hover:bg-secondary/5 transition-colors items-center">
-                                            {/* Class info */}
-                                            <div className="md:col-span-4 flex items-center gap-3">
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white ${cls.school_level === 'SMP'
-                                                    ? 'bg-gradient-to-br from-blue-500 to-blue-600'
-                                                    : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
-                                                    }`}>
-                                                    {cls.grade_level || '?'}
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold text-text-main dark:text-white">{cls.name}</div>
-                                                    <div className="text-xs text-text-secondary">
-                                                        {cls.school_level || '-'} • Tingkat {cls.grade_level || '-'}
-                                                    </div>
-                                                </div>
+                            return (
+                                <div key={group.teacher.id} className="hover:bg-secondary/5 transition-colors">
+                                    {/* Teacher Header */}
+                                    <div className="flex items-center gap-4 p-4">
+                                        <div
+                                            onClick={() => hasAssignments && toggleExpanded(group.teacher.id)}
+                                            className={`flex-1 flex items-center gap-4 ${hasAssignments ? 'cursor-pointer' : ''}`}
+                                        >
+                                            <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white shadow-sm ${hasAssignments
+                                                ? 'bg-gradient-to-br from-slate-700 to-slate-600'
+                                                : 'bg-slate-400'
+                                                }`}>
+                                                {group.teacher.name[0]?.toUpperCase() || <User set="bold" primaryColor="white" size={20} />}
                                             </div>
-
-                                            {/* Teacher display / dropdown */}
-                                            <div className="md:col-span-5">
-                                                {isLocked ? (
-                                                    // Locked state: show teacher name as badge
-                                                    <div className="flex items-center gap-2 px-4 py-2.5 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl">
-                                                        <div className="w-7 h-7 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center text-white text-xs font-bold">
-                                                            {(assignedTeacher?.user?.full_name || '?')[0]?.toUpperCase()}
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <span className="text-sm font-bold text-text-main dark:text-white">
-                                                                {assignedTeacher?.user?.full_name || assignedTeacher?.user?.username || '-'}
-                                                            </span>
-                                                            {assignedTeacher?.nip && (
-                                                                <span className="text-xs text-text-secondary ml-1.5">({assignedTeacher.nip})</span>
-                                                            )}
-                                                        </div>
-                                                        <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
-                                                    </div>
-                                                ) : (
-                                                    // Editing state: show dropdown
-                                                    <div className="relative">
-                                                        <select
-                                                            value={currentWali}
-                                                            onChange={(e) => setWaliKelasMap(prev => ({
-                                                                ...prev,
-                                                                [cls.id]: e.target.value
-                                                            }))}
-                                                            className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary appearance-none transition-colors ${hasChanged
-                                                                ? 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30 text-text-main dark:text-white'
-                                                                : 'bg-secondary/5 border-secondary/20 text-text-main dark:text-white'
-                                                                }`}
-                                                        >
-                                                            <option value="">— Belum ada wali kelas —</option>
-                                                            {teachers
-                                                                .filter(t => !assignedElsewhere.has(t.id) || t.id === currentWali)
-                                                                .map((t) => (
-                                                                    <option key={t.id} value={t.id}>
-                                                                        {t.user.full_name || t.user.username} {t.nip ? `(${t.nip})` : ''}
-                                                                    </option>
-                                                                ))}
-                                                        </select>
-                                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Action buttons */}
-                                            <div className="md:col-span-3 flex justify-end gap-2">
-                                                {isLocked ? (
-                                                    // Locked: show Edit button
-                                                    <Button
-                                                        size="sm"
-                                                        variant="secondary"
-                                                        onClick={() => setEditingWali(prev => new Set(prev).add(cls.id))}
-                                                        icon={<Edit className="w-4 h-4" />}
-                                                    >
-                                                        Edit
-                                                    </Button>
-                                                ) : (
-                                                    // Editing: show Save + Cancel
-                                                    <>
-                                                        {hasSavedWali && (
-                                                            <Button
-                                                                size="sm"
-                                                                variant="secondary"
-                                                                onClick={() => handleCancelEditWali(cls.id)}
-                                                                icon={<X className="w-4 h-4" />}
-                                                            >
-                                                                Batal
-                                                            </Button>
-                                                        )}
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={() => handleSaveWali(cls.id)}
-                                                            loading={isSaving}
-                                                            disabled={!hasChanged && !(!savedVal && !currentWali)}
-                                                            variant={hasChanged ? 'primary' : 'secondary'}
-                                                            icon={<Save className="w-4 h-4" />}
-                                                        >
-                                                            Simpan
-                                                        </Button>
-                                                    </>
-                                                )}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-bold text-text-main dark:text-white">
+                                                    {group.teacher.name}
+                                                </div>
+                                                <div className="text-sm text-text-secondary dark:text-zinc-400">
+                                                    {hasAssignments ? (
+                                                        <span>
+                                                            {group.subjects.length} mapel • {group.total_classes} kelas
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-amber-600 dark:text-amber-400">
+                                                            ⚠️ Belum ada penugasan
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </Card>
-                </>
-            )}
+                                        {hasAssignments ? (
+                                            <button
+                                                onClick={() => toggleExpanded(group.teacher.id)}
+                                                className="p-2.5 bg-primary/10 hover:bg-primary/20 rounded-xl transition-all"
+                                            >
+                                                {isExpanded
+                                                    ? <ChevronUp set="bold" primaryColor="currentColor" size={20} />
+                                                    : <ChevronDown set="bold" primaryColor="currentColor" size={20} />
+                                                }
+                                            </button>
+                                        ) : (
+                                            <Button size="sm" onClick={() => openAddNew(group.teacher.id)}>
+                                                Assign
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    {/* Expanded Details */}
+                                    {isExpanded && hasAssignments && (
+                                        <div className="px-4 pb-4 space-y-3">
+                                            {group.subjects.map((subj) => (
+                                                <div
+                                                    key={subj.subject.id}
+                                                    className="bg-secondary/5 dark:bg-white/5 rounded-xl p-3"
+                                                >
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <span className="px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800">
+                                                            📖 {subj.subject.name}
+                                                        </span>
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                onClick={() => handleEdit(group.teacher.id, subj.subject.id)}
+                                                                className="p-2 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 transition-colors"
+                                                                title="Edit"
+                                                            >
+                                                                <Edit set="bold" primaryColor="currentColor" size={16} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteSubject(group.teacher.id, subj.subject.id)}
+                                                                disabled={deleting === `${group.teacher.id}-${subj.subject.id}`}
+                                                                className="p-2 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                                                                title="Hapus"
+                                                            >
+                                                                <Trash2 set="bold" primaryColor="currentColor" size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {subj.classes.map((cls) => (
+                                                            <span
+                                                                key={cls.id}
+                                                                className={`px-2 py-1 rounded-lg text-xs font-medium ${cls.school_level === 'SMP'
+                                                                    ? 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400 border border-sky-200 dark:border-sky-800'
+                                                                    : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800'
+                                                                    }`}
+                                                            >
+                                                                {cls.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ))}
+
+                                            {/* Action Buttons */}
+                                            <div className="flex justify-between items-center pt-3">
+                                                <button
+                                                    onClick={() => openAddNew(group.teacher.id)}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm hover:shadow-md transition-all font-bold text-sm"
+                                                >
+                                                    <div className="text-white"><BookOpen set="bold" primaryColor="currentColor" size={16} /></div>
+                                                    + Tambah Mapel Lain
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteAll(group.teacher.id)}
+                                                    disabled={deleting === group.teacher.id}
+                                                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-red-600 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                                >
+                                                    <Trash2 set="bold" primaryColor="currentColor" size={16} />
+                                                    Hapus Semua
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })}
+                    </div>
+                )}
+            </Card>
+
+            {/* Assignment Wizard */}
+            <AssignmentWizard
+                open={showWizard}
+                onClose={() => {
+                    setShowWizard(false)
+                    setEditMode(undefined)
+                }}
+                onSuccess={fetchAssignments}
+                teachers={teachers}
+                subjects={subjects}
+                classes={classes}
+                existingAssignments={existingAssignments}
+                academicYearId={selectedYearId}
+                editMode={editMode}
+            />
         </div>
     )
 }

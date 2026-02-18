@@ -37,18 +37,15 @@ export default function StatsCard({ label, value, icon, trend }: StatsCardProps)
     }, [numericValue])
 
     return (
-        <div className="relative p-6 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/50 shadow-xl shadow-primary/10 flex items-center gap-4 overflow-hidden">
-            {/* Glassmorphism subtle gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-white/10 pointer-events-none"></div>
-
-            {/* Icon container with glass effect */}
-            <div className="relative z-10 rounded-xl p-3 bg-white/50 backdrop-blur-sm border border-white/60 shadow-lg">
+        <div className="relative p-6 rounded-2xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4 overflow-hidden">
+            {/* Icon container */}
+            <div className="relative z-10 rounded-xl p-3 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
                 {icon}
             </div>
 
             <div className="relative z-10">
-                <p className="text-sm font-bold text-text-secondary/80 uppercase tracking-wider">{label}</p>
-                <p className="text-2xl font-extrabold text-text-main">
+                <p className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{label}</p>
+                <p className="text-2xl font-extrabold text-slate-900 dark:text-white">
                     {numericValue !== null ? displayValue : (value || '-')}
                 </p>
             </div>

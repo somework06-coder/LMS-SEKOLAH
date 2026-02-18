@@ -121,7 +121,7 @@ export default function SiswaTugasPage() {
                 </div>
             ) : assignments.length === 0 ? (
                 <EmptyState
-                    icon={<PenTool className="w-12 h-12 text-pink-200" />}
+                    icon={<PenTool className="w-12 h-12 text-pink-500 dark:text-pink-200" />}
                     title="Belum Ada Tugas"
                     description="Belum ada tugas tersedia untuk kelasmu"
                 />

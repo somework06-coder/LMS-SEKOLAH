@@ -33,19 +33,19 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark overflow-hidden relative">
             {/* Background Decorations */}
-            <div className="absolute top-0 -left-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl opacity-50 mix-blend-multiply filter animate-blob"></div>
-            <div className="absolute top-0 -right-20 w-96 h-96 bg-secondary/20 rounded-full blur-3xl opacity-50 mix-blend-multiply filter animate-blob animation-delay-2000"></div>
-            <div className="absolute -bottom-32 left-20 w-96 h-96 bg-primary-dark/20 rounded-full blur-3xl opacity-50 mix-blend-multiply filter animate-blob animation-delay-4000"></div>
+            <div className="absolute top-0 -left-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl opacity-50 mix-blend-multiply filter animate-blob"></div>
+            <div className="absolute top-0 -right-20 w-96 h-96 bg-slate-400/10 rounded-full blur-3xl opacity-50 mix-blend-multiply filter animate-blob animation-delay-2000"></div>
+            <div className="absolute -bottom-32 left-20 w-96 h-96 bg-emerald-600/10 rounded-full blur-3xl opacity-50 mix-blend-multiply filter animate-blob animation-delay-4000"></div>
 
             <div className="relative w-full max-w-md mx-4">
-                <div className="relative bg-white/80 dark:bg-surface-dark/80 backdrop-blur-xl border border-white/20 dark:border-white/5 rounded-3xl shadow-2xl shadow-primary/10 p-8 sm:p-10">
+                <div className="relative bg-white/90 dark:bg-surface-dark/90 backdrop-blur-xl border border-white/50 dark:border-white/5 rounded-3xl shadow-2xl shadow-slate-200/50 dark:shadow-none p-8 sm:p-10">
                     {/* Logo/Title */}
                     <div className="text-center mb-10">
-                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary mb-6 shadow-lg shadow-primary/30 ring-4 ring-white dark:ring-surface-dark">
-                            <span className="text-4xl">🎓</span>
+                        <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-emerald-500 mb-6 shadow-lg shadow-emerald-500/20 ring-4 ring-white dark:ring-surface-dark transform rotate-3 hover:rotate-6 transition-transform">
+                            <span className="text-4xl text-white">🎓</span>
                         </div>
-                        <h1 className="text-3xl font-bold text-text-main dark:text-white mb-2 tracking-tight">LMS Sekolah</h1>
-                        <p className="text-text-secondary dark:text-[#A8BC9F]">Selamat datang kembali!</p>
+                        <h1 className="text-3xl font-bold text-slate-800 dark:text-white mb-2 tracking-tight">LMS Sekolah</h1>
+                        <p className="text-slate-500 dark:text-slate-400">Selamat datang kembali!</p>
                     </div>
 
                     {/* Error Message */}
@@ -61,11 +61,11 @@ export default function LoginPage() {
                     {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2 ml-1">
+                            <label className="block text-sm font-bold text-slate-700 dark:text-white mb-2 ml-1">
                                 Username
                             </label>
                             <div className="relative group">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-secondary group-focus-within:text-primary transition-colors">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                     </svg>
@@ -74,7 +74,7 @@ export default function LoginPage() {
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full pl-12 pr-4 py-4 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                    className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
                                     placeholder="Masukkan username Anda"
                                     required
                                 />
@@ -82,11 +82,11 @@ export default function LoginPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-text-main dark:text-white mb-2 ml-1">
+                            <label className="block text-sm font-bold text-slate-700 dark:text-white mb-2 ml-1">
                                 Password
                             </label>
                             <div className="relative group">
-                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-text-secondary group-focus-within:text-primary transition-colors">
+                                <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors">
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                     </svg>
@@ -95,14 +95,14 @@ export default function LoginPage() {
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-12 pr-12 py-4 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white placeholder:text-text-secondary/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                                    className="w-full pl-12 pr-12 py-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
                                     placeholder="Masukkan password Anda"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-text-secondary hover:text-primary transition-colors"
+                                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-emerald-500 transition-colors"
                                 >
                                     {showPassword ? (
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,7 +121,7 @@ export default function LoginPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-4 px-6 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl shadow-soft shadow-primary/30 hover:shadow-lg hover:shadow-primary/40 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                            className="w-full py-4 px-6 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                         >
                             {loading ? (
                                 <>
@@ -143,8 +143,8 @@ export default function LoginPage() {
                     </form>
 
                     {/* Footer */}
-                    <p className="mt-8 text-center text-sm text-text-secondary">
-                        Lupa password? <a href="#" className="font-bold text-primary hover:underline">Hubungi Admin</a>
+                    <p className="mt-8 text-center text-sm text-slate-500">
+                        Lupa password? <a href="#" className="font-bold text-emerald-500 hover:underline">Hubungi Admin</a>
                     </p>
                 </div>
             </div>

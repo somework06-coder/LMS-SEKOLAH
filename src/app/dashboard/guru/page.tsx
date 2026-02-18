@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
-import { BookOpen, PenTool, Clock, Brain, Archive, BarChart3, HeartHandshake } from 'lucide-react'
+import { BookOpen, PenTool, Clock, Brain, Archive, BarChart3 } from 'lucide-react'
 
 interface TeachingAssignment {
     id: string
@@ -19,8 +19,6 @@ export default function GuruDashboard() {
     const router = useRouter()
     const [assignments, setAssignments] = useState<TeachingAssignment[]>([])
     const [loading, setLoading] = useState(true)
-    const [isWaliKelas, setIsWaliKelas] = useState(false)
-    const [waliClassName, setWaliClassName] = useState('')
 
     useEffect(() => {
         if (user && user.role !== 'GURU') {
@@ -31,30 +29,12 @@ export default function GuruDashboard() {
     useEffect(() => {
         const fetchAssignments = async () => {
             try {
-                // Use my-teaching-assignments API (already filtered by teacher + active year)
                 const res = await fetch('/api/my-teaching-assignments')
                 const data = await res.json()
-                setAssignments(Array.isArray(data) ? data : [])
-
-                // Check if wali kelas - need teacher ID for this
-                try {
-                    const teachersRes = await fetch('/api/teachers')
-                    const teachers = await teachersRes.json()
-                    const myTeacher = Array.isArray(teachers)
-                        ? teachers.find((t: { user: { id: string } }) => t.user.id === user?.id)
-                        : null
-
-                    if (myTeacher) {
-                        const classesRes = await fetch('/api/classes')
-                        const classesData = await classesRes.json()
-                        const waliClass = classesData.find((c: any) => c.homeroom_teacher_id === myTeacher.id)
-                        if (waliClass) {
-                            setIsWaliKelas(true)
-                            setWaliClassName(waliClass.name)
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error checking wali kelas:', e)
+                if (Array.isArray(data)) {
+                    setAssignments(data)
+                } else {
+                    setAssignments([])
                 }
             } catch (error) {
                 console.error('Error:', error)
@@ -122,32 +102,6 @@ export default function GuruDashboard() {
                     </Link>
                 ))}
             </div>
-
-            {/* Wali Kelas Card - conditional */}
-            {isWaliKelas && (
-                <Link href="/dashboard/guru/wali-kelas">
-                    <Card className="border-2 border-pink-400/40 hover:border-pink-500 hover:shadow-lg hover:shadow-pink-500/10 active:scale-[0.98] transition-all group bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 cursor-pointer p-4">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
-                                <HeartHandshake className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold text-text-main dark:text-white group-hover:text-pink-600 transition-colors">
-                                    👨‍🏫 Wali Kelas {waliClassName}
-                                </h3>
-                                <p className="text-xs text-text-secondary dark:text-zinc-400 mt-0.5">
-                                    Lihat rekap nilai seluruh siswa di kelas Anda
-                                </p>
-                            </div>
-                            <div className="text-pink-500 group-hover:translate-x-1 transition-transform">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </div>
-                        </div>
-                    </Card>
-                </Link>
-            )}
 
             {/* Teaching Assignments */}
             <div>

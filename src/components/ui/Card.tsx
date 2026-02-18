@@ -16,8 +16,8 @@ export default function Card({
         <div className={`
             bg-white dark:bg-surface-dark
             rounded-2xl
-            shadow-soft 
-            border border-secondary/10 dark:border-white/5
+            shadow-card
+            border border-slate-200 dark:border-slate-700
             ${padding}
             ${className}
         `}

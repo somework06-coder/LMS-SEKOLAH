@@ -58,7 +58,6 @@ export default function MateriPage() {
 
     const fetchData = async () => {
         try {
-            // Use my-teaching-assignments (already filtered by teacher + active year)
             const [assignmentsRes, materialsRes] = await Promise.all([
                 fetch('/api/my-teaching-assignments'),
                 fetch('/api/materials')
@@ -68,18 +67,14 @@ export default function MateriPage() {
                 materialsRes.json()
             ])
 
-            const myAssignments = Array.isArray(assignmentsData) ? assignmentsData : []
+            const validAssignments = Array.isArray(assignmentsData) ? assignmentsData : []
             const validMaterials = Array.isArray(materialsData) ? materialsData : []
 
-            const myMaterials = validMaterials.filter((m: Material) =>
-                myAssignments.some((a: TeachingAssignment) => a.id === m.teaching_assignment?.id)
-            )
-
-            setAssignments(myAssignments)
-            setMaterials(myMaterials)
+            setAssignments(validAssignments)
+            setMaterials(validMaterials)
 
             const groups: Record<string, SubjectGroup> = {}
-            myAssignments.forEach((a: TeachingAssignment) => {
+            validAssignments.forEach((a: TeachingAssignment) => {
                 const subjectId = a.subject.id
                 if (!groups[subjectId]) {
                     groups[subjectId] = {
@@ -94,7 +89,7 @@ export default function MateriPage() {
                 }
             })
 
-            myMaterials.forEach((m: Material) => {
+            validMaterials.forEach((m: Material) => {
                 const subjectId = m.teaching_assignment?.subject?.id
                 if (subjectId && groups[subjectId]) {
                     groups[subjectId].materials.push(m)

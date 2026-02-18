@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
-import { Calendar, Plus, CheckCircle, Clock, PlayCircle, AlertTriangle, Trash2, Loader2 } from 'lucide-react'
+import { Calendar, Plus, TickSquare as CheckCircle, TimeCircle as Clock, Play as PlayCircle, Danger as AlertTriangle, Delete as Trash2, Edit } from 'react-iconly'
+import { Loader2 } from 'lucide-react'
 import { AcademicYear, AcademicYearStatus } from '@/lib/types'
 
 interface FormData {
@@ -207,22 +208,22 @@ export default function TahunAjaranPage() {
         switch (status) {
             case 'ACTIVE':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-xs font-bold border border-green-500/20">
-                        <PlayCircle className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-xs font-bold border border-emerald-200 dark:border-emerald-800">
+                        <PlayCircle set="bold" primaryColor="currentColor" size={12} />
                         Aktif
                     </span>
                 )
             case 'COMPLETED':
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-full text-xs font-bold border border-blue-500/20">
-                        <CheckCircle className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 rounded-full text-xs font-bold border border-slate-200 dark:border-slate-700">
+                        <CheckCircle set="bold" primaryColor="currentColor" size={12} />
                         Selesai
                     </span>
                 )
             default:
                 return (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-full text-xs font-bold border border-amber-500/20">
-                        <Clock className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full text-xs font-bold border border-amber-200 dark:border-amber-800">
+                        <Clock set="bold" primaryColor="currentColor" size={12} />
                         Direncanakan
                     </span>
                 )
@@ -244,9 +245,9 @@ export default function TahunAjaranPage() {
                 title="Tahun Ajaran"
                 subtitle="Kelola daftar tahun ajaran sekolah"
                 backHref="/dashboard/admin"
-                icon={<Calendar className="w-6 h-6 text-amber-500" />}
+                icon={<div className="text-amber-500"><Calendar set="bold" primaryColor="currentColor" size={24} /></div>}
                 action={
-                    <Button onClick={openAdd} icon={<Plus className="w-5 h-5" />}>
+                    <Button onClick={openAdd} icon={<Plus set="bold" primaryColor="currentColor" size={20} />}>
                         Tambah Tahun Ajaran
                     </Button>
                 }
@@ -255,12 +256,12 @@ export default function TahunAjaranPage() {
             <Card className="overflow-hidden p-0">
                 {loading ? (
                     <div className="p-12 flex justify-center">
-                        <div className="animate-spin text-primary"><Calendar className="w-8 h-8" /></div>
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                 ) : years.length === 0 ? (
                     <div className="p-6">
                         <EmptyState
-                            icon={<Calendar className="w-12 h-12 text-secondary" />}
+                            icon={<div className="text-secondary"><Calendar set="bold" primaryColor="currentColor" size={48} /></div>}
                             title="Belum Ada Tahun Ajaran"
                             description="Tambahkan tahun ajaran untuk memulai"
                             action={<Button onClick={openAdd}>Tambah Tahun Ajaran</Button>}
@@ -269,7 +270,7 @@ export default function TahunAjaranPage() {
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-secondary/10 dark:bg-white/5 border-b border-secondary/20">
+                            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                                 <tr>
                                     <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Nama</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Periode</th>
@@ -279,7 +280,7 @@ export default function TahunAjaranPage() {
                             </thead>
                             <tbody className="divide-y divide-secondary/20 dark:divide-white/5">
                                 {years.map((year) => (
-                                    <tr key={year.id} className="hover:bg-secondary/5 transition-colors">
+                                    <tr key={year.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td className="px-6 py-4 text-text-main dark:text-white font-medium">{year.name}</td>
                                         <td className="px-6 py-4 text-text-secondary text-sm">
                                             {formatDate(year.start_date)} - {formatDate(year.end_date)}
@@ -293,7 +294,7 @@ export default function TahunAjaranPage() {
                                                 {(year.status === 'ACTIVE' || year.is_active) && (
                                                     <button
                                                         onClick={() => openComplete(year)}
-                                                        className="px-3 py-1.5 rounded-lg bg-green-500/10 text-green-600 hover:bg-green-500/20 text-xs font-medium transition-colors"
+                                                        className="px-3 py-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50 text-xs font-medium transition-colors"
                                                         title="Selesaikan Tahun Ajaran"
                                                     >
                                                         Selesaikan
@@ -304,16 +305,14 @@ export default function TahunAjaranPage() {
                                                     className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 flex items-center justify-center transition-colors"
                                                     title="Edit"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
+                                                    <Edit set="bold" primaryColor="currentColor" size={16} />
                                                 </button>
                                                 <button
                                                     onClick={() => openDeleteConfirm(year)}
                                                     className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 flex items-center justify-center transition-colors"
                                                     title="Hapus"
                                                 >
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 set="bold" primaryColor="currentColor" size={16} />
                                                 </button>
                                             </div>
                                         </td>
@@ -334,43 +333,37 @@ export default function TahunAjaranPage() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <label className="block text-sm font-bold text-text-main dark:text-white mb-2">Nama Tahun Ajaran</label>
-                        <div className="relative">
+                        {editingYear ? (
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400 transition-all"
+                                placeholder="Contoh: 2024/2025"
+                                required
+                            />
+                        ) : (
                             <select
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all appearance-none"
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                                 required
                             >
-                                <option value="">Pilih Tahun Ajaran...</option>
+                                <option value="">Pilih tahun ajaran...</option>
                                 {(() => {
                                     const currentYear = new Date().getFullYear()
-                                    const startYear = 2020
-                                    const endYear = currentYear + 5
-                                    const options: { value: string; label: string }[] = []
-                                    const existingNames = years
-                                        .filter(y => !editingYear || y.id !== editingYear.id)
-                                        .map(y => y.name)
-
-                                    for (let y = endYear; y >= startYear; y--) {
+                                    const existingNames = years.map(y => y.name)
+                                    const options = []
+                                    for (let y = currentYear + 5; y >= 2020; y--) {
                                         const name = `${y}/${y + 1}`
-                                        if (!existingNames.includes(name)) options.push({ value: name, label: `📅 ${name}` })
+                                        if (!existingNames.includes(name)) {
+                                            options.push(<option key={name} value={name}>📅 {name}</option>)
+                                        }
                                     }
-
-                                    // If editing and current value isn't in options, add it
-                                    if (editingYear && formData.name && !options.some(o => o.value === formData.name)) {
-                                        options.unshift({ value: formData.name, label: `📅 ${formData.name}` })
-                                    }
-
-                                    return options.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))
+                                    return options
                                 })()}
                             </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">▼</div>
-                        </div>
-                        <p className="text-xs text-text-secondary mt-2">
-                            Format: Tahun/Tahun + Semester. Tahun ajaran yang sudah ada tidak ditampilkan.
-                        </p>
+                        )}
                     </div>
 
                     <div>
@@ -379,7 +372,7 @@ export default function TahunAjaranPage() {
                             type="date"
                             value={formData.start_date}
                             onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                         />
                         <p className="text-xs text-text-secondary mt-2">
                             Tanggal selesai akan otomatis terisi saat tahun ajaran diselesaikan.
@@ -391,7 +384,7 @@ export default function TahunAjaranPage() {
                         <select
                             value={formData.status}
                             onChange={(e) => setFormData({ ...formData, status: e.target.value as AcademicYearStatus })}
-                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                             disabled={editingYear?.status === 'COMPLETED'}
                         >
                             <option value="PLANNED">🕐 Direncanakan</option>
@@ -466,7 +459,7 @@ export default function TahunAjaranPage() {
                     ) : relatedData && relatedData.total > 0 ? (
                         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-xl">
                             <div className="flex items-start gap-2 mb-3">
-                                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                <AlertTriangle set="bold" primaryColor="currentColor" size={20} />
                                 <p className="text-sm font-bold text-red-800 dark:text-red-200">
                                     Data berikut akan TERHAPUS PERMANEN:
                                 </p>
@@ -563,8 +556,10 @@ export default function TahunAjaranPage() {
                 title="🚨 Konfirmasi Akhir"
             >
                 <div className="space-y-4">
-                    <div className="bg-red-100 dark:bg-red-900/30 border-2 border-red-500 p-6 rounded-xl text-center">
-                        <AlertTriangle className="w-16 h-16 text-red-600 mx-auto mb-4" />
+                    <div className="bg-red-100 dark:bg-red-900/30 border-2 border-red-500 p-6 rounded-xl text-center flex flex-col items-center">
+                        <div className="text-red-600 mb-4">
+                            <AlertTriangle set="bold" primaryColor="currentColor" size={64} />
+                        </div>
                         <p className="text-lg font-bold text-red-800 dark:text-red-200 mb-2">
                             APAKAH ANDA YAKIN?
                         </p>

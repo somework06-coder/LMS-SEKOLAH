@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import { Modal, Button, PageHeader, EmptyState } from '@/components/ui'
 import Card from '@/components/ui/Card'
-import { Users, UserPlus, Pencil, Trash2, Loader2, Eye, EyeOff, AlertCircle, Filter, GraduationCap } from 'lucide-react'
+import { User as Users, AddUser as UserPlus, Edit as Pencil, Delete as Trash2, Show as Eye, Hide as EyeOff, InfoCircle as AlertCircle, Filter, Document as GraduationCap } from 'react-iconly'
+import { Loader2 } from 'lucide-react'
 import { Class, SchoolLevel } from '@/lib/types'
 
 interface Student {
@@ -183,13 +184,13 @@ export default function SiswaPage() {
                 title="Akun Siswa"
                 subtitle="Kelola data siswa dan akses login"
                 backHref="/dashboard/admin"
-                icon={<Users className="w-6 h-6 text-violet-500" />}
+                icon={<div className="text-violet-500"><Users set="bold" primaryColor="currentColor" size={24} /></div>}
                 action={
                     <div className="flex gap-2">
-                        <Button variant="secondary" onClick={() => setShowFilters(!showFilters)} icon={<Filter className="w-5 h-5" />}>
+                        <Button variant="secondary" onClick={() => setShowFilters(!showFilters)} icon={<Filter set="bold" primaryColor="currentColor" size={20} />}>
                             Filter
                         </Button>
-                        <Button onClick={openAdd} icon={<UserPlus className="w-5 h-5" />}>
+                        <Button onClick={openAdd} icon={<UserPlus set="bold" primaryColor="currentColor" size={20} />}>
                             Tambah Siswa
                         </Button>
                     </div>
@@ -205,7 +206,7 @@ export default function SiswaPage() {
                             <select
                                 value={filterAngkatan}
                                 onChange={(e) => setFilterAngkatan(e.target.value)}
-                                className="px-3 py-2 bg-secondary/5 border border-secondary/20 rounded-lg text-text-main dark:text-white text-sm"
+                                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             >
                                 <option value="">Semua</option>
                                 {uniqueAngkatan.map(a => (
@@ -218,7 +219,7 @@ export default function SiswaPage() {
                             <select
                                 value={filterSchoolLevel}
                                 onChange={(e) => setFilterSchoolLevel(e.target.value)}
-                                className="px-3 py-2 bg-secondary/5 border border-secondary/20 rounded-lg text-text-main dark:text-white text-sm"
+                                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             >
                                 <option value="">Semua</option>
                                 <option value="SMP">SMP</option>
@@ -248,7 +249,7 @@ export default function SiswaPage() {
                 ) : filteredStudents.length === 0 ? (
                     <div className="p-6">
                         <EmptyState
-                            icon={<Users className="w-12 h-12 text-violet-200" />}
+                            icon={<div className="text-violet-200"><Users set="bold" primaryColor="currentColor" size={48} /></div>}
                             title="Belum Ada Siswa"
                             description={students.length > 0 ? "Tidak ada siswa yang sesuai filter" : "Tambahkan akun siswa untuk memulai"}
                             action={<Button onClick={students.length > 0 ? clearFilters : openAdd}>{students.length > 0 ? 'Reset Filter' : 'Tambah Siswa'}</Button>}
@@ -257,7 +258,7 @@ export default function SiswaPage() {
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-secondary/10 dark:bg-white/5 border-b border-secondary/20">
+                            <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
                                 <tr>
                                     <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">Nama</th>
                                     <th className="px-6 py-4 text-left text-sm font-bold text-text-main dark:text-white uppercase tracking-wider">L/P</th>
@@ -270,13 +271,13 @@ export default function SiswaPage() {
                             </thead>
                             <tbody className="divide-y divide-secondary/20 dark:divide-white/5">
                                 {filteredStudents.map((student) => (
-                                    <tr key={student.id} className="hover:bg-secondary/5 transition-colors">
+                                    <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-rose-500 to-red-500 flex items-center justify-center text-white font-bold shadow-sm text-sm">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-sky-500 to-blue-500 flex items-center justify-center text-white font-bold shadow-sm text-sm">
                                                     {student.user.full_name?.[0] || '?'}
                                                 </div>
-                                                <span className="text-text-main dark:text-white font-bold">{student.user.full_name || '-'}</span>
+                                                <span className="text-slate-900 dark:text-white font-bold">{student.user.full_name || '-'}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -295,7 +296,7 @@ export default function SiswaPage() {
                                         <td className="px-6 py-4">
                                             {student.angkatan ? (
                                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20 rounded-full text-xs font-bold">
-                                                    <GraduationCap className="w-3 h-3" />
+                                                    <GraduationCap set="bold" primaryColor="currentColor" size={12} />
                                                     {student.angkatan}
                                                 </span>
                                             ) : (
@@ -304,7 +305,7 @@ export default function SiswaPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             {student.class ? (
-                                                <span className="px-3 py-1 bg-primary/10 text-primary-dark dark:text-primary rounded-full text-xs font-bold border border-primary/20">
+                                                <span className="px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-xs font-bold border border-emerald-100 dark:border-emerald-800">
                                                     {student.class.name}
                                                 </span>
                                             ) : (
@@ -315,10 +316,10 @@ export default function SiswaPage() {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button onClick={() => openEdit(student)} className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 flex items-center justify-center transition-colors">
-                                                    <Pencil className="w-4 h-4" />
+                                                    <Pencil set="bold" primaryColor="currentColor" size={16} />
                                                 </button>
                                                 <button onClick={() => handleDelete(student.id)} className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 hover:bg-red-500/20 flex items-center justify-center transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
+                                                    <Trash2 set="bold" primaryColor="currentColor" size={16} />
                                                 </button>
                                             </div>
                                         </td>
@@ -337,7 +338,7 @@ export default function SiswaPage() {
             >
                 {error && (
                     <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-600 text-sm font-medium flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5" />
+                        <AlertCircle set="bold" primaryColor="currentColor" size={20} />
                         {error}
                     </div>
                 )}
@@ -348,7 +349,7 @@ export default function SiswaPage() {
                             type="text"
                             value={formData.full_name}
                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400"
                             placeholder="Nama Lengkap Siswa"
                             required
                         />
@@ -361,7 +362,7 @@ export default function SiswaPage() {
                                 type="text"
                                 value={formData.nis}
                                 onChange={(e) => setFormData({ ...formData, nis: e.target.value })}
-                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400"
                                 placeholder="NIS Siswa"
                             />
                         </div>
@@ -371,7 +372,7 @@ export default function SiswaPage() {
                                 <select
                                     value={formData.gender}
                                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                                    className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                                 >
                                     <option value="">Pilih</option>
                                     <option value="L">Laki-laki</option>
@@ -385,7 +386,7 @@ export default function SiswaPage() {
                     {/* Angkatan Section */}
                     <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3">
-                            <GraduationCap className="w-5 h-5 text-amber-600" />
+                            <div className="text-amber-600"><GraduationCap set="bold" primaryColor="currentColor" size={20} /></div>
                             <span className="text-sm font-bold text-amber-800 dark:text-amber-200">Informasi Angkatan</span>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -395,7 +396,7 @@ export default function SiswaPage() {
                                     <select
                                         value={formData.angkatan}
                                         onChange={(e) => setFormData({ ...formData, angkatan: e.target.value, entry_year: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white dark:bg-secondary/10 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                                     >
                                         <option value="">Pilih Angkatan</option>
                                         {angkatanOptions.map(year => (
@@ -411,7 +412,7 @@ export default function SiswaPage() {
                                     <select
                                         value={formData.school_level}
                                         onChange={(e) => setFormData({ ...formData, school_level: e.target.value })}
-                                        className="w-full px-4 py-3 bg-white dark:bg-secondary/10 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                        className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                                     >
                                         <option value="">Pilih Level</option>
                                         <option value="SMP">SMP</option>
@@ -429,7 +430,7 @@ export default function SiswaPage() {
                             <select
                                 value={formData.class_id}
                                 onChange={(e) => setFormData({ ...formData, class_id: e.target.value })}
-                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary appearance-none"
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 appearance-none"
                             >
                                 <option value="">Pilih Kelas</option>
                                 {classes
@@ -448,7 +449,7 @@ export default function SiswaPage() {
                             type="text"
                             value={formData.username}
                             onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                            className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50"
+                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400"
                             placeholder="Username login"
                             required
                         />
@@ -462,7 +463,7 @@ export default function SiswaPage() {
                                 type={showPassword ? 'text' : 'password'}
                                 value={formData.password}
                                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                className="w-full px-4 py-3 bg-secondary/5 border border-secondary/20 rounded-xl text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary placeholder-text-secondary/50 pr-12"
+                                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 placeholder-slate-400 pr-12"
                                 placeholder={editingStudent ? "••••••••" : "Password"}
                                 required={!editingStudent}
                             />
@@ -472,9 +473,9 @@ export default function SiswaPage() {
                                 className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-text-secondary hover:text-text-main transition-colors"
                             >
                                 {showPassword ? (
-                                    <EyeOff className="w-5 h-5" />
+                                    <EyeOff set="bold" primaryColor="currentColor" size={20} />
                                 ) : (
-                                    <Eye className="w-5 h-5" />
+                                    <Eye set="bold" primaryColor="currentColor" size={20} />
                                 )}
                             </button>
                         </div>

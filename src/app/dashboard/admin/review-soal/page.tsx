@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import AIReviewPanel from '@/components/AIReviewPanel'
-import { ArrowLeft, Filter, CheckCircle, RotateCcw, Archive, ChevronDown, ChevronUp, Search, User, BookOpen, Brain, BarChart3, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Filter as Filter2, TickSquare as CheckCircle, Swap as RotateCcw, Folder as Archive, ArrowDown as ChevronDown, ArrowUp as ChevronUp, Search, User, Document as BookOpen, Discovery as Brain, Graph as BarChart3, Show as Eye, Hide as EyeOff } from 'react-iconly'
 import Link from 'next/link'
 
 interface QueueItem {
@@ -148,29 +148,29 @@ export default function ReviewSoalPage() {
 
     const getSourceBadge = (source: string) => {
         const colors: Record<string, string> = {
-            bank: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
-            quiz: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-            exam: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300'
+            bank: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+            quiz: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300',
+            exam: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
         }
         return <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${colors[source] || 'bg-gray-100 text-gray-600'}`}>{getSourceLabel(source)}</span>
     }
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'approved': return <span className="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 font-medium">✅ Approved</span>
-            case 'ai_reviewing': return <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium animate-pulse">🤖 AI Review...</span>
+            case 'approved': return <span className="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 font-medium">✅ Approved</span>
+            case 'ai_reviewing': return <span className="px-2 py-0.5 text-xs rounded-full bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 font-medium animate-pulse">🤖 AI Review...</span>
             case 'admin_review': return <span className="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 font-medium">⚠️ Perlu Review</span>
-            case 'returned': return <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 font-medium">❌ Dikembalikan</span>
-            case 'draft': return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-medium">📝 Draft</span>
-            default: return <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 font-medium">{status || '-'}</span>
+            case 'returned': return <span className="px-2 py-0.5 text-xs rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 font-medium">❌ Dikembalikan</span>
+            case 'draft': return <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 font-medium">📝 Draft</span>
+            default: return <span className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 font-medium">{status || '-'}</span>
         }
     }
 
     const getDifficultyBadge = (difficulty?: string) => {
         switch (difficulty) {
-            case 'EASY': return <span className="px-1.5 py-0.5 text-xs rounded bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400">Mudah</span>
-            case 'MEDIUM': return <span className="px-1.5 py-0.5 text-xs rounded bg-yellow-50 text-yellow-600 dark:bg-yellow-900/20 dark:text-yellow-400">Sedang</span>
-            case 'HARD': return <span className="px-1.5 py-0.5 text-xs rounded bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400">Sulit</span>
+            case 'EASY': return <span className="px-1.5 py-0.5 text-xs rounded bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400">Mudah</span>
+            case 'MEDIUM': return <span className="px-1.5 py-0.5 text-xs rounded bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400">Sedang</span>
+            case 'HARD': return <span className="px-1.5 py-0.5 text-xs rounded bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">Sulit</span>
             default: return null
         }
     }
@@ -240,7 +240,7 @@ export default function ReviewSoalPage() {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Link href="/dashboard/admin">
-                        <Button variant="ghost" icon={<ArrowLeft className="w-4 h-4" />} />
+                        <Button variant="ghost" icon={<ArrowLeft set="bold" primaryColor="currentColor" size={16} />} />
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold text-text-main dark:text-white">Review Soal</h1>
@@ -258,7 +258,7 @@ export default function ReviewSoalPage() {
                     <p className="text-xs text-text-secondary dark:text-zinc-400 mt-1">Total Soal</p>
                 </Card>
                 <Card className="p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totalAnalyzed}</p>
+                    <p className="text-2xl font-bold text-sky-600 dark:text-sky-400">{totalAnalyzed}</p>
                     <p className="text-xs text-text-secondary dark:text-zinc-400 mt-1">Sudah Dianalisis AI</p>
                 </Card>
                 <Card className="p-4 text-center">
@@ -275,7 +275,7 @@ export default function ReviewSoalPage() {
             <Card className="p-4">
                 <div className="flex flex-wrap gap-3 items-center">
                     <div className="flex items-center gap-1">
-                        <Filter className="w-4 h-4 text-text-secondary dark:text-zinc-400" />
+                        <Filter2 set="bold" primaryColor="currentColor" size={16} />
                         <span className="text-sm text-text-secondary dark:text-zinc-400">Sumber:</span>
                     </div>
                     {['', 'bank', 'quiz', 'exam'].map(src => (
@@ -298,7 +298,7 @@ export default function ReviewSoalPage() {
                             onClick={() => { setStatusFilter(s.v); setPage(1) }}
                             className={`px-3 py-1 text-sm rounded-lg transition-colors ${statusFilter === s.v
                                 ? 'bg-primary text-white shadow-sm'
-                                : 'bg-secondary/10 text-text-main dark:text-zinc-300 hover:bg-secondary/20'
+                                : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                 }`}
                         >
                             {s.l}
@@ -306,7 +306,7 @@ export default function ReviewSoalPage() {
                     ))}
                     <div className="flex-1" />
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"><Search set="bold" primaryColor="currentColor" size={16} /></div>
                         <input
                             type="text"
                             placeholder="Cari soal..."
@@ -343,8 +343,8 @@ export default function ReviewSoalPage() {
                             >
                                 <div className="flex items-center gap-4">
                                     {/* Avatar */}
-                                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                        <User className="w-6 h-6 text-primary" />
+                                    <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                                        <User set="bold" primaryColor="currentColor" size={24} />
                                     </div>
 
                                     {/* Info */}
@@ -354,8 +354,8 @@ export default function ReviewSoalPage() {
                                         </h3>
                                         <div className="flex flex-wrap gap-2 mt-1">
                                             {group.subjects.map(subj => (
-                                                <span key={subj} className="px-2 py-0.5 text-xs rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300 font-medium">
-                                                    <BookOpen className="w-3 h-3 inline mr-1" />{subj}
+                                                <span key={subj} className="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-medium">
+                                                    <div className="inline mr-1"><BookOpen set="bold" primaryColor="currentColor" size={12} /></div>{subj}
                                                 </span>
                                             ))}
                                         </div>
@@ -385,8 +385,8 @@ export default function ReviewSoalPage() {
                                         )}
                                         <div className="flex-shrink-0">
                                             {expandedTeacher === group.teacherId
-                                                ? <ChevronUp className="w-5 h-5 text-text-secondary" />
-                                                : <ChevronDown className="w-5 h-5 text-text-secondary" />
+                                                ? <ChevronUp set="bold" primaryColor="currentColor" size={20} />
+                                                : <ChevronDown set="bold" primaryColor="currentColor" size={20} />
                                             }
                                         </div>
                                     </div>
@@ -425,7 +425,7 @@ export default function ReviewSoalPage() {
                                                             )}
                                                             {item.ai_review && (
                                                                 <span className="px-1.5 py-0.5 text-xs bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-300 rounded">
-                                                                    <Brain className="w-3 h-3 inline mr-0.5" />
+                                                                    <div className="inline mr-0.5"><Brain set="bold" primaryColor="currentColor" size={12} /></div>
                                                                     Bloom L{item.ai_review.primary_bloom_level}
                                                                     {item.ai_review.hots_flag && ' • HOTS'}
                                                                 </span>
@@ -445,7 +445,7 @@ export default function ReviewSoalPage() {
 
                                             {/* Expanded Question Detail */}
                                             {expandedQuestion === item.id && (
-                                                <div className="px-4 pb-4 pt-2 ml-9 space-y-4 bg-gray-50/50 dark:bg-zinc-900/30 rounded-b-lg">
+                                                <div className="px-4 pb-4 pt-2 ml-9 space-y-4 bg-slate-50/50 dark:bg-slate-900/30 rounded-b-lg">
                                                     {/* Full Question */}
                                                     <div>
                                                         <h4 className="text-xs font-bold text-text-secondary dark:text-zinc-400 mb-1 uppercase tracking-wide">Soal Lengkap</h4>
@@ -503,7 +503,7 @@ export default function ReviewSoalPage() {
                                                                     disabled={actionLoading === item.id || item.status === 'approved'}
                                                                     className="!bg-green-600 hover:!bg-green-700 !text-white text-xs flex-1"
                                                                 >
-                                                                    <CheckCircle className="w-3.5 h-3.5 mr-1" />
+                                                                    <CheckCircle set="bold" primaryColor="currentColor" size={14} />
                                                                     Approve
                                                                 </Button>
                                                                 <Button
@@ -512,7 +512,7 @@ export default function ReviewSoalPage() {
                                                                     disabled={actionLoading === item.id}
                                                                     className="!bg-amber-500 hover:!bg-amber-600 !text-white text-xs flex-1"
                                                                 >
-                                                                    <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                                                                    <RotateCcw set="bold" primaryColor="currentColor" size={14} />
                                                                     Return
                                                                 </Button>
                                                                 <Button
@@ -521,7 +521,7 @@ export default function ReviewSoalPage() {
                                                                     disabled={actionLoading === item.id}
                                                                     className="text-gray-500 text-xs flex-1"
                                                                 >
-                                                                    <Archive className="w-3.5 h-3.5 mr-1" />
+                                                                    <Archive set="bold" primaryColor="currentColor" size={14} />
                                                                     Arsip
                                                                 </Button>
                                                             </div>

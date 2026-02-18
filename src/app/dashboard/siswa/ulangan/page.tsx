@@ -133,7 +133,7 @@ export default function SiswaUlanganPage() {
                 </div>
             ) : exams.length === 0 ? (
                 <EmptyState
-                    icon={<FileText className="w-12 h-12 text-red-200" />}
+                    icon={<FileText className="w-12 h-12 text-red-500 dark:text-red-200" />}
                     title="Belum Ada Ulangan"
                     description="Ulangan akan muncul di sini saat guru mempublishnya"
                 />

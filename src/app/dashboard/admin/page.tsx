@@ -6,7 +6,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
 import StatsCard from '@/components/ui/StatsCard'
-import { Calendar, School, BookOpen, UserCheck, Users, UserPlus, BarChart3, TrendingUp, GraduationCap, Megaphone, ShieldCheck, RefreshCw } from 'lucide-react'
+import {
+    Calendar, Category, Document, Work, User, AddUser, Chart, Graph,
+    Ticket, Notification, ShieldDone, Bookmark, Swap
+} from 'react-iconly'
 
 interface StatsData {
     totalTeachers: number
@@ -69,67 +72,67 @@ export default function AdminDashboard() {
         {
             title: 'Kelas',
             description: 'Kelola daftar kelas',
-            icon: School,
+            icon: Category,
             href: '/dashboard/admin/kelas',
         },
         {
             title: 'Kenaikan Kelas',
             description: 'Proses kenaikan kelas massal',
-            icon: GraduationCap,
+            icon: Graph,
             href: '/dashboard/admin/kenaikan-kelas',
         },
         {
             title: 'Pergantian Tahun',
             description: 'Wizard pergantian tahun ajaran',
-            icon: RefreshCw,
+            icon: Swap,
             href: '/dashboard/admin/pergantian-tahun',
         },
         {
             title: 'Mata Pelajaran',
             description: 'Kelola daftar mapel',
-            icon: BookOpen,
+            icon: Bookmark,
             href: '/dashboard/admin/mapel',
         },
         {
             title: 'Akun Guru',
             description: 'Kelola akun guru',
-            icon: UserCheck,
+            icon: Work,
             href: '/dashboard/admin/guru',
         },
         {
             title: 'Akun Siswa',
             description: 'Kelola akun siswa',
-            icon: Users,
+            icon: User,
             href: '/dashboard/admin/siswa',
         },
         {
             title: 'Penugasan',
             description: 'Assign guru ke kelas',
-            icon: UserPlus,
+            icon: Ticket,
             href: '/dashboard/admin/penugasan',
         },
         {
             title: 'Rekap Nilai',
             description: 'Rekap nilai per kelas',
-            icon: BarChart3,
+            icon: Chart,
             href: '/dashboard/admin/rekap-nilai',
         },
         {
             title: 'Analitik',
             description: 'Performa per mapel',
-            icon: TrendingUp,
+            icon: Graph,
             href: '/dashboard/admin/analitik',
         },
         {
             title: 'Review Soal',
             description: 'Review kualitas soal HOTS',
-            icon: ShieldCheck,
+            icon: ShieldDone,
             href: '/dashboard/admin/review-soal',
         },
         {
             title: 'Pengumuman',
             description: 'Kelola pengumuman',
-            icon: Megaphone,
+            icon: Notification,
             href: '/dashboard/admin/pengumuman',
         }
     ]
@@ -137,84 +140,80 @@ export default function AdminDashboard() {
     return (
         <div className="space-y-8">
             {/* Welcome Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary to-primary-dark p-8 shadow-xl shadow-primary/20">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl shadow-slate-900/20">
                 <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
-                <div className="absolute -right-20 -top-20 w-80 h-80 bg-white/10 rounded-full blur-3xl"></div>
+                <div className="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/20 rounded-full blur-3xl"></div>
 
                 <div className="relative">
                     <h1 className="text-3xl font-bold text-white mb-2 leading-tight">
                         Selamat Datang Admin, {user?.full_name}! 👋
                     </h1>
-                    <p className="text-blue-50/90 text-lg">
+                    <p className="text-slate-300 text-lg">
                         Panel Administrasi - Kelola seluruh data sekolah
                     </p>
                 </div>
             </div>
 
             {/* Stats Grid */}
+            {/* Stats Grid */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatsCard
                     label="Total Guru"
                     value={stats.totalTeachers}
-                    icon={<UserCheck className="w-6 h-6 text-blue-500" />}
+                    icon={<div className="text-blue-500 flex items-center justify-center"><Work set="bold" primaryColor="currentColor" size={32} /></div>}
                 />
                 <StatsCard
                     label="Total Siswa"
                     value={stats.totalStudents}
-                    icon={<Users className="w-6 h-6 text-green-500" />}
+                    icon={<div className="text-emerald-500 flex items-center justify-center"><User set="bold" primaryColor="currentColor" size={32} /></div>}
                 />
                 <StatsCard
                     label="Total Kelas"
                     value={stats.totalClasses}
-                    icon={<School className="w-6 h-6 text-purple-500" />}
+                    icon={<div className="text-purple-500 flex items-center justify-center"><Category set="bold" primaryColor="currentColor" size={32} /></div>}
                 />
                 <StatsCard
                     label="Total Mapel"
                     value={stats.totalSubjects}
-                    icon={<BookOpen className="w-6 h-6 text-amber-500" />}
+                    icon={<div className="text-amber-500 flex items-center justify-center"><Document set="bold" primaryColor="currentColor" size={32} /></div>}
                 />
             </div>
 
             {/* Menu Grid */}
             <div>
-                <h2 className="text-xl font-bold text-text-main dark:text-white mb-6">Menu Kelola</h2>
+                <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-6">Menu Kelola</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {menuItems.map((item, i) => (
                         <Link
                             key={i}
                             href={item.href}
                         >
-                            <Card className="h-full border-2 border-primary/30 hover:border-primary hover:shadow-lg hover:shadow-primary/10 active:scale-95 transition-all group cursor-pointer">
+                            <Card className="h-full border border-slate-200 hover:border-emerald-500 hover:shadow-md active:scale-95 transition-all group cursor-pointer bg-white dark:bg-surface-dark">
                                 <div className="flex items-start gap-4">
                                     {/* Duotone Icon Container with unique colors per function */}
-                                    <div className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm ${item.href.includes('tahun-ajaran') ? 'bg-indigo-100 dark:bg-indigo-900/30 group-hover:bg-indigo-600' :
-                                        item.href.includes('/kelas') ? 'bg-cyan-100 dark:bg-cyan-900/30 group-hover:bg-cyan-600' :
-                                            item.href.includes('mapel') ? 'bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-600' :
-                                                item.href.includes('/guru') ? 'bg-emerald-100 dark:bg-emerald-900/30 group-hover:bg-emerald-600' :
-                                                    item.href.includes('siswa') ? 'bg-violet-100 dark:bg-violet-900/30 group-hover:bg-violet-600' :
-                                                        item.href.includes('penugasan') ? 'bg-teal-100 dark:bg-teal-900/30 group-hover:bg-teal-600' :
-                                                            item.href.includes('rekap-nilai') ? 'bg-green-100 dark:bg-green-900/30 group-hover:bg-green-600' :
-                                                                'bg-orange-100 dark:bg-orange-900/30 group-hover:bg-orange-600'
+                                    <div className={`flex-shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-sm ${item.href.includes('tahun-ajaran') ? 'bg-indigo-50 dark:bg-indigo-900/10 group-hover:bg-indigo-500 text-indigo-500 dark:text-indigo-400 group-hover:text-white' :
+                                        item.href.includes('/kelas') ? 'bg-cyan-50 dark:bg-cyan-900/10 group-hover:bg-cyan-500 text-cyan-500 dark:text-cyan-400 group-hover:text-white' :
+                                            item.href.includes('mapel') ? 'bg-blue-50 dark:bg-blue-900/10 group-hover:bg-blue-500 text-blue-500 dark:text-blue-400 group-hover:text-white' :
+                                                item.href.includes('/guru') ? 'bg-emerald-50 dark:bg-emerald-900/10 group-hover:bg-emerald-500 text-emerald-500 dark:text-emerald-400 group-hover:text-white' :
+                                                    item.href.includes('siswa') ? 'bg-violet-50 dark:bg-violet-900/10 group-hover:bg-violet-500 text-violet-500 dark:text-violet-400 group-hover:text-white' :
+                                                        item.href.includes('penugasan') ? 'bg-teal-50 dark:bg-teal-900/10 group-hover:bg-teal-500 text-teal-500 dark:text-teal-400 group-hover:text-white' :
+                                                            item.href.includes('rekap-nilai') ? 'bg-green-50 dark:bg-green-900/10 group-hover:bg-green-500 text-green-500 dark:text-green-400 group-hover:text-white' :
+                                                                'bg-slate-50 dark:bg-slate-800 group-hover:bg-slate-600 text-slate-500 dark:text-slate-400 group-hover:text-white'
                                         }`}>
-                                        <item.icon className={`w-7 h-7 transition-colors ${item.href.includes('tahun-ajaran') ? 'text-indigo-600 dark:text-indigo-400 group-hover:text-white' :
-                                            item.href.includes('/kelas') ? 'text-cyan-600 dark:text-cyan-400 group-hover:text-white' :
-                                                item.href.includes('mapel') ? 'text-blue-600 dark:text-blue-400 group-hover:text-white' :
-                                                    item.href.includes('/guru') ? 'text-emerald-600 dark:text-emerald-400 group-hover:text-white' :
-                                                        item.href.includes('siswa') ? 'text-violet-600 dark:text-violet-400 group-hover:text-white' :
-                                                            item.href.includes('penugasan') ? 'text-teal-600 dark:text-teal-400 group-hover:text-white' :
-                                                                item.href.includes('rekap-nilai') ? 'text-green-600 dark:text-green-400 group-hover:text-white' :
-                                                                    'text-orange-600 dark:text-orange-400 group-hover:text-white'
-                                            }`} strokeWidth={2} />
+                                        <item.icon
+                                            set="bold"
+                                            primaryColor="currentColor"
+                                            size={28} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <h3 className="text-lg font-bold text-text-main dark:text-white group-hover:text-primary transition-colors mb-1">
+                                        <h3 className="text-lg font-bold text-slate-800 dark:text-white group-hover:text-emerald-600 transition-colors mb-1">
                                             {item.title}
                                         </h3>
-                                        <p className="text-sm text-text-secondary dark:text-[#A8BC9F]">
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">
                                             {item.description}
                                         </p>
                                     </div>
-                                    <div className="self-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0 text-primary">
+                                    <div className="self-center opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0 text-emerald-500">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                         </svg>

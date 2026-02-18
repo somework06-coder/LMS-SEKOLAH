@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import Card from '@/components/ui/Card'
-import { BookOpen, PenTool, Clock, Brain, Archive, BarChart3 } from 'lucide-react'
+import { BookOpen, PenTool, Clock, Brain, Archive, BarChart3, School } from 'lucide-react'
 
 interface TeachingAssignment {
     id: string
@@ -52,6 +52,7 @@ export default function GuruDashboard() {
         { href: '/dashboard/guru/kuis', icon: Brain, label: 'Kuis', sub: 'Review & latihan' },
         { href: '/dashboard/guru/bank-soal', icon: Archive, label: 'Bank Soal', sub: 'Simpan & pakai lagi' },
         { href: '/dashboard/guru/nilai', icon: BarChart3, label: 'Nilai', sub: 'Rekap penilaian' },
+        { href: '/dashboard/guru/wali-kelas', icon: School, label: 'Wali Kelas', sub: 'Data siswa perwalian' },
     ]
 
     return (

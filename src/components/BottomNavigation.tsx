@@ -28,6 +28,7 @@ const guruNav: NavItem[] = [
     { icon: Edit, label: 'Tugas', path: '/dashboard/guru/tugas' },
     { icon: Game, label: 'Kuis', path: '/dashboard/guru/kuis' },
     { icon: TimeCircle, label: 'Ulangan', path: '/dashboard/guru/ulangan' },
+    { icon: User, label: 'Wali', path: '/dashboard/guru/wali-kelas' },
 ]
 
 const adminNav: NavItem[] = [
